@@ -1,0 +1,84 @@
+code	id	trial	row	block	cultivar_code 	cultivar	planting_date	health_1	health_2
+HMS22	S2-2	Scripps	17	2	2	Golden Delicious	dec	0	0
+HMS23	S2-3	Scripps	17	2	3	Grenadier	dec	0	0
+HMS24	S2-4	Scripps	17	2	4	Gala	dec	0	0
+HMS25	S2-5	Scripps	17	2	5	Braeburn	dec	0	nearly dead
+HMS26	S2-6	Scripps	17	2	6	Jazz	dec	nearly dead	nearly dead
+HMS27	S2-7	Scripps	17	2	7	Kanzi	dec	nearly dead	dead
+HMS28	S2-8	Scripps	17	2	8	Rubens	dec	nearly dead	nearly dead
+HMS12	S1-2	Scripps	17	1	2	Golden Delicious	dec	0	0
+HMS13	S1-3	Scripps	17	1	3	Grenadier	dec	0	0
+HMS14	S1-4	Scripps	17	1	4	Gala	dec	0	0
+HMS15	S1-5	Scripps	17	1	5	Braeburn	dec	0	nearly dead
+HMS16	S1-6	Scripps	17	1	6	Jazz	dec	0	0
+HMS18	S1-8	Scripps	17	1	8	Rubens	dec	nearly dead	dead
+HMS32	S3-2	Scripps	16	3	2	Golden Delicious	march	0	0
+HMS33	S3-3	Scripps	16	3	3	Grenadier	march	0	0
+HMS34	S3-4	Scripps	16	3	4	Gala	march	0	0
+HMS35	S3-5	Scripps	16	3	5	Braeburn	march	0	0
+HMS36	S3-6	Scripps	16	3	6	Jazz	march	0	0
+HMS37	S3-7	Scripps	16	3	7	Kanzi	march	nearly dead	nearly dead
+HMS38	S3-8	Scripps	16	3	8	Rubens	march	0	nearly dead
+HMS52	S5-2	Scripps	15	5	2	Golden Delicious	march	0	0
+HMS53	S5-3	Scripps	15	5	3	Grenadier	march	0	0
+HMS54	S5-4	Scripps	15	5	4	Gala	march	0	nearly dead
+HMS55	S5-5	Scripps	15	5	5	Braeburn	march	0	0
+HMS56	S5-6	Scripps	15	5	6	Jazz	march	nearly dead	nearly dead
+HMS57	S5-7	Scripps	15	5	7	Kanzi	march	too dead	dead
+HMS58	S5-8	Scripps	15	5	8	Rubens	march	nearly dead	nearly dead
+HMA12	A1-2	Avalon	1	1	2	Golden Delicious	april	0	0
+HMA13	A1-3	Avalon	1	1	3	Grenadier	april	0	top broken
+HMA14	A1-4	Avalon	1	1	4	Gala	april	0	0
+HMA15	A1-5	Avalon	1	1	5	Braeburn	april	0	0
+HMA16	A1-6	Avalon	1	1	6	Jazz	april	0	0
+HMA17	A1-7	Avalon	1	1	7	Kanzi	april	0	0
+HMA18	A1-8	Avalon	1	1	8	Rubens	april	dead	0
+HMA22	A2-2	Avalon	2	2	2	Golden Delicious	dec	0	0
+HMA23	A2-3	Avalon	2	2	3	Grenadier	dec	0	0
+HMA24	A2-4	Avalon	2	2	4	Gala	dec	0	0
+HMA25	A2-5	Avalon	2	2	5	Braeburn	dec	0	0
+HMA26	A2-6	Avalon	2	2	6	Jazz	dec	0	0
+HMA27	A2-7	Avalon	2	2	7	Kanzi	dec	0	0
+HMA28	A2-8	Avalon	2	2	8	Rubens	dec	0	0
+HMA32	A3-2	Avalon	3	3	2	Golden Delicious	dec	0	0
+HMA33	A3-3	Avalon	3	3	3	Grenadier	dec	0	0
+HMA34	A3-4	Avalon	3	3	4	Gala	dec	0	0
+HMA35	A3-5	Avalon	3	3	5	Braeburn	dec	0	0
+HMA36	A3-6	Avalon	3	3	6	Jazz	dec	0	0
+HMA37	A3-7	Avalon	3	3	7	Kanzi	dec	0	top broken
+HMA38	A3-8	Avalon	3	3	8	Rubens	dec	0	0
+HMA52	A5-2	Avalon	5	5	2	Golden Delicious	april	0	0
+HMA53	A5-3	Avalon	5	5	3	Grenadier	april	0	top broken
+HMA54	A5-4	Avalon	5	5	4	Gala	april	0	0
+HMA55	A5-5	Avalon	5	5	5	Braeburn	april	0	0
+HMA56	A5-6	Avalon	5	5	6	Jazz	april	0	0
+HMA57	A5-7	Avalon	5	5	7	Kanzi	april	0	0
+HMA58	A5-8	Avalon	5	5	8	Rubens	april	0	top broken
+HMW12	W1-2	WWF	1	1	2	Golden Delicious	dec	0	0
+HMW13	W1-3	WWF	1	1	3	Grenadier	dec	0	0
+HMW14	W1-4	WWF	1	1	4	Gala	dec	almost dead	almost dead
+HMW15	W1-5	WWF	1	1	5	Braeburn	dec	almost dead	almost dead
+HMW16	W1-6	WWF	1	1	6	Jazz	dec	almost dead	almost dead
+HMW17	W1-7	WWF	1	1	7	Kanzi	dec	dead	dead
+HMW18	W1-8	WWF	1	1	8	Rubens	dec	dead	almost dead
+HMW32	W3-2	WWF	1	3	2	Golden Delicious	dec	0	0
+HMW33	W3-3	WWF	1	3	3	Grenadier	dec	0	0
+HMW34	W3-4	WWF	1	3	4	Gala	dec	0	0
+HMW35	W3-5	WWF	1	3	5	Braeburn	dec	dead	almost dead
+HMW36	W3-6	WWF	1	3	6	Jazz	dec	almost dead	almost dead
+HMW37	W3-7	WWF	1	3	7	Kanzi	dec	dead	almost dead
+HMW38	W3-8	WWF	1	3	8	Rubens	dec	almost dead	almost dead
+HMW42	W4-2	WWF	2	4	2	Golden Delicious	march	dying	0
+HMW43	W4-3	WWF	2	4	3	Grenadier	march	0	0
+HMW44	W4-4	WWF	2	4	4	Gala	march	dying	0
+HMW45	W4-5	WWF	2	4	5	Braeburn	march	almost dead	almost dead
+HMW46	W4-6	WWF	2	4	6	Jazz	march	dying	dead
+HMW47	W4-7	WWF	2	4	7	Kanzi	march	almost dead	almost dead
+HMW48	W4-8	WWF	2	4	8	Rubens	march	almost dead	almost dead
+HMW52	W5-2	WWF	2	5	2	Golden Delicious	march	0	0
+HMW53	W5-3	WWF	2	5	3	Grenadier	march	0	0
+HMW54	W5-4	WWF	2	5	4	Gala	march	0	almost dead
+HMW55	W5-5	WWF	2	5	5	Braeburn	march	almost dead	almost dead
+HMW56	W5-6	WWF	2	5	6	Jazz	march	na	na
+HMW57	W5-7	WWF	2	5	7	Kanzi	march	dead	dead
+HMW58	W5-8	WWF	2	5	8	Rubens	march	dead	na

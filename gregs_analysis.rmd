@@ -18,17 +18,18 @@ knitr::opts_chunk$set(fig.width=9, fig.height=9)
 <!-- #=============================================================================== -->
 ```{r}
 ## Load required libraries
-library(DESeq2)
+#library(DESeq2)
 library(data.table)
 library(tidyverse)
-library(vegan)
-library(lmPerm)
-library(viridis)
-library(grid)
-library(gridExtra)
-library(cowplot)
-# library(devtools)
-# install_github("eastmallingresearch/Metabarcoding_pipeline/scripts")
+#library(vegan)
+#library(lmPerm)
+#library(viridis)
+#library(grid)
+#library(gridExtra)
+#library(cowplot)
+
+library(devtools)
+install_github("eastmallingresearch/Metabarcoding_pipeline/scripts")
 library(metafuncs)
 ```
 

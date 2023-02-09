@@ -9,7 +9,11 @@ date: 2023-02-09
 ```{r}
 library(data.table)
 library(tidyverse)
+```
 
+## metafuncs
+
+```{r}
 library(devtools)
 install_github("eastmallingresearch/Metabarcoding_pipeline/scripts")
 library(metafuncs)
@@ -17,7 +21,25 @@ library(metafuncs)
 
 # Load data
 
+## OTU tables
+
 ```{r}
-ubiome_BAC <- loadData("BAC.otu_table.txt","colData","BAC.sintax.taxa",RHB="BAC")
-ubiome_FUN <- loadData("FUN.otu_table.txt","colData","FUN.sintax.taxa",RHB="FUN")
+read_otu_table <- function(otu_table) {
+    return(read.table(otu_table, header = T, sep = "\t", 
+        row.names = 1, comment.char = ""))  # comment.char = "" to allow '#' in first line
+}
+
+bac_zotu_table <- read_otu_table("data/BAC.zotu_table.txt")
+fun_zotu_table <- read_otu_table("data/FUN.zotu_table.txt")
+```
+
+## Sample metadata
+
+```{r}
+sample_metadata <- read.table("sample_metadata.txt", header = T, sep = "\t", row.names = 1)
+```
+
+
+```{r}
+colnames(sample_metadata)
 ```
