@@ -1,0 +1,13 @@
+---
+title: Rhizosphere microbiome analysis
+author: Hamish McLean
+date: 2023-02-09
+---
+
+# Load libraries
+
+```{r}
+library(data.table)
+```
+
+
