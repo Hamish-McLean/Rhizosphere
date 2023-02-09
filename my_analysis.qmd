@@ -8,6 +8,16 @@ date: 2023-02-09
 
 ```{r}
 library(data.table)
+library(tidyverse)
+
+library(devtools)
+install_github("eastmallingresearch/Metabarcoding_pipeline/scripts")
+library(metafuncs)
 ```
 
+# Load data
 
+```{r}
+ubiome_BAC <- loadData("BAC.otu_table.txt","colData","BAC.sintax.taxa",RHB="BAC")
+ubiome_FUN <- loadData("FUN.otu_table.txt","colData","FUN.sintax.taxa",RHB="FUN")
+```
