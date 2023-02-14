@@ -18,15 +18,15 @@ knitr::opts_chunk$set(fig.width=9, fig.height=9)
 <!-- #=============================================================================== -->
 ```{r}
 ## Load required libraries
-#library(DESeq2)
+library(DESeq2)
 library(data.table)
 library(tidyverse)
-#library(vegan)
-#library(lmPerm)
-#library(viridis)
-#library(grid)
-#library(gridExtra)
-#library(cowplot)
+library(vegan)
+library(lmPerm)
+library(viridis)
+library(grid)
+library(gridExtra)
+library(cowplot)
 
 library(devtools)
 install_github("eastmallingresearch/Metabarcoding_pipeline/scripts")
@@ -38,9 +38,13 @@ library(metafuncs)
 <!-- #=============================================================================== -->
 ```{r}
 # Run constants
-Factor1="Status"
-Factor2="Treatment"
-Design=~Block+Treatment*Status
+#Factor1="Status"
+#Factor2="Treatment"
+#Design=~Block+Treatment*Status
+
+Factor1="trial"
+Factor2="cultivar"
+Design=~Block+cultivar*trial
 
 # colour blind palette
 cbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
@@ -48,7 +52,7 @@ cbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73",
 
 ## Custom functions
 
-gfunc <- function(countData,coldata,title) {
+gfunc <- function(countData,colData,title) {
 #### Rarefaction curve plotter ####  
   
   colData <- colData[names(countData),]
@@ -99,10 +103,14 @@ gfunc <- function(countData,coldata,title) {
 #       Load data
 <!-- #=============================================================================== -->
 ```{r}
-# Load 
-ubiome_BAC <- loadData("BAC.otu_table.txt","colData","BAC.sintax.taxa",RHB="BAC")
-ubiome_FUN <- loadData("FUN.otu_table.txt","colData","FUN.sintax.taxa",RHB="FUN")
+metadata <- "sample_metadata.txt"
 
+# Load
+ubiome_BAC <- loadData("data/BAC.otu_table.txt",metadata,"data/BAC.sintax.taxa",RHB="BAC")
+ubiome_FUN <- loadData("data/FUN.otu_table.txt",metadata,"data/FUN.sintax.taxa",RHB="FUN")
+
+ubiome_zBAC <- loadData("data/BAC.zotu_table.txt",metadata,"data/zBAC.sintax.taxa",RHB="BAC")
+ubiome_zFUN <- loadData("data/FUN.zotu_table.txt",metadata,"data/zFUN.sintax.taxa",RHB="FUN")
 ```
 
 <!-- #=============================================================================== -->
@@ -114,6 +122,9 @@ ubiome_FUN <- loadData("FUN.otu_table.txt","colData","FUN.sintax.taxa",RHB="FUN"
 ubiome_FUN$dds2 <- ubiom_to_des(ubiome_FUN,filter=expression(colSums(countData)>=1000))
 ubiome_BAC$dds2 <- ubiom_to_des(ubiome_BAC,filter=expression(colSums(countData)>=1000))
 
+ubiome_zFUN$dds2 <- ubiom_to_des(ubiome_zFUN,filter=expression(colSums(countData)>=1000))
+ubiome_zBAC$dds2 <- ubiom_to_des(ubiome_zBAC,filter=expression(colSums(countData)>=1000))
+
 ```
 
 <!-- #=============================================================================== -->
@@ -122,9 +133,11 @@ ubiome_BAC$dds2 <- ubiom_to_des(ubiome_BAC,filter=expression(colSums(countData)>
 
 ```{r}
 invisible(mapply(assign,names(ubiome_BAC),ubiome_BAC,MoreArgs=list(envir = globalenv())))
-g1 <- gfunc(as.data.frame(counts(dds)),as.data.frame(colData(dds)),"Bacteria")
+g1 <- gfunc(as.data.frame(counts(dds2)),as.data.frame(colData(dds2)),"Bacteria")
 invisible(mapply(assign,names(ubiome_FUN),ubiome_FUN,MoreArgs=list(envir = globalenv())))
-g2 <-gfunc(as.data.frame(counts(dds)),as.data.frame(colData(dds)),"Fungi")
+g2 <- gfunc(as.data.frame(counts(dds2)),as.data.frame(colData(dds2)),"Fungi")
+
+# changed all occurences of dds to dds2
 
 grid.arrange(g1,g2,
              left=textGrob(label=expression("Log"[10] * " aligned sequenecs"),rot=90),
@@ -148,8 +161,8 @@ invisible(mapply(assign,names(ubiome_FUN),ubiome_FUN,MoreArgs=list(envir=globale
 ```{r}
 
 # plot alpha diversity - plot_alpha will convert normalised abundances to integer values
-plot_alpha(counts(dds,normalize=T),
-           colData(dds),
+plot_alpha(counts(dds2,normalize=T),
+           colData(dds2),
            design=Factor1,
            colour=Factor2,
            measures=c("Chao1", "Shannon", "Simpson","Observed"),
