@@ -1,8 +1,6 @@
 ---
-title: "New analysis"
-output:
-  pdf_document: default
-  word_document: default
+title: "Root endophyte analysis"
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -11,6 +9,7 @@ knitr::opts_chunk$set(message=F)
 knitr::opts_chunk$set(warning=F)
 knitr::opts_chunk$set(comment = NA)
 knitr::opts_chunk$set(fig.width=9, fig.height=9)
+knitr::opts_chunk$set(error = TRUE)
 ```
 
 <!-- #=============================================================================== -->
@@ -36,16 +35,18 @@ library(metafuncs)
 <!-- #=============================================================================== -->
 #       Functions and constants
 <!-- #=============================================================================== -->
-```{r}
-# Run constants
-#Factor1="Status"
-#Factor2="Treatment"
-#Design=~Block+Treatment*Status
 
+```{r}
+TAXCONF = 0.6   # Sets the taxonomy confidence level to get "rank" in taxonomy files
+TOPOTU = 10    # Number of Top OTUs for summary information  
+
+# Run constants
 Factor1="trial"
 Factor2="cultivar"
-Design=~Block+cultivar*trial
+design=~block+cultivar*trial
+```
 
+```{r}
 # colour blind palette
 cbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
     "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
@@ -106,25 +107,50 @@ gfunc <- function(countData,colData,title) {
 metadata <- "sample_metadata.txt"
 
 # Load
-ubiome_BAC <- loadData("data/BAC.otu_table.txt",metadata,"data/BAC.sintax.taxa",RHB="BAC")
-ubiome_FUN <- loadData("data/FUN.otu_table.txt",metadata,"data/FUN.sintax.taxa",RHB="FUN")
+#ubiome_BAC <- loadData("data/BAC.otu_table.txt",metadata,"data/BAC.sintax.taxa",RHB="BAC")
+#ubiome_FUN <- loadData("data/FUN.otu_table.txt",metadata,"data/FUN.sintax.taxa",RHB="FUN")
 
-ubiome_zBAC <- loadData("data/BAC.zotu_table.txt",metadata,"data/zBAC.sintax.taxa",RHB="BAC")
-ubiome_zFUN <- loadData("data/FUN.zotu_table.txt",metadata,"data/zFUN.sintax.taxa",RHB="FUN")
+ubiome_BAC <- loadData("data/BAC.zotu_table.txt",metadata,"data/zBAC.sintax.taxa",RHB="BAC")
+ubiome_FUN <- loadData("data/FUN.zotu_table.txt",metadata,"data/zFUN.sintax.taxa",RHB="FUN")
 ```
+
+<!-- #=============================================================================== -->
+#       Filter samples and OTUs
+<!-- #=============================================================================== -->
+
+```{r}
+# Filter Plant, Chloroplast, and Eukaryote OTUs
+
+# Fungi: Plantae OTUs
+cat("Fungi:", length(grep("Plantae", ubiome_FUN$taxData$kingdom)), "Plantae OTUs\n")
+
+# Bacteria: Chloroplast (Streptophyta) and Eukaryote OTUs
+cat(
+  "Bacteria:", length(grep("Streptophyta",ubiome_BAC$taxData$genus)), "Chloroplast OTUs;", 
+  length(grep("Eukaryota",ubiome_BAC$taxData$kingdom)), "Eukaryote OTUs\n"
+)
+
+# Filter Chloroplast and Eukaryote
+filt <- rownames(
+  ubiome_BAC$taxData[
+    grepl("Streptophyta", ubiome_BAC$taxData$genus) & 
+    as.numeric(ubiome_BAC$taxData$g_conf) >= TAXCONF,
+  ]
+)
+filt <- c(filt, rownames(ubiome_BAC$taxData[grep("Eukaryota", ubiome_BAC$taxData$kingdom), ]))
+cat("Bacteria: removing",length(filt),"OTUs")
+ubiome_BAC$taxData <- ubiome_BAC$taxData[!rownames(ubiome_BAC$taxData) %in% filt,]
+ubiome_BAC$countData <- ubiome_BAC$countData[!rownames(ubiome_BAC$countData) %in% filt,]
+```
+
 
 <!-- #=============================================================================== -->
 #       Create DEseq objects
 <!-- #=============================================================================== -->
 ```{r}
-
 # filtered for minimum of 1000 reads
-ubiome_FUN$dds2 <- ubiom_to_des(ubiome_FUN,filter=expression(colSums(countData)>=1000))
-ubiome_BAC$dds2 <- ubiom_to_des(ubiome_BAC,filter=expression(colSums(countData)>=1000))
-
-ubiome_zFUN$dds2 <- ubiom_to_des(ubiome_zFUN,filter=expression(colSums(countData)>=1000))
-ubiome_zBAC$dds2 <- ubiom_to_des(ubiome_zBAC,filter=expression(colSums(countData)>=1000))
-
+ubiome_FUN$dds <- ubiom_to_des(ubiome_FUN,filter=expression(colSums(countData)>=1000))
+ubiome_BAC$dds <- ubiom_to_des(ubiome_BAC,filter=expression(colSums(countData)>=1000))
 ```
 
 <!-- #=============================================================================== -->
@@ -133,23 +159,135 @@ ubiome_zBAC$dds2 <- ubiom_to_des(ubiome_zBAC,filter=expression(colSums(countData
 
 ```{r}
 invisible(mapply(assign,names(ubiome_BAC),ubiome_BAC,MoreArgs=list(envir = globalenv())))
-g1 <- gfunc(as.data.frame(counts(dds2)),as.data.frame(colData(dds2)),"Bacteria")
+gr1 <- gfunc(as.data.frame(counts(dds)),as.data.frame(colData(dds)),"Bacteria OTU")
 invisible(mapply(assign,names(ubiome_FUN),ubiome_FUN,MoreArgs=list(envir = globalenv())))
-g2 <- gfunc(as.data.frame(counts(dds2)),as.data.frame(colData(dds2)),"Fungi")
+gr2 <- gfunc(as.data.frame(counts(dds)),as.data.frame(colData(dds)),"Fungi OTU")
 
-# changed all occurences of dds to dds2
+gr3 <- grid.arrange(
+  gr1, gr2,
+  left = textGrob(label = expression("Log"[10] * " aligned sequenecs"), rot = 90),
+  bottom = "OTU count", nrow = 2
+)
 
-grid.arrange(g1,g2,
-             left=textGrob(label=expression("Log"[10] * " aligned sequenecs"),rot=90),
-             bottom="OTU count",nrow=2)                        
+ggsave(filename = "otu_rarefaction_plots.png", plot = gr3, path = "figures/")
+```
+
+```{r echo = FALSE, eval = FALSE}
+invisible(mapply(assign,names(ubiome_zBAC),ubiome_zBAC,MoreArgs=list(envir = globalenv())))
+grz1 <- gfunc(as.data.frame(counts(dds)),as.data.frame(colData(dds)),"Bacteria ZOTU")
+invisible(mapply(assign,names(ubiome_zFUN),ubiome_zFUN,MoreArgs=list(envir = globalenv())))
+grz2 <- gfunc(as.data.frame(counts(dds)),as.data.frame(colData(dds)),"Fungi ZOTU")
+
+grz3 <- grid.arrange(
+  grz1, grz2,
+  left = textGrob(label = expression("Log"[10] * " aligned sequenecs"),rot = 90),
+  bottom = "OTU count", nrow = 2
+)
+
+ggsave(filename = "zotu_rarefaction_plots.png", plot = grz3, path = "figures/")
 ```
 
 <!-- #=============================================================================== -->
 #      ***FUNGI***
 <!-- #=============================================================================== -->
+
 ```{r}
 # Fungi
 invisible(mapply(assign,names(ubiome_FUN),ubiome_FUN,MoreArgs=list(envir=globalenv())))
+```
+
+<!-- #=============================================================================== -->
+##      OTU and sample summary
+<!-- #=============================================================================== -->
+
+### Read and sample summary
+
+```{r echo = FALSE}
+cat("Raw reads","\n\n")
+cat("Total raw reads:\t\t", sum(countData),"\n")
+cat("Mean raw reads per sample:\t", mean(colSums(countData)),"\n")
+cat("Median raw reads per sample:", median(colSums(countData)),"\n")
+cat("Min raw reads per sample:\t", min(colSums(countData)),"\n")
+cat("Max raw reads per sample:\t", max(colSums(countData)),"\n\n")
+#colSums(countData)
+
+nct <- counts(dds,normalize=T)
+cat("Normalised reads","\n\n")
+cat("Total normalised reads:\t\t", sum(nct),"\n")
+cat("Mean normalised reads per sample:\t", mean(colSums(nct)),"\n")
+cat("Median normalised reads per sample:", median(colSums(nct)),"\n")
+cat("Min normalised reads per sample:\t", min(colSums(nct)),"\n")
+cat("Max normalised reads per sample:\t", max(colSums(nct)),"\n\n")
+#round(colSums(counts(dds,normalize=T)),0)
+```
+
+### OTU summary 
+
+```{r echo = FALSE}
+cat("Total OTUs:\t\t",nrow(taxData),"\n")
+cat("Raw reads per OTU summary","\n\n")
+cat("Mean raw reads per OTU:\t", mean(rowSums(countData)),"\n")
+cat("Median raw per OTU:\t", median(rowSums(countData)),"\n")
+cat("OTU raw Min reads:\t\t", min(rowSums(countData)),"\n")
+cat("OTU raw Max reads:\t\t", max(rowSums(countData)),"\n\n")
+
+cat("Normalised reads per OTU summary","\n\n")
+cat("Mean normalised reads per OTU:\t", mean(rowSums(nct)),"\n")
+cat("Median normalised reads per OTU:\t", median(rowSums(nct)),"\n")
+cat("OTU normalised Min reads:\t\t", min(rowSums(nct)),"\n")
+cat("OTU normalised Max reads:\t\t", max(rowSums(nct)),"\n\n")
+
+y <- rowSums(nct)
+y <- y[order(y,decreasing = T)]
+# proportion
+xy <- y/sum(y)
+
+cat("Total " ,TOPOTU,"OTUs:\n")
+data.frame(counts=y[1:TOPOTU],Prop=xy[1:TOPOTU],rank=taxData[names(y)[1:TOPOTU],]$rank)
+
+```
+
+<!-- #=============================================================================== -->
+##          Taxonomy Summary
+<!-- #=============================================================================== -->
+
+### Taxonomy identifiable
+
+Proportion of OTUs which can be assigned (with the given confidence) at each taxonomic rank
+
+```{r}
+
+# Proportion of OTUs which can be assigned (with the given confidence) at each taxonomic rank
+
+tx <- copy(taxData)
+setDT(tx)
+cols <- names(tx)[9:15]
+
+tx[,(cols):=lapply(.SD,as.factor),.SDcols=cols]
+
+data.table(
+  rank=c("kingdom","phylum","class","order","family","genus","species"),
+  "0.8"=round(unlist(lapply(cols,function(col) sum(as.number(tx[[col]])>=0.8)/nrow(tx))),2),
+  "0.65"=round(unlist(lapply(cols,function(col) sum(as.number(tx[[col]])>=0.65)/nrow(tx))),2),
+  "0.5"=round(unlist(lapply(cols,function(col) sum(as.number(tx[[col]])>=0.5)/nrow(tx))),2)
+)
+
+```
+
+% of reads which can be assigned to each taxonomic ranks
+
+```{r}
+
+tx <-taxData[rownames(dds),]
+  nc <- counts(dds,normalize=T)
+ac <- sum(nc)
+
+data.table(
+  rank=c("kingdom","phylum","class","order","family","genus","species"),
+  "0.8"=round(unlist(lapply(cols ,function(col)(sum(nc[which(as.numeric(tx[[col]])>=0.8),])/ac *100))),2),
+  "0.65"=round(unlist(lapply(cols,function(col)(sum(nc[which(as.numeric(tx[[col]])>=0.65),])/ac *100))),2),
+  "0.5"=round(unlist(lapply(cols,function(col)(sum(nc[which(as.numeric(tx[[col]])>=0.5),])/ac *100))),2)
+)
 
 ```
 
@@ -161,30 +299,39 @@ invisible(mapply(assign,names(ubiome_FUN),ubiome_FUN,MoreArgs=list(envir=globale
 ```{r}
 
 # plot alpha diversity - plot_alpha will convert normalised abundances to integer values
-plot_alpha(counts(dds2,normalize=T),
-           colData(dds2),
-           design=Factor1,
-           colour=Factor2,
-           measures=c("Chao1", "Shannon", "Simpson","Observed"),
-           type="box") + 
-  scale_colour_manual(values=cbPalette)+theme(axis.title.x =  element_blank())
+
+fun_alpha_plot <- plot_alpha(
+  counts(dds, normalize = T), colData(dds),
+  design = "cultivar", colour = "trial",
+  measures = c("Chao1", "Shannon", "Simpson", "Observed"),
+  type = "box"
+) + scale_colour_manual(values = cbPalette) + 
+  theme(axis.title.x = element_blank()) +
+  ggtitle("Fungal ZOTU α-diversity")
+
+ggsave(
+  filename = "fun_alpha_diversity.png", plot = fun_alpha_plot, path = "figures/", 
+  height = 20, width = 40, units = "cm"
+)
 ```
 
 ## Permutation based anova on diversity index ranks
 ```{r}
 # get the diversity index data
-all_alpha_ord <- plot_alpha(counts(dds,normalize=T),colData(dds),design="Status",returnData=T)
+all_alpha_ord <- plot_alpha(counts(dds,normalize=T),colData(dds),design="trial",returnData=T)
 
 # join diversity indices and metadata
-all_alpha_ord <- all_alpha_ord[as.data.table(colData(dds),keep.rownames="Samples"),
-                               on="Samples"]
+all_alpha_ord <- all_alpha_ord[
+  as.data.table(colData(dds), keep.rownames = "Samples"), 
+  on = "Samples"
+]
 
 ```
 
 ### Chao1
 ```{r}
-setkey(all_alpha_ord,S.chao1)
-all_alpha_ord[,measure:=as.numeric(as.factor(S.chao1))]
+setkey(all_alpha_ord, S.chao1)
+all_alpha_ord[, measure := as.numeric(as.factor(S.chao1))]
 summary(aovp(update(design,measure~.),all_alpha_ord,seqs=T))
 ```
 
@@ -232,24 +379,25 @@ round(mypca$percentVar[1:4],3)
 ### ANOVA of first 4 PCs
 ```{r} 
 apply(mypca$x[,1:4],2,function(x){
-  summary(aov(update(design,x~.),data=cbind(pc,colData(dds))))
+  summary(aov(update(design,x~.),data=as.data.frame(cbind(x,colData(dds)))))
 })
 ```
 
 ### PCA plot
 ```{r, fig.width=8,fig.height=5}
 
-plotOrd(d,
+pca_plot <- plotOrd(d,
         colData(dds),
-        design=Factor1,
-        shape=Factor2,
-        axes=c(2,3),
+        design=Factor2,
+        shape=Factor1,
+        axes=c(1,2),
    #     facet="field_pair", 
         cbPalette=T,
         alpha=0.75,) #+ 
   #geom_line(aes(group=facet),alpha=0.25,linetype=3,colour="#000000") + 
   #theme(text = element_text(size=14))
 
+ggsave(filename = "fun_pca_plot.png", plot = pca_plot, path = "figures/")
 ```
 
 ### PCA sum of squares (% var)
@@ -267,21 +415,23 @@ round(colSums(perVar)/sum(colSums(perVar))*100,3)
 ## ADONIS
 ```{r}
 vg <- vegdist(t(counts(dds,normalize=T)),method="bray")
-set.seed(sum(utf8ToInt("Xiangming Xu")))
+set.seed(sum(utf8ToInt("Hamish McLean")))
 adonis(update(design,vg~.),colData(dds),permutations = 1000)
 
 ```
 
 ## NMDS ordination
 ```{r}
-set.seed(sum(utf8ToInt("Xiangming Xu")))
+set.seed(sum(utf8ToInt("Hamish McLean")))
 ord <- metaMDS(vg,trace=0) 
 #sratmax=20000,maxit=20000,try = 177, trymax = 177
 
 nmds <- scores(ord)
 
-g <- plotOrd(nmds,colData(dds),design=Factor1,shape=Factor2,alpha=0.75,cbPalette=T)
+g <- plotOrd(nmds,colData(dds),design=Factor2,shape=Factor1,alpha=0.75,cbPalette=T)
 g + theme(text=element_text(size=14))
+
+ggsave(filename = "fun_nmds_plot.png", plot = g, path = "figures/")
 ```
 
 ### NMDS with phylum or class arrows 
@@ -383,13 +533,19 @@ keep <- c(which(duplicated(colData(dds)$field_pair,fromLast=T)),
 ```{r}
 
 # plot alpha diversity - plot_alpha will convert normalised abundances to integer values
-plot_alpha(counts(dds,normalize=T),
-           colData(dds),
-           design=Factor1,
-           colour=Factor2,
-           measures=c("Chao1", "Shannon", "Simpson","Observed"),
-           type="box") + 
-  scale_colour_manual(values=cbPalette)+theme(axis.title.x =  element_blank())
+bac_alpha_plot <- plot_alpha(
+  counts(dds,normalize = T), colData(dds),
+  design = "cultivar", colour = "trial",
+  measures = c("Chao1", "Shannon", "Simpson", "Observed"),
+  type="box"
+) + scale_colour_manual(values = cbPalette) + 
+  theme(axis.title.x =  element_blank()) + 
+  ggtitle("Bacterial ZOTU α-diversity")
+
+ggsave(
+  filename = "bac_alpha_diversity.png", plot = bac_alpha_plot, path = "figures/", 
+  height = 20, width = 40, units = "cm"
+)
 ```
 
 ## Permutation based anova on diversity index ranks
@@ -454,24 +610,25 @@ round(mypca$percentVar[1:4],3)
 ### ANOVA of first 4 PCs
 ```{r} 
 apply(mypca$x[,1:4],2,function(x){
-  summary(aov(update(design,x~.),data=cbind(pc,colData(dds))))
+  summary(aov(update(design,x~.),data=as.data.frame(cbind(x,colData(dds)))))
 })
 ```
 
 ### PCA plot
 ```{r, fig.width=8,fig.height=5}
 
-plotOrd(d,
+fun_pca_plot <- plotOrd(d,
         colData(dds),
-        design=Factor1,
-        shape=Factor2,
-        axes=c(2,3),
+        design=Factor2,
+        shape=Factor1,
+        axes=c(1,2),
    #     facet="field_pair", 
         cbPalette=T,
         alpha=0.75,) #+ 
   #geom_line(aes(group=facet),alpha=0.25,linetype=3,colour="#000000") + 
   #theme(text = element_text(size=14))
 
+ggsave(filename = "bac_pca_plot.png", plot = fun_pca_plot, path = "figures/")
 ```
 
 ### PCA sum of squares (% var)
@@ -489,21 +646,23 @@ round(colSums(perVar)/sum(colSums(perVar))*100,3)
 ## ADONIS
 ```{r}
 vg <- vegdist(t(counts(dds,normalize=T)),method="bray")
-set.seed(sum(utf8ToInt("Xiangming Xu")))
+set.seed(sum(utf8ToInt("Hamish McLean")))
 adonis(update(design,vg~.),colData(dds),permutations = 1000)
 
 ```
 
 ## NMDS ordination
 ```{r}
-set.seed(sum(utf8ToInt("Xiangming Xu")))
+set.seed(sum(utf8ToInt("Hamish McLean")))
 ord <- metaMDS(vg,trace=0) 
 #sratmax=20000,maxit=20000,try = 177, trymax = 177
 
 nmds <- scores(ord)
 
-g <- plotOrd(nmds,colData(dds),design=Factor1,shape=Factor2,alpha=0.75,cbPalette=T)
+g <- plotOrd(nmds,colData(dds),design=Factor2,shape=Factor1,alpha=0.75,cbPalette=T)
 g + theme(text=element_text(size=14))
+
+ggsave(filename = "bac_nmds_plot.png", plot = g, path = "figures/")
 ```
 
 ### NMDS with phylum or class arrows 
