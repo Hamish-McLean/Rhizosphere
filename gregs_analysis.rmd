@@ -15,7 +15,7 @@ knitr::opts_chunk$set(error = TRUE)
 <!-- #=============================================================================== -->
 #       Load libraries
 <!-- #=============================================================================== -->
-```{r}
+```{r libraries}
 ## Load required libraries
 library(DESeq2)
 library(data.table)
@@ -36,17 +36,17 @@ library(metafuncs)
 #       Functions and constants
 <!-- #=============================================================================== -->
 
-```{r}
+```{r constants}
 TAXCONF = 0.6   # Sets the taxonomy confidence level to get "rank" in taxonomy files
 TOPOTU = 10    # Number of Top OTUs for summary information  
 
 # Run constants
-Factor1="trial"
-Factor2="cultivar"
-design=~block+cultivar*trial
+Factor1 = "trial"
+Factor2 = "cultivar"
+design = x ~ trial / block + planting_date * cultivar
 ```
 
-```{r}
+```{r functions}
 # colour blind palette
 cbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
     "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
@@ -103,7 +103,7 @@ gfunc <- function(countData,colData,title) {
 <!-- #=============================================================================== -->
 #       Load data
 <!-- #=============================================================================== -->
-```{r}
+```{r data}
 metadata <- "sample_metadata.txt"
 
 # Load
@@ -118,7 +118,7 @@ ubiome_FUN <- loadData("data/FUN.zotu_table.txt",metadata,"data/zFUN.sintax.taxa
 #       Filter samples and OTUs
 <!-- #=============================================================================== -->
 
-```{r}
+```{r filter}
 # Filter Plant, Chloroplast, and Eukaryote OTUs
 
 # Fungi: Plantae OTUs
@@ -147,7 +147,7 @@ ubiome_BAC$countData <- ubiome_BAC$countData[!rownames(ubiome_BAC$countData) %in
 <!-- #=============================================================================== -->
 #       Create DEseq objects
 <!-- #=============================================================================== -->
-```{r}
+```{r DEseq}
 # filtered for minimum of 1000 reads
 ubiome_FUN$dds <- ubiom_to_des(ubiome_FUN,filter=expression(colSums(countData)>=1000))
 ubiome_BAC$dds <- ubiom_to_des(ubiome_BAC,filter=expression(colSums(countData)>=1000))
@@ -157,34 +157,21 @@ ubiome_BAC$dds <- ubiom_to_des(ubiome_BAC,filter=expression(colSums(countData)>=
 #       Sample rarefaction plots
 <!-- #=============================================================================== -->        
 
-```{r}
-invisible(mapply(assign,names(ubiome_BAC),ubiome_BAC,MoreArgs=list(envir = globalenv())))
-gr1 <- gfunc(as.data.frame(counts(dds)),as.data.frame(colData(dds)),"Bacteria OTU")
-invisible(mapply(assign,names(ubiome_FUN),ubiome_FUN,MoreArgs=list(envir = globalenv())))
-gr2 <- gfunc(as.data.frame(counts(dds)),as.data.frame(colData(dds)),"Fungi OTU")
+```{r rarefaction}
+invisible(mapply(assign, names(ubiome_BAC), ubiome_BAC, MoreArgs = list(envir = globalenv())))
+rare_bac <- gfunc(as.data.frame(counts(dds)), as.data.frame(colData(dds)), "Bacteria ZOTU")
+invisible(mapply(assign, names(ubiome_FUN), ubiome_FUN, MoreArgs = list(envir = globalenv())))
+rare_fun <- gfunc(as.data.frame(counts(dds)), as.data.frame(colData(dds)), "Fungi ZOTU")
 
-gr3 <- grid.arrange(
-  gr1, gr2,
+rarefaction_plots <- grid.arrange(
+  rare_bac, rare_fun,
   left = textGrob(label = expression("Log"[10] * " aligned sequenecs"), rot = 90),
-  bottom = "OTU count", nrow = 2
+  bottom = "ZOTU count", nrow = 2
 )
 
-ggsave(filename = "otu_rarefaction_plots.png", plot = gr3, path = "figures/")
-```
+ggsave(filename = "rarefaction_plots.png", plot = rarefaction_plots, path = "figures/")
 
-```{r echo = FALSE, eval = FALSE}
-invisible(mapply(assign,names(ubiome_zBAC),ubiome_zBAC,MoreArgs=list(envir = globalenv())))
-grz1 <- gfunc(as.data.frame(counts(dds)),as.data.frame(colData(dds)),"Bacteria ZOTU")
-invisible(mapply(assign,names(ubiome_zFUN),ubiome_zFUN,MoreArgs=list(envir = globalenv())))
-grz2 <- gfunc(as.data.frame(counts(dds)),as.data.frame(colData(dds)),"Fungi ZOTU")
-
-grz3 <- grid.arrange(
-  grz1, grz2,
-  left = textGrob(label = expression("Log"[10] * " aligned sequenecs"),rot = 90),
-  bottom = "OTU count", nrow = 2
-)
-
-ggsave(filename = "zotu_rarefaction_plots.png", plot = grz3, path = "figures/")
+rarefaction_plots
 ```
 
 <!-- #=============================================================================== -->
@@ -202,47 +189,54 @@ invisible(mapply(assign,names(ubiome_FUN),ubiome_FUN,MoreArgs=list(envir=globale
 
 ### Read and sample summary
 
-```{r echo = FALSE}
-cat("Raw reads","\n\n")
-cat("Total raw reads:\t\t", sum(countData),"\n")
-cat("Mean raw reads per sample:\t", mean(colSums(countData)),"\n")
-cat("Median raw reads per sample:", median(colSums(countData)),"\n")
-cat("Min raw reads per sample:\t", min(colSums(countData)),"\n")
-cat("Max raw reads per sample:\t", max(colSums(countData)),"\n\n")
+```{r read_summary}
+cat(
+  "Raw reads","\n\n",
+  "Total raw reads:\t\t", sum(countData),"\n",
+  "Mean raw reads per sample:\t", mean(colSums(countData)),"\n",
+  "Median raw reads per sample:\t", median(colSums(countData)),"\n",
+  "Max raw reads per sample:\t", max(colSums(countData)),"\n",
+  "Min raw reads per sample:\t", min(colSums(countData)),"\n\n"
+)
 #colSums(countData)
 
 nct <- counts(dds,normalize=T)
-cat("Normalised reads","\n\n")
-cat("Total normalised reads:\t\t", sum(nct),"\n")
-cat("Mean normalised reads per sample:\t", mean(colSums(nct)),"\n")
-cat("Median normalised reads per sample:", median(colSums(nct)),"\n")
-cat("Min normalised reads per sample:\t", min(colSums(nct)),"\n")
-cat("Max normalised reads per sample:\t", max(colSums(nct)),"\n\n")
+cat("Normalised reads","\n\n",
+  "Total normalised reads:\t\t", sum(nct),"\n",
+  "Mean normalised reads per sample:\t", mean(colSums(nct)),"\n",
+  "Median normalised reads per sample:\t", median(colSums(nct)),"\n",
+  "Min normalised reads per sample:\t", min(colSums(nct)),"\n",
+  "Max normalised reads per sample:\t", max(colSums(nct)),"\n\n"
+)
 #round(colSums(counts(dds,normalize=T)),0)
 ```
 
 ### OTU summary 
 
-```{r echo = FALSE}
-cat("Total OTUs:\t\t",nrow(taxData),"\n")
-cat("Raw reads per OTU summary","\n\n")
-cat("Mean raw reads per OTU:\t", mean(rowSums(countData)),"\n")
-cat("Median raw per OTU:\t", median(rowSums(countData)),"\n")
-cat("OTU raw Min reads:\t\t", min(rowSums(countData)),"\n")
-cat("OTU raw Max reads:\t\t", max(rowSums(countData)),"\n\n")
+```{r otu_summary}
+cat(
+  "Total OTUs:\t\t", nrow(taxData),"\n\n",
+  "Raw reads per OTU summary", "\n\n",
+  "Mean raw reads per OTU:\t", mean(rowSums(countData)),"\n",
+  "Median raw per OTU:\t\t", median(rowSums(countData)),"\n",
+  "OTU raw Min reads:\t\t", min(rowSums(countData)),"\n",
+  "OTU raw Max reads:\t\t", max(rowSums(countData)),"\n\n"
+)
 
-cat("Normalised reads per OTU summary","\n\n")
-cat("Mean normalised reads per OTU:\t", mean(rowSums(nct)),"\n")
-cat("Median normalised reads per OTU:\t", median(rowSums(nct)),"\n")
-cat("OTU normalised Min reads:\t\t", min(rowSums(nct)),"\n")
-cat("OTU normalised Max reads:\t\t", max(rowSums(nct)),"\n\n")
+cat(
+  "Normalised reads per OTU summary","\n\n",
+  "Mean normalised reads per OTU:\t\t", mean(rowSums(nct)),"\n",
+  "Median normalised reads per OTU:\t", median(rowSums(nct)),"\n",
+  "OTU normalised Min reads:\t\t", min(rowSums(nct)),"\n",
+  "OTU normalised Max reads:\t\t", max(rowSums(nct)),"\n\n"
+)
 
 y <- rowSums(nct)
 y <- y[order(y,decreasing = T)]
 # proportion
 xy <- y/sum(y)
 
-cat("Total " ,TOPOTU,"OTUs:\n")
+cat("Top " ,TOPOTU, "OTUs:\n")
 data.frame(counts=y[1:TOPOTU],Prop=xy[1:TOPOTU],rank=taxData[names(y)[1:TOPOTU],]$rank)
 
 ```
@@ -296,7 +290,7 @@ data.table(
 <!-- #=============================================================================== -->
 
 ## Alpha diversity plot
-```{r}
+```{r fun_alpha_diversity}
 
 # plot alpha diversity - plot_alpha will convert normalised abundances to integer values
 
@@ -313,6 +307,8 @@ ggsave(
   filename = "fun_alpha_diversity.png", plot = fun_alpha_plot, path = "figures/", 
   height = 20, width = 40, units = "cm"
 )
+
+fun_alpha_plot
 ```
 
 ## Permutation based anova on diversity index ranks
@@ -326,6 +322,8 @@ all_alpha_ord <- all_alpha_ord[
   on = "Samples"
 ]
 
+all_alpha_ord[, trial.block := as.factor(paste0(trial, block))]
+design <- x ~ trial * planting_date * cultivar + trial / trial.block
 ```
 
 ### Chao1
