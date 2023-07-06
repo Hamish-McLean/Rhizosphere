@@ -26,6 +26,7 @@ library(viridis)
 library(grid)
 library(gridExtra)
 library(cowplot)
+library(iNEXT)
 
 library(devtools)
 install_github("eastmallingresearch/Metabarcoding_pipeline/scripts")
@@ -48,10 +49,10 @@ design = x ~ trial / block + planting_date * cultivar
 
 ```{r functions}
 # colour blind palette
-cbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
-    "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-
-## Custom functions
+cbPalette <- c(
+  "#000000", "#E69F00", "#56B4E9", "#009E73", 
+  "#F0E442", "#0072B2", "#D55E00", "#CC79A7"
+)
 
 gfunc <- function(countData,colData,title) {
 #### Rarefaction curve plotter ####  
@@ -61,11 +62,8 @@ gfunc <- function(countData,colData,title) {
   # descending order each sample 
   DT <- data.table(apply(countData,2,sort,decreasing=T))
   
-  # get cummulative sum of each sample
-  DT <- cumsum(DT)    
-  
-  # log the count values                            
-  DT <- log10(DT)
+  # get log10(cummulative sum) of each sample
+  DT <- log10(cumsum(DT))
   
   # set values larger than maximum for each column to NA
   DT <- data.table(apply(DT,2,function(x) {x[(which.max(x)+1):length(x)]<- NA;x}))
@@ -114,6 +112,35 @@ ubiome_BAC <- loadData("data/BAC.zotu_table.txt",metadata,"data/zBAC.sintax.taxa
 ubiome_FUN <- loadData("data/FUN.zotu_table.txt",metadata,"data/zFUN.sintax.taxa",RHB="FUN")
 ```
 
+```{r abundance}
+
+abundance <- fread("mean_abundance.csv")
+
+# Add sample ID to abundance data
+abundance$ID <- paste0("HM", gsub("-", "", abundance$Sample))
+
+ubiome_BAC[["abundance"]] <- abundance[abundance$Target == "16S"]
+ubiome_FUN[["abundance"]] <- abundance[abundance$Target == "ITS"]
+
+names(ubiome_BAC)
+
+head(ubiome_BAC$countData)
+
+#' Normalise count data
+#' Normalise count data using qPCR theoretical copy number data
+normaliseCountData <- function(data) {
+  totalOTUs <- apply(data$countData, 2, sum) 
+  totalOTUs <- as.data.frame(totalOTUs, col.names = c("ID", "TotalOTUs"))
+  
+  # adjustedTotalOTUs <- totalOTUs %>%
+  #   map(~ .x * data$abundance[data$abundance$ID == .x, "MeanAdjustedTCN"])
+  return(totalOTUs)
+}
+
+str(normaliseCountData(ubiome_BAC))
+
+```
+
 <!-- #=============================================================================== -->
 #       Filter samples and OTUs
 <!-- #=============================================================================== -->
@@ -126,8 +153,8 @@ cat("Fungi:", length(grep("Plantae", ubiome_FUN$taxData$kingdom)), "Plantae OTUs
 
 # Bacteria: Chloroplast (Streptophyta) and Eukaryote OTUs
 cat(
-  "Bacteria:", length(grep("Streptophyta",ubiome_BAC$taxData$genus)), "Chloroplast OTUs;", 
-  length(grep("Eukaryota",ubiome_BAC$taxData$kingdom)), "Eukaryote OTUs\n"
+  "Bacteria:", length(grep("Streptophyta", ubiome_BAC$taxData$genus)), "Chloroplast OTUs;", 
+  length(grep("Eukaryota", ubiome_BAC$taxData$kingdom)), "Eukaryote OTUs\n"
 )
 
 # Filter Chloroplast and Eukaryote
@@ -137,10 +164,13 @@ filt <- rownames(
     as.numeric(ubiome_BAC$taxData$g_conf) >= TAXCONF,
   ]
 )
+
 filt <- c(filt, rownames(ubiome_BAC$taxData[grep("Eukaryota", ubiome_BAC$taxData$kingdom), ]))
-cat("Bacteria: removing",length(filt),"OTUs")
-ubiome_BAC$taxData <- ubiome_BAC$taxData[!rownames(ubiome_BAC$taxData) %in% filt,]
-ubiome_BAC$countData <- ubiome_BAC$countData[!rownames(ubiome_BAC$countData) %in% filt,]
+
+cat("Bacteria: removing", length(filt), "OTUs")
+
+ubiome_BAC$taxData <- ubiome_BAC$taxData[!rownames(ubiome_BAC$taxData) %in% filt, ]
+ubiome_BAC$countData <- ubiome_BAC$countData[!rownames(ubiome_BAC$countData) %in% filt, ]
 ```
 
 
@@ -149,8 +179,8 @@ ubiome_BAC$countData <- ubiome_BAC$countData[!rownames(ubiome_BAC$countData) %in
 <!-- #=============================================================================== -->
 ```{r DEseq}
 # filtered for minimum of 1000 reads
-ubiome_FUN$dds <- ubiom_to_des(ubiome_FUN,filter=expression(colSums(countData)>=1000))
-ubiome_BAC$dds <- ubiom_to_des(ubiome_BAC,filter=expression(colSums(countData)>=1000))
+ubiome_FUN$dds <- ubiom_to_des(ubiome_FUN, filter = expression(colSums(countData) >= 1000))
+ubiome_BAC$dds <- ubiom_to_des(ubiome_BAC, filter = expression(colSums(countData) >= 1000))
 ```
 
 <!-- #=============================================================================== -->
@@ -180,7 +210,7 @@ rarefaction_plots
 
 ```{r}
 # Fungi
-invisible(mapply(assign,names(ubiome_FUN),ubiome_FUN,MoreArgs=list(envir=globalenv())))
+invisible(mapply(assign, names(ubiome_FUN), ubiome_FUN, MoreArgs = list(envir = globalenv())))
 ```
 
 <!-- #=============================================================================== -->
