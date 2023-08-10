@@ -268,7 +268,7 @@ cat("Normalised reads","\n\n",
   "Min normalised reads per sample:\t", min(colSums(nct)),"\n",
   "Max normalised reads per sample:\t", max(colSums(nct)),"\n\n"
 )
-#round(colSums(counts(dds,normalize=T)),0)
+#round(colSums(counts(dds,normalize = DNORM)),0)
 ```
 
 ### OTU summary 
@@ -333,7 +333,7 @@ data.table(
 ```{r}
 
 tx <-taxData[rownames(dds),]
-  nc <- counts(dds,normalize=T)
+  nc <- counts(dds,normalize = DNORM)
 ac <- sum(nc)
 
 data.table(
@@ -355,7 +355,7 @@ data.table(
 # plot alpha diversity - plot_alpha will convert normalised abundances to integer values
 
 fun_alpha_plot <- plot_alpha(
-  counts(dds, normalize = T), colData(dds),
+  counts(dds, normalize = DNORM), colData(dds),
   design = "cultivar", colour = "trial",
   measures = c("Chao1", "Shannon", "Simpson", "Observed"),
   type = "box"
@@ -374,7 +374,7 @@ fun_alpha_plot
 ## Permutation based anova on diversity index ranks
 ```{r}
 # get the diversity index data
-all_alpha_ord <- plot_alpha(counts(dds,normalize=T),colData(dds),design="trial",returnData=T)
+all_alpha_ord <- plot_alpha(counts(dds,normalize = DNORM),colData(dds),design="trial",returnData=T)
 
 # join diversity indices and metadata
 all_alpha_ord <- all_alpha_ord[
@@ -412,7 +412,7 @@ summary(aovp(update(design,measure~.),all_alpha_ord,seqs=T))
 <!-- #============================================================================ -->
 
 ```{r}
-dds <- dds[rowSums(counts(dds, normalize=T))>5,]
+dds <- dds[rowSums(counts(dds, normalize = DNORM))>5,]
 ```
 <!-- #=============================================================================== -->
 #       Beta diversity PCA/NMDS
@@ -472,7 +472,7 @@ round(colSums(perVar)/sum(colSums(perVar))*100,3)
 
 ## ADONIS
 ```{r}
-vg <- vegdist(t(counts(dds,normalize=T)),method="bray")
+vg <- vegdist(t(counts(dds,normalize = DNORM)),method="bray")
 set.seed(sum(utf8ToInt("Hamish McLean")))
 adonis(update(design,vg~.),colData(dds),permutations = 1000)
 
@@ -592,7 +592,7 @@ keep <- c(which(duplicated(colData(dds)$field_pair,fromLast=T)),
 
 # plot alpha diversity - plot_alpha will convert normalised abundances to integer values
 bac_alpha_plot <- plot_alpha(
-  counts(dds,normalize = T), colData(dds),
+  counts(dds,normalize = DNORM), colData(dds),
   design = "cultivar", colour = "trial",
   measures = c("Chao1", "Shannon", "Simpson", "Observed"),
   type="box"
@@ -609,7 +609,7 @@ ggsave(
 ## Permutation based anova on diversity index ranks
 ```{r}
 # get the diversity index data
-all_alpha_ord <- plot_alpha(counts(dds,normalize=T),colData(dds),design="Status",returnData=T)
+all_alpha_ord <- plot_alpha(counts(dds,normalize = DNORM),colData(dds),design="Status",returnData=T)
 
 # join diversity indices and metadata
 all_alpha_ord <- all_alpha_ord[as.data.table(colData(dds),keep.rownames="Samples"),
@@ -643,7 +643,7 @@ summary(aovp(update(design,measure~.),all_alpha_ord,seqs=T))
 <!-- #============================================================================ -->
 
 ```{r}
-dds <- dds[rowSums(counts(dds, normalize=T))>5,]
+dds <- dds[rowSums(counts(dds, normalize = DNORM))>5,]
 ```
 <!-- #=============================================================================== -->
 #       Beta diversity PCA/NMDS
@@ -703,7 +703,7 @@ round(colSums(perVar)/sum(colSums(perVar))*100,3)
 
 ## ADONIS
 ```{r}
-vg <- vegdist(t(counts(dds,normalize=T)),method="bray")
+vg <- vegdist(t(counts(dds,normalize = DNORM)),method="bray")
 set.seed(sum(utf8ToInt("Hamish McLean")))
 adonis(update(design,vg~.),colData(dds),permutations = 1000)
 
