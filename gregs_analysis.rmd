@@ -119,25 +119,35 @@ abundance <- fread("mean_abundance.csv")
 # Add sample ID to abundance data
 abundance$ID <- paste0("HM", gsub("-", "", abundance$Sample))
 
-ubiome_BAC[["abundance"]] <- abundance[abundance$Target == "16S"]
-ubiome_FUN[["abundance"]] <- abundance[abundance$Target == "ITS"]
-
-names(ubiome_BAC)
-
-head(ubiome_BAC$countData)
+# Add bacterial (16S) and fungal (ITS) abundance to ubiome BAC and FUN named lists
+ubiome_BAC$abundance <- abundance[abundance$Target == "16S"]
+ubiome_FUN$abundance <- abundance[abundance$Target == "ITS"]
 
 #' Normalise count data
 #' Normalise count data using qPCR theoretical copy number data
+#' by multiplying the count data by the ratio of copy number:total OTUs
+#' using the formula adjustedOTUs = OTUcount * copyNumber / totalOTUs
 normaliseCountData <- function(data) {
-  totalOTUs <- apply(data$countData, 2, sum) 
-  totalOTUs <- as.data.frame(totalOTUs, col.names = c("ID", "TotalOTUs"))
+  # Calculate total OTUs per sample
+  totalOTUs <- apply(data$countData, 2, sum)
+  totalOTUs <- data.frame("ID" = names(totalOTUs), "TotalOTUs" = totalOTUs, row.names = NULL)
   
-  # adjustedTotalOTUs <- totalOTUs %>%
-  #   map(~ .x * data$abundance[data$abundance$ID == .x, "MeanAdjustedTCN"])
-  return(totalOTUs)
+  # Merge total OTUs with abundance data
+  data[["abundance"]] <- merge(data$abundance, totalOTUs, by = "ID")
+
+  # Calculate adjusted total OTUs
+  data[["abundance"]] <- data$abundance %>%
+    mutate(AdjustedTotalOTUs = MeanAdjustedTCN / TotalOTUs)
+
+  # Multiply count data by adjusted total OTUs for each sample
+  abundance = t(data.frame("AdjustedTotalOTUs" = data$abundance$AdjustedTotalOTUs, row.names = data$abundance$ID))
+  data$adjustedCountData<- data$countData %>%
+    mutate(across(everything(), ~ . * abundance[, cur_column()]))
+
+  return(data)
 }
 
-str(normaliseCountData(ubiome_BAC))
+normaliseCountData(ubiome_BAC)
 
 ```
 
