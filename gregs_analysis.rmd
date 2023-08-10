@@ -5,10 +5,10 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T)
-knitr::opts_chunk$set(message=F)
-knitr::opts_chunk$set(warning=F)
+knitr::opts_chunk$set(message = F)
+knitr::opts_chunk$set(warning = F)
 knitr::opts_chunk$set(comment = NA)
-knitr::opts_chunk$set(fig.width=9, fig.height=9)
+knitr::opts_chunk$set(fig.width = 9, fig.height = 9)
 knitr::opts_chunk$set(error = TRUE)
 ```
 
@@ -39,7 +39,9 @@ library(metafuncs)
 
 ```{r constants}
 TAXCONF = 0.6   # Sets the taxonomy confidence level to get "rank" in taxonomy files
-TOPOTU = 10    # Number of Top OTUs for summary information  
+TOPOTU = 10    # Number of Top OTUs for summary information
+
+DNORM = F # Boolean for DeSeq2 normalisation
 
 # Run constants
 Factor1 = "trial"
@@ -112,6 +114,15 @@ ubiome_BAC <- loadData("data/BAC.zotu_table.txt",metadata,"data/zBAC.sintax.taxa
 ubiome_FUN <- loadData("data/FUN.zotu_table.txt",metadata,"data/zFUN.sintax.taxa",RHB="FUN")
 ```
 
+<!-- #=============================================================================== -->
+#       Abundance normalisation
+<!-- #=============================================================================== -->
+
+OTU normalisation is performed using qPCR theoretical copy number data. 
+The OTU counts are multiplied by the ratio of copy number:total OTUs for each sample.
+The formula is: 
+$$adjustedOTUs = OTUcount \times \frac{copyNumber}{totalOTUs}$$
+
 ```{r abundance}
 
 abundance <- fread("mean_abundance.csv")
@@ -126,7 +137,10 @@ ubiome_FUN$abundance <- abundance[abundance$Target == "ITS"]
 #' Normalise count data
 #' Normalise count data using qPCR theoretical copy number data
 #' by multiplying the count data by the ratio of copy number:total OTUs
-#' using the formula adjustedOTUs = OTUcount * copyNumber / totalOTUs
+#' using the formula adjustedOTUs = OTUcount * copyNumber / totalOTUs.
+#' `countData` is a matrix of OTU counts, `abundance` is a data frame of
+#' qPCR copy number data, `ID` is the column name of the sample ID in both dataframes.
+#' 'countData' is overwritten with the normalised data.
 normaliseCountData <- function(data) {
   # Calculate total OTUs per sample
   totalOTUs <- apply(data$countData, 2, sum)
@@ -139,15 +153,21 @@ normaliseCountData <- function(data) {
   data[["abundance"]] <- data$abundance %>%
     mutate(AdjustedTotalOTUs = MeanAdjustedTCN / TotalOTUs)
 
+  # Save raw count data
+  data$rawCountData <- data$countData
+
   # Multiply count data by adjusted total OTUs for each sample
   abundance = t(data.frame("AdjustedTotalOTUs" = data$abundance$AdjustedTotalOTUs, row.names = data$abundance$ID))
-  data$adjustedCountData<- data$countData %>%
+  data$countData<- data$rawCountData %>%
     mutate(across(everything(), ~ . * abundance[, cur_column()]))
 
   return(data)
 }
 
-normaliseCountData(ubiome_BAC)
+ubiome_BAC <- normaliseCountData(ubiome_BAC)
+ubiome_FUN <- normaliseCountData(ubiome_FUN)
+
+identical(ubiome_FUN$rawCountData, ubiome_BAC$countData)
 
 ```
 
@@ -240,7 +260,7 @@ cat(
 )
 #colSums(countData)
 
-nct <- counts(dds,normalize=T)
+nct <- counts(dds,normalize = DNORM)
 cat("Normalised reads","\n\n",
   "Total normalised reads:\t\t", sum(nct),"\n",
   "Mean normalised reads per sample:\t", mean(colSums(nct)),"\n",
