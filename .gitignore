@@ -2,5 +2,6 @@ data/
 Metabarcoding_pipeline/
 my_analysis_files/
 lauren_analysis/
+my_analysis_files/
 .RData
 .Rhistory
