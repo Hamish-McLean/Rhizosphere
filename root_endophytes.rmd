@@ -54,7 +54,7 @@ HEIGHT =     9
 # Model design
 Factor1 = "trial"
 Factor2 = "cultivar"
-design = y ~ trial + planting_date * cultivar
+DESIGN = y ~ trial + planting_season + cultivar
 ```
 
 ```{r functions}
@@ -80,6 +80,22 @@ metadata <- "sample_metadata.txt"
 
 ubiome_BAC <- loadData("data/BAC.zotu_table.txt",metadata,"data/zBAC.sintax.taxa",RHB="BAC")
 ubiome_FUN <- loadData("data/FUN.zotu_table.txt",metadata,"data/zFUN.sintax.taxa",RHB="FUN")
+
+# Correct for planting date month variability
+ubiome_BAC$colData <- ubiome_BAC$colData %>%
+  mutate(
+    planting_season = case_when(
+      planting_date %in% c("march", "april") ~ "spring",
+      planting_date %in% c("dec") ~ "winter"
+    )
+  )
+ubiome_FUN$colData <- ubiome_FUN$colData %>%
+  mutate(
+    planting_season = case_when(
+      planting_date %in% c("march", "april") ~ "spring",
+      planting_date %in% c("dec") ~ "winter"
+    )
+  )
 ```
 
 # Filter samples and OTUs
@@ -90,10 +106,10 @@ ubiome_FUN <- loadData("data/FUN.zotu_table.txt",metadata,"data/zFUN.sintax.taxa
 # Filter Plant, Chloroplast, and Eukaryote OTUs
 
 # Fungi: Plantae OTUs
-print("Fungi:", length(grep("Plantae", ubiome_FUN$taxData$kingdom)), "Plantae OTUs\n")
+cat("Fungi:", length(grep("Plantae", ubiome_FUN$taxData$kingdom)), "Plantae OTUs\n")
 
 # Bacteria: Chloroplast (Streptophyta) and Eukaryote OTUs
-print(
+cat(
   "Bacteria:", length(grep("Streptophyta", ubiome_BAC$taxData$genus)), "Chloroplast OTUs;", 
   length(grep("Eukaryota", ubiome_BAC$taxData$kingdom)), "Eukaryote OTUs\n"
 )
@@ -108,7 +124,7 @@ filt <- rownames(
 
 filt <- c(filt, rownames(ubiome_BAC$taxData[grep("Eukaryota", ubiome_BAC$taxData$kingdom), ]))
 
-print("Bacteria: removing", length(filt), "OTUs")
+cat("Bacteria: removing", length(filt), "OTUs")
 
 ubiome_BAC$taxData <- ubiome_BAC$taxData[!rownames(ubiome_BAC$taxData) %in% filt, ]
 ubiome_BAC$countData <- ubiome_BAC$countData[!rownames(ubiome_BAC$countData) %in% filt, ]
@@ -122,9 +138,11 @@ Remove samples with read count below `r READFILTER * 100` % of median.
 
 ```{r filter_samples}
 invisible(mapply(assign, names(ubiome_BAC), ubiome_BAC, MoreArgs = list(envir = globalenv())))
-rare_bac <- gfunc(as.data.frame(counts(dds)), as.data.frame(colData(dds)), "Bacteria ZOTU")
+rare_bac <- gfunc(countData, colData, "Bacteria")
+# rare_bac <- gfunc(as.data.frame(counts(dds)), as.data.frame(colData(dds)), "Bacteria ZOTU")
 invisible(mapply(assign, names(ubiome_FUN), ubiome_FUN, MoreArgs = list(envir = globalenv())))
-rare_fun <- gfunc(as.data.frame(counts(dds)), as.data.frame(colData(dds)), "Fungi ZOTU")
+rare_fun <- gfunc(countData, colData, "Fungi")
+# rare_fun <- gfunc(as.data.frame(counts(dds)), as.data.frame(colData(dds)), "Fungi ZOTU")
 
 rarefaction_plots <- grid.arrange(
   rare_bac, rare_fun,
@@ -132,21 +150,19 @@ rarefaction_plots <- grid.arrange(
   bottom = "ZOTU count", nrow = 2
 )
 
-ggsave(filename = "rarefaction_plots.png", plot = rarefaction_plots, path = "figures/")
+# ggsave(filename = "rarefaction_plots.png", plot = rarefaction_plots, path = "figures/")
 
-rarefaction_plots
+# rarefaction_plots
 
 # Fungi
-
 med <- median(colSums(ubiome_FUN$countData))
 filt <- !colSums(ubiome_FUN$countData) > med * READFILTER
-print("Fungi: ",sum(filt),"sample(s) removed\n")
+cat("Fungi: ",sum(filt),"sample(s) removed\n")
 
 # Bacteria
-
 med <- median(colSums(ubiome_BAC$countData))
 filt <- !colSums(ubiome_BAC$countData) > med * READFILTER
-print("Bacteria: ",sum(filt),"sample(s) removed\n")
+cat("Bacteria: ",sum(filt),"sample(s) removed\n")
 ```
 
 ## Filter reads
@@ -154,14 +170,14 @@ print("Bacteria: ",sum(filt),"sample(s) removed\n")
 Remove OTUs with read count below `r OTUFILTER * 100` % of total reads.
 
 ```{r filter_reads}
-# fungi
+# Fungi
 keep <- filter_otus(ubiome_FUN$countData, OTUFILTER)
 cat("Fungi: removing", nrow(ubiome_FUN$countData) - length(keep), "OTUs\n")
 
-ubiome_FUN$taxData <- ubiome_FUN$taxData[rownames(ubiome_FUN$taxData)%in%keep,]
-ubiome_FUN$countData <- ubiome_FUN$countData[rownames(ubiome_FUN$countData)%in%keep,]
+ubiome_FUN$taxData <- ubiome_FUN$taxData[rownames(ubiome_FUN$taxData) %in% keep,]
+ubiome_FUN$countData <- ubiome_FUN$countData[rownames(ubiome_FUN$countData) %in% keep,]
 
-# bacteria
+# Bacteria
 keep <-  filter_otus(ubiome_BAC$countData, OTUFILTER)
 cat("Bacteria: removing", nrow(ubiome_BAC$countData) - length(keep), "OTUs")
 
@@ -169,120 +185,98 @@ ubiome_BAC$taxData <- ubiome_BAC$taxData[rownames(ubiome_BAC$taxData) %in% keep,
 ubiome_BAC$countData <- ubiome_BAC$countData[rownames(ubiome_BAC$countData) %in% keep,]
 ```
 
-# Create DESeq objects
+# Absolute abundance normalisation
+
+OTU normalisation is performed using qPCR theoretical copy number data. 
+
+## Prepare qPCR abundance data
+
+```{r abundance}
+abundance <- fread("mean_abundance.csv")
+
+# Add sample ID to abundance data
+abundance$id <- paste0("HM", gsub("-", "", abundance$Sample))
+# abundance$id <- abundance$Sample
+abundance$copy_number <- abundance$MeanAdjustedTCN
+
+# Add bacterial (16S) and fungal (ITS) abundance to ubiome BAC and FUN named lists
+ubiome_FUN$abundance <- abundance[abundance$Target == "ITS"] %>%
+  column_to_rownames(var = "id")
+ubiome_BAC$abundance <- abundance[abundance$Target == "16S"] %>%
+  column_to_rownames(var = "id")
+
+# Merge copy number from abundance with colData
+ubiome_FUN$colData <- merge(
+  ubiome_FUN$colData, 
+  ubiome_FUN$abundance[, c("Target", "copy_number")], 
+  by = 0
+) %>% column_to_rownames(var = "Row.names")
+ubiome_BAC$colData <- merge(
+  ubiome_BAC$colData, 
+  ubiome_BAC$abundance[, c("Target", "copy_number")], 
+  by = 0
+) %>% column_to_rownames(var = "Row.names")
+```
+
+## Create DESeq objects
 
 ```{r DESeq}
 # Make sure countData and colData still match
+# ubiome_FUN$colData <- ubiome_FUN$colData[colnames(ubiome_FUN$countData),]
+# ubiome_BAC$colData <- ubiome_BAC$colData[colnames(ubiome_BAC$countData),]
+identical(colnames(ubiome_FUN$countData), rownames(ubiome_FUN$colData))
+identical(colnames(ubiome_BAC$countData), rownames(ubiome_BAC$colData))
 
-ubiome_BAC$colData <- ubiome_BAC$colData[colnames(ubiome_BAC$countData),]
-ubiome_FUN$colData <- ubiome_FUN$colData[colnames(ubiome_FUN$countData),]
-
+# Create DESeq objects
 ubiome_FUN$dds <- ubiom_to_des(ubiome_FUN)
 ubiome_BAC$dds <- ubiom_to_des(ubiome_BAC)
 ```
 
-<!-- #=============================================================================== -->
-#       Abundance normalisation
-<!-- #=============================================================================== -->
+# Abundance normalisation
 
 Absolute abundance normalisation using DESeq2 size factors.
 
-Values are centred around the 
+Values are centred around the mean of the copy number.
 
 ```{r}
 # Normalise count data using DESeq2 size factors
 
-ubiome_FUN$dds$sizeFactor <- ubiome_FUN$dds$Copy_number / mean(ubiome_FUN$dds$Copy_number)
-ubiome_BAC$dds$sizeFactor <- ubiome_BAC$dds$Copy_number / mean(ubiome_BAC$dds$Copy_number,na.rm=T)
-
-```
-
-OTU normalisation is performed using qPCR theoretical copy number data. 
-The OTU counts are multiplied by the ratio of copy number:total OTUs for each sample.
-The formula is: 
-$$adjustedOTUs = OTUcount \times \frac{copyNumber}{totalOTUs}$$
-
-```{r abundance}
-
-abundance <- fread("mean_abundance.csv")
-
-# Add sample ID to abundance data
-abundance$ID <- paste0("HM", gsub("-", "", abundance$Sample))
-
-# Add bacterial (16S) and fungal (ITS) abundance to ubiome BAC and FUN named lists
-ubiome_BAC$abundance <- abundance[abundance$Target == "16S"]
-ubiome_FUN$abundance <- abundance[abundance$Target == "ITS"]
-
-#' Normalise count data
-#' Normalise count data using qPCR theoretical copy number data
-#' by multiplying the count data by the ratio of copy number:total OTUs
-#' using the formula adjustedOTUs = OTUcount * copyNumber / totalOTUs.
-#' `countData` is a matrix of OTU counts, `abundance` is a data frame of
-#' qPCR copy number data, `ID` is the column name of the sample ID in both dataframes.
-#' 'countData' is overwritten with the normalised data.
-normaliseCountData <- function(data) {
-  # Calculate total OTUs per sample
-  totalOTUs <- apply(data$countData, 2, sum)
-  totalOTUs <- data.frame("ID" = names(totalOTUs), "TotalOTUs" = totalOTUs, row.names = NULL)
-  
-  # Merge total OTUs with abundance data
-  data[["abundance"]] <- merge(data$abundance, totalOTUs, by = "ID")
-
-  # Calculate adjusted total OTUs
-  data[["abundance"]] <- data$abundance %>%
-    mutate(AdjustedTotalOTUs = MeanAdjustedTCN / TotalOTUs)
-
-  # Save raw count data
-  data$rawCountData <- data$countData
-
-  # Multiply count data by adjusted total OTUs for each sample
-  abundance = t(data.frame("AdjustedTotalOTUs" = data$abundance$AdjustedTotalOTUs, row.names = data$abundance$ID))
-  data$countData<- data$rawCountData %>%
-    mutate(across(everything(), ~ . * abundance[, cur_column()]))
-
-  return(data)
-}
-
-ubiome_BAC <- normaliseCountData(ubiome_BAC)
-ubiome_FUN <- normaliseCountData(ubiome_FUN)
-
-identical(ubiome_FUN$rawCountData, ubiome_BAC$countData)
+ubiome_FUN$dds$sizeFactor <- ubiome_FUN$dds$copy_number / mean(ubiome_FUN$dds$copy_number)
+ubiome_BAC$dds$sizeFactor <- ubiome_BAC$dds$copy_number / mean(ubiome_BAC$dds$copy_number)
 
 ```
 
 <!-- #=============================================================================== -->
-#      ***FUNGI***
+# **Fungi**
 <!-- #=============================================================================== -->
 
 ```{r}
-# Fungi
+# Unpack fungi data
 invisible(mapply(assign, names(ubiome_FUN), ubiome_FUN, MoreArgs = list(envir = globalenv())))
 ```
 
-<!-- #=============================================================================== -->
-##      OTU and sample summary
-<!-- #=============================================================================== -->
+## OTU and sample summary
 
 ### Read and sample summary
 
 ```{r read_summary}
-print(
-  "Raw reads","\n\n",
-  "Total raw reads:\t\t", sum(countData),"\n",
-  "Mean raw reads per sample:\t", mean(colSums(countData)),"\n",
-  "Median raw reads per sample:\t", median(colSums(countData)),"\n",
-  "Max raw reads per sample:\t", max(colSums(countData)),"\n",
-  "Min raw reads per sample:\t", min(colSums(countData)),"\n\n"
+cat(
+  "Raw reads", "\n\n",
+  "Total raw reads:\t\t", sum(countData), "\n",
+  "Mean raw reads per sample:\t", mean(colSums(countData)), "\n",
+  "Median raw reads per sample:\t", median(colSums(countData)), "\n",
+  "Max raw reads per sample:\t", max(colSums(countData)), "\n",
+  "Min raw reads per sample:\t", min(colSums(countData)), "\n\n"
 )
 #colSums(countData)
 
-nct <- counts(dds,normalize = DNORM)
-print("Normalised reads","\n\n",
-  "Total normalised reads:\t\t", sum(nct),"\n",
-  "Mean normalised reads per sample:\t", mean(colSums(nct)),"\n",
-  "Median normalised reads per sample:\t", median(colSums(nct)),"\n",
-  "Min normalised reads per sample:\t", min(colSums(nct)),"\n",
-  "Max normalised reads per sample:\t", max(colSums(nct)),"\n\n"
+nct <- counts(dds, normalize = T)
+cat("Normalised reads", "\n\n",
+  "Total normalised reads:\t\t", sum(nct), "\n",
+  "Mean normalised reads per sample:\t", mean(colSums(nct)), "\n",
+  "Median normalised reads per sample:\t", median(colSums(nct)), "\n",
+  "Min normalised reads per sample:\t", min(colSums(nct)), "\n",
+  "Max normalised reads per sample:\t", max(colSums(nct)), "\n\n"
 )
 #round(colSums(counts(dds,normalize = DNORM)),0)
 ```
@@ -317,9 +311,7 @@ data.frame(counts=y[1:TOPOTU],Prop=xy[1:TOPOTU],rank=taxData[names(y)[1:TOPOTU],
 
 ```
 
-<!-- #=============================================================================== -->
-##          Taxonomy Summary
-<!-- #=============================================================================== -->
+## Taxonomy Summary
 
 ### Taxonomy identifiable
 
@@ -349,7 +341,7 @@ data.table(
 ```{r}
 
 tx <-taxData[rownames(dds),]
-  nc <- counts(dds,normalize = DNORM)
+nc <- counts(dds, normalize = DNORM)
 ac <- sum(nc)
 
 data.table(
@@ -361,26 +353,26 @@ data.table(
 
 ```
 
-<!-- #=============================================================================== -->
-#       Alpha diversity analysis
-<!-- #=============================================================================== -->
+# Alpha diversity analysis
 
 ## Alpha diversity plot
+
 ```{r fun_alpha_diversity}
 
 # plot alpha diversity - plot_alpha will convert normalised abundances to integer values
 
 fun_alpha_plot <- plot_alpha(
-  counts(dds, normalize = DNORM), colData(dds),
+  counts(dds, normalize = F), colData(dds),
   design = "cultivar", colour = "trial",
   measures = c("Chao1", "Shannon", "Simpson", "Observed"),
   type = "box"
 ) + scale_colour_manual(values = cbPalette) + 
   theme(axis.title.x = element_blank()) +
-  ggtitle("Fungal ZOTU α-diversity")
+  ggtitle("Fungal ZOTU α-diversity") +
+  facet_wrap(~planting_season)
 
 ggsave(
-  filename = "fun_alpha_diversity.png", plot = fun_alpha_plot, path = "figures/", 
+  filename = "fun_alpha.png", plot = fun_alpha_plot, path = "figures/", 
   height = 20, width = 40, units = "cm"
 )
 
@@ -388,9 +380,15 @@ fun_alpha_plot
 ```
 
 ## Permutation based anova on diversity index ranks
+
 ```{r}
 # get the diversity index data
-all_alpha_ord <- plot_alpha(counts(dds,normalize = DNORM),colData(dds),design="trial",returnData=T)
+all_alpha_ord <- plot_alpha(
+  counts(dds,normalize = F),
+  colData(dds),
+  design = "trial",
+  returnData = T
+)
 
 # join diversity indices and metadata
 all_alpha_ord <- all_alpha_ord[
@@ -398,100 +396,103 @@ all_alpha_ord <- all_alpha_ord[
   on = "Samples"
 ]
 
-all_alpha_ord[, trial.block := as.factor(paste0(trial, block))]
-design <- x ~ trial * planting_date * cultivar + trial / trial.block
+# all_alpha_ord[, trial.block := as.factor(paste0(trial, block))]
+design <- DESIGN # x ~ trial * planting_date * cultivar + trial / trial.block
 ```
 
 ### Chao1
+
 ```{r}
 setkey(all_alpha_ord, S.chao1)
 all_alpha_ord[, measure := as.numeric(as.factor(S.chao1))]
-summary(aovp(update(design,measure~.),all_alpha_ord,seqs=T))
+summary(aovp(update(design, measure~.), all_alpha_ord, seqs = T))
 ```
 
 ### Shannon
+
 ```{r}
-setkey(all_alpha_ord,shannon)
-all_alpha_ord[,measure:=as.numeric(as.factor(shannon))]
-summary(aovp(update(design,measure~.),all_alpha_ord,seqs=T))
+setkey(all_alpha_ord, shannon)
+all_alpha_ord[, measure := as.numeric(as.factor(shannon))]
+summary(aovp(update(design, measure~.), all_alpha_ord, seqs = T))
 ```  
 
 ### Simpson
+
 ```{r}
-setkey(all_alpha_ord,simpson)
-all_alpha_ord[,measure:=as.numeric(as.factor(shannon))]
-summary(aovp(update(design,measure~.),all_alpha_ord,seqs=T))
+setkey(all_alpha_ord, simpson)
+all_alpha_ord[, measure := as.numeric(as.factor(shannon))]
+summary(aovp(update(design, measure~.), all_alpha_ord, seqs = T))
 ```
 
-<!-- #=============================================================================== -->
-#       Filter data
-<!-- #============================================================================ -->
+# Beta diversity PCA/NMDS
+
+## PCA
 
 ```{r}
-dds <- dds[rowSums(counts(dds, normalize = DNORM))>5,]
-```
-<!-- #=============================================================================== -->
-#       Beta diversity PCA/NMDS
-<!-- #=============================================================================== -->
 
-## PCA 
-```{r}
-### PCA ###
-
-# perform PC decomposition of DES object
+# Perform PC decomposition of DES object
 mypca <- des_to_pca(dds)
 
-# to get pca plot axis into the same scale create a dataframe of PC scores multiplied by their variance
-d <-t(data.frame(t(mypca$x)*mypca$percentVar))
+# To get pca plot axis into the same scale create a dataframe of PC scores multiplied by their variance
+d <- t(data.frame(t(mypca$x) * mypca$percentVar))
+
+design = DESIGN
 ```
 
 ### Percent variation in first 4 PCs 
+
 ```{r}
-round(mypca$percentVar[1:4],3)
+round(mypca$percentVar[1:4], 3)
 ```
 
 ### ANOVA of first 4 PCs
+
 ```{r} 
-apply(mypca$x[,1:4],2,function(x){
-  summary(aov(update(design,x~.),data=as.data.frame(cbind(x,colData(dds)))))
-})
+apply(
+  mypca$x[, 1:4], 2, 
+  function(x){
+    summary(aov(update(design, x~.), data = as.data.frame(cbind(x, colData(dds)))))
+  }
+)
 ```
 
 ### PCA plot
-```{r, fig.width=8,fig.height=5}
+```{r, fig.width = 8, fig.height = 5}
 
-pca_plot <- plotOrd(d,
-        colData(dds),
-        design=Factor2,
-        shape=Factor1,
-        axes=c(1,2),
-   #     facet="field_pair", 
-        cbPalette=T,
-        alpha=0.75,) #+ 
-  #geom_line(aes(group=facet),alpha=0.25,linetype=3,colour="#000000") + 
-  #theme(text = element_text(size=14))
+pca_plot <- plotOrd(
+  d,
+  colData(dds),
+  design = "cultivar",
+  shape = "trial",
+  axes = c(1, 2),
+  facet = "planting_season", 
+  cbPalette = T,
+  alpha = 0.75,
+) + facet_wrap(~facet) 
+#   geom_line(aes(group=facet),alpha=0.25,linetype=3,colour="#000000") + 
+#   theme(text = element_text(size=14))
 
 ggsave(filename = "fun_pca_plot.png", plot = pca_plot, path = "figures/")
 ```
 
 ### PCA sum of squares (% var)
+
 ```{r}
-sum_squares <- apply(mypca$x,2,function(x) 
-  summary(aov(update(design,x~.),data=cbind(x,colData(dds))))[[1]][2]
+sum_squares <- apply(mypca$x, 2 ,function(x) 
+  summary(aov(update(design, x~.), data = cbind(x, colData(dds))))[[1]][2]
 )
-sum_squares <- do.call(cbind,sum_squares)
-x<-t(apply(sum_squares,2,prop.table))
+sum_squares <- do.call(cbind, sum_squares)
+x <- t(apply(sum_squares, 2, prop.table))
 perVar <- x * mypca$percentVar
 #colSums(perVar)
-round(colSums(perVar)/sum(colSums(perVar))*100,3)
+round(colSums(perVar) / sum(colSums(perVar)) * 100, 3)
 ```
 
 ## ADONIS
 ```{r}
-vg <- vegdist(t(counts(dds,normalize = DNORM)),method="bray")
+vg <- vegdist(t(counts(dds, normalize = DNORM)), method = "bray")
 set.seed(sum(utf8ToInt("Hamish McLean")))
-adonis(update(design,vg~.),colData(dds),permutations = 1000)
-
+adonis(update(design, vg~.), colData(dds), permutations = 1000)
 ```
 
 ## NMDS ordination
