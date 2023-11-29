@@ -12,12 +12,11 @@ knitr::opts_chunk$set(fig.width = 9, fig.height = 9)
 knitr::opts_chunk$set(error = TRUE)
 ```
 
-<!-- #=============================================================================== -->
-#       Load libraries
-<!-- #=============================================================================== -->
+# Setup
+
+## Libraries
 
 ```{r libraries}
-## Load required libraries
 library(DESeq2)
 library(tidyverse)
 library(data.table)
@@ -31,12 +30,10 @@ library(iNEXT)
 
 # library(devtools)
 # install_github("eastmallingresearch/Metabarcoding_pipeline/scripts")
-# library(metafuncs)
+library(metafuncs)
 ```
 
-<!-- #=============================================================================== -->
-#       Functions and constants
-<!-- #=============================================================================== -->
+## Functions and constants
 
 ```{r constants}
 ALPHA =      .1    # DESeq2 alpha value
@@ -67,14 +64,12 @@ cbPalette <- c(
   "#F0E442", "#0072B2", "#D55E00", "#CC79A7"
 )
 
-source("functions/rarefaction.R")
+# source("functions/rarefaction.R")
 source("lauren_analysis/metabarcoding.R")
 source("lauren_analysis/loadme.R")
 ```
 
-<!-- #=============================================================================== -->
-#       Load data
-<!-- #=============================================================================== -->
+# Load data
 
 ```{r data}
 metadata <- "sample_metadata.txt"
@@ -87,9 +82,120 @@ ubiome_BAC <- loadData("data/BAC.zotu_table.txt",metadata,"data/zBAC.sintax.taxa
 ubiome_FUN <- loadData("data/FUN.zotu_table.txt",metadata,"data/zFUN.sintax.taxa",RHB="FUN")
 ```
 
+# Filter samples and OTUs
+
+## Filtering taxa
+
+```{r filter_taxa}
+# Filter Plant, Chloroplast, and Eukaryote OTUs
+
+# Fungi: Plantae OTUs
+print("Fungi:", length(grep("Plantae", ubiome_FUN$taxData$kingdom)), "Plantae OTUs\n")
+
+# Bacteria: Chloroplast (Streptophyta) and Eukaryote OTUs
+print(
+  "Bacteria:", length(grep("Streptophyta", ubiome_BAC$taxData$genus)), "Chloroplast OTUs;", 
+  length(grep("Eukaryota", ubiome_BAC$taxData$kingdom)), "Eukaryote OTUs\n"
+)
+
+# Filter Chloroplast and Eukaryote
+filt <- rownames(
+  ubiome_BAC$taxData[
+    grepl("Streptophyta", ubiome_BAC$taxData$genus) & 
+    as.numeric(ubiome_BAC$taxData$g_conf) >= TAXCONF,
+  ]
+)
+
+filt <- c(filt, rownames(ubiome_BAC$taxData[grep("Eukaryota", ubiome_BAC$taxData$kingdom), ]))
+
+print("Bacteria: removing", length(filt), "OTUs")
+
+ubiome_BAC$taxData <- ubiome_BAC$taxData[!rownames(ubiome_BAC$taxData) %in% filt, ]
+ubiome_BAC$countData <- ubiome_BAC$countData[!rownames(ubiome_BAC$countData) %in% filt, ]
+```
+
+## Filtering samples
+
+Plot rarefaction curves.
+
+Remove samples with read count below `r READFILTER * 100` % of median.
+
+```{r filter_samples}
+invisible(mapply(assign, names(ubiome_BAC), ubiome_BAC, MoreArgs = list(envir = globalenv())))
+rare_bac <- gfunc(as.data.frame(counts(dds)), as.data.frame(colData(dds)), "Bacteria ZOTU")
+invisible(mapply(assign, names(ubiome_FUN), ubiome_FUN, MoreArgs = list(envir = globalenv())))
+rare_fun <- gfunc(as.data.frame(counts(dds)), as.data.frame(colData(dds)), "Fungi ZOTU")
+
+rarefaction_plots <- grid.arrange(
+  rare_bac, rare_fun,
+  left = textGrob(label = expression("Log"[10] * " aligned sequenecs"), rot = 90),
+  bottom = "ZOTU count", nrow = 2
+)
+
+ggsave(filename = "rarefaction_plots.png", plot = rarefaction_plots, path = "figures/")
+
+rarefaction_plots
+
+# Fungi
+
+med <- median(colSums(ubiome_FUN$countData))
+filt <- !colSums(ubiome_FUN$countData) > med * READFILTER
+print("Fungi: ",sum(filt),"sample(s) removed\n")
+
+# Bacteria
+
+med <- median(colSums(ubiome_BAC$countData))
+filt <- !colSums(ubiome_BAC$countData) > med * READFILTER
+print("Bacteria: ",sum(filt),"sample(s) removed\n")
+```
+
+## Filter reads
+
+Remove OTUs with read count below `r OTUFILTER * 100` % of total reads.
+
+```{r filter_reads}
+# fungi
+keep <- filter_otus(ubiome_FUN$countData, OTUFILTER)
+cat("Fungi: removing", nrow(ubiome_FUN$countData) - length(keep), "OTUs\n")
+
+ubiome_FUN$taxData <- ubiome_FUN$taxData[rownames(ubiome_FUN$taxData)%in%keep,]
+ubiome_FUN$countData <- ubiome_FUN$countData[rownames(ubiome_FUN$countData)%in%keep,]
+
+# bacteria
+keep <-  filter_otus(ubiome_BAC$countData, OTUFILTER)
+cat("Bacteria: removing", nrow(ubiome_BAC$countData) - length(keep), "OTUs")
+
+ubiome_BAC$taxData <- ubiome_BAC$taxData[rownames(ubiome_BAC$taxData) %in% keep,]
+ubiome_BAC$countData <- ubiome_BAC$countData[rownames(ubiome_BAC$countData) %in% keep,]
+```
+
+# Create DESeq objects
+
+```{r DESeq}
+# Make sure countData and colData still match
+
+ubiome_BAC$colData <- ubiome_BAC$colData[colnames(ubiome_BAC$countData),]
+ubiome_FUN$colData <- ubiome_FUN$colData[colnames(ubiome_FUN$countData),]
+
+ubiome_FUN$dds <- ubiom_to_des(ubiome_FUN)
+ubiome_BAC$dds <- ubiom_to_des(ubiome_BAC)
+```
+
 <!-- #=============================================================================== -->
 #       Abundance normalisation
 <!-- #=============================================================================== -->
+
+Absolute abundance normalisation using DESeq2 size factors.
+
+Values are centred around the 
+
+```{r}
+# Normalise count data using DESeq2 size factors
+
+ubiome_FUN$dds$sizeFactor <- ubiome_FUN$dds$Copy_number / mean(ubiome_FUN$dds$Copy_number)
+ubiome_BAC$dds$sizeFactor <- ubiome_BAC$dds$Copy_number / mean(ubiome_BAC$dds$Copy_number,na.rm=T)
+
+```
 
 OTU normalisation is performed using qPCR theoretical copy number data. 
 The OTU counts are multiplied by the ratio of copy number:total OTUs for each sample.
@@ -145,69 +251,6 @@ identical(ubiome_FUN$rawCountData, ubiome_BAC$countData)
 ```
 
 <!-- #=============================================================================== -->
-#       Filter samples and OTUs
-<!-- #=============================================================================== -->
-
-```{r filter}
-# Filter Plant, Chloroplast, and Eukaryote OTUs
-
-# Fungi: Plantae OTUs
-cat("Fungi:", length(grep("Plantae", ubiome_FUN$taxData$kingdom)), "Plantae OTUs\n")
-
-# Bacteria: Chloroplast (Streptophyta) and Eukaryote OTUs
-cat(
-  "Bacteria:", length(grep("Streptophyta", ubiome_BAC$taxData$genus)), "Chloroplast OTUs;", 
-  length(grep("Eukaryota", ubiome_BAC$taxData$kingdom)), "Eukaryote OTUs\n"
-)
-
-# Filter Chloroplast and Eukaryote
-filt <- rownames(
-  ubiome_BAC$taxData[
-    grepl("Streptophyta", ubiome_BAC$taxData$genus) & 
-    as.numeric(ubiome_BAC$taxData$g_conf) >= TAXCONF,
-  ]
-)
-
-filt <- c(filt, rownames(ubiome_BAC$taxData[grep("Eukaryota", ubiome_BAC$taxData$kingdom), ]))
-
-cat("Bacteria: removing", length(filt), "OTUs")
-
-ubiome_BAC$taxData <- ubiome_BAC$taxData[!rownames(ubiome_BAC$taxData) %in% filt, ]
-ubiome_BAC$countData <- ubiome_BAC$countData[!rownames(ubiome_BAC$countData) %in% filt, ]
-```
-
-
-<!-- #=============================================================================== -->
-#       Create DEseq objects
-<!-- #=============================================================================== -->
-```{r DEseq}
-# filtered for minimum of 1000 reads
-ubiome_FUN$dds <- ubiom_to_des(ubiome_FUN, filter = expression(colSums(countData) >= 1000))
-ubiome_BAC$dds <- ubiom_to_des(ubiome_BAC, filter = expression(colSums(countData) >= 1000))
-```
-
-<!-- #=============================================================================== -->
-#       Sample rarefaction plots
-<!-- #=============================================================================== -->        
-
-```{r rarefaction}
-invisible(mapply(assign, names(ubiome_BAC), ubiome_BAC, MoreArgs = list(envir = globalenv())))
-rare_bac <- gfunc(as.data.frame(counts(dds)), as.data.frame(colData(dds)), "Bacteria ZOTU")
-invisible(mapply(assign, names(ubiome_FUN), ubiome_FUN, MoreArgs = list(envir = globalenv())))
-rare_fun <- gfunc(as.data.frame(counts(dds)), as.data.frame(colData(dds)), "Fungi ZOTU")
-
-rarefaction_plots <- grid.arrange(
-  rare_bac, rare_fun,
-  left = textGrob(label = expression("Log"[10] * " aligned sequenecs"), rot = 90),
-  bottom = "ZOTU count", nrow = 2
-)
-
-ggsave(filename = "rarefaction_plots.png", plot = rarefaction_plots, path = "figures/")
-
-rarefaction_plots
-```
-
-<!-- #=============================================================================== -->
 #      ***FUNGI***
 <!-- #=============================================================================== -->
 
@@ -223,7 +266,7 @@ invisible(mapply(assign, names(ubiome_FUN), ubiome_FUN, MoreArgs = list(envir = 
 ### Read and sample summary
 
 ```{r read_summary}
-cat(
+print(
   "Raw reads","\n\n",
   "Total raw reads:\t\t", sum(countData),"\n",
   "Mean raw reads per sample:\t", mean(colSums(countData)),"\n",
@@ -234,7 +277,7 @@ cat(
 #colSums(countData)
 
 nct <- counts(dds,normalize = DNORM)
-cat("Normalised reads","\n\n",
+print("Normalised reads","\n\n",
   "Total normalised reads:\t\t", sum(nct),"\n",
   "Mean normalised reads per sample:\t", mean(colSums(nct)),"\n",
   "Median normalised reads per sample:\t", median(colSums(nct)),"\n",
