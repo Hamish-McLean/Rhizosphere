@@ -307,8 +307,7 @@ y <- y[order(y,decreasing = T)]
 xy <- y/sum(y)
 
 cat("Top " ,TOPOTU, "OTUs:\n")
-data.frame(counts=y[1:TOPOTU],Prop=xy[1:TOPOTU],rank=taxData[names(y)[1:TOPOTU],]$rank)
-
+data.frame(counts = y[1:TOPOTU], proportion = xy[1:TOPOTU], rank = taxData[names(y)[1:TOPOTU],]$rank)
 ```
 
 ## Taxonomy Summary
@@ -325,15 +324,14 @@ tx <- copy(taxData)
 setDT(tx)
 cols <- names(tx)[9:15]
 
-tx[,(cols):=lapply(.SD,as.factor),.SDcols=cols]
+tx[, (cols) := lapply(.SD, as.factor), .SDcols = cols]
 
 data.table(
-  rank=c("kingdom","phylum","class","order","family","genus","species"),
-  "0.8"=round(unlist(lapply(cols,function(col) sum(as.number(tx[[col]])>=0.8)/nrow(tx))),2),
-  "0.65"=round(unlist(lapply(cols,function(col) sum(as.number(tx[[col]])>=0.65)/nrow(tx))),2),
-  "0.5"=round(unlist(lapply(cols,function(col) sum(as.number(tx[[col]])>=0.5)/nrow(tx))),2)
+  rank = c("kingdom", "phylum", "class", "order", "family", "genus", "species"),
+  "0.8" = round(unlist(lapply(cols, function(col) sum(as.number(tx[[col]]) >= 0.8) / nrow(tx))), 2),
+  "0.65" = round(unlist(lapply(cols, function(col) sum(as.number(tx[[col]]) >= 0.65) / nrow(tx))), 2),
+  "0.5" = round(unlist(lapply(cols, function(col) sum(as.number(tx[[col]]) >= 0.5) / nrow(tx))), 2)
 )
-
 ```
 
 % of reads which can be assigned to each taxonomic ranks
@@ -345,10 +343,10 @@ nc <- counts(dds, normalize = DNORM)
 ac <- sum(nc)
 
 data.table(
-  rank=c("kingdom","phylum","class","order","family","genus","species"),
-  "0.8"=round(unlist(lapply(cols ,function(col)(sum(nc[which(as.numeric(tx[[col]])>=0.8),])/ac *100))),2),
-  "0.65"=round(unlist(lapply(cols,function(col)(sum(nc[which(as.numeric(tx[[col]])>=0.65),])/ac *100))),2),
-  "0.5"=round(unlist(lapply(cols,function(col)(sum(nc[which(as.numeric(tx[[col]])>=0.5),])/ac *100))),2)
+  rank = c("kingdom", "phylum", "class", "order", "family", "genus", "species"),
+  "0.8" = round(unlist(lapply(cols, function(col)(sum(nc[which(as.numeric(tx[[col]]) >= 0.8),]) / ac * 100))), 2),
+  "0.65" = round(unlist(lapply(cols, function(col)(sum(nc[which(as.numeric(tx[[col]]) >= 0.65),]) / ac * 100))), 2),
+  "0.5" = round(unlist(lapply(cols, function(col)(sum(nc[which(as.numeric(tx[[col]]) >= 0.5),]) / ac * 100))), 2)
 )
 
 ```
@@ -368,8 +366,8 @@ fun_alpha_plot <- plot_alpha(
   type = "box"
 ) + scale_colour_manual(values = cbPalette) + 
   theme(axis.title.x = element_blank()) +
-  ggtitle("Fungal ZOTU α-diversity") +
-  facet_wrap(~planting_season)
+  ggtitle("Fungal α-diversity")
+  # facet_wrap(~planting_season)
 
 ggsave(
   filename = "fun_alpha.png", plot = fun_alpha_plot, path = "figures/", 
@@ -384,7 +382,7 @@ fun_alpha_plot
 ```{r}
 # get the diversity index data
 all_alpha_ord <- plot_alpha(
-  counts(dds,normalize = F),
+  counts(dds, normalize = F),
   colData(dds),
   design = "trial",
   returnData = T
@@ -414,13 +412,13 @@ summary(aovp(update(design, measure~.), all_alpha_ord, seqs = T))
 setkey(all_alpha_ord, shannon)
 all_alpha_ord[, measure := as.numeric(as.factor(shannon))]
 summary(aovp(update(design, measure~.), all_alpha_ord, seqs = T))
-```  
+```
 
 ### Simpson
 
 ```{r}
 setkey(all_alpha_ord, simpson)
-all_alpha_ord[, measure := as.numeric(as.factor(shannon))]
+all_alpha_ord[, measure := as.numeric(as.factor(simpson))]
 summary(aovp(update(design, measure~.), all_alpha_ord, seqs = T))
 ```
 
@@ -457,6 +455,7 @@ apply(
 ```
 
 ### PCA plot
+
 ```{r, fig.width = 8, fig.height = 5}
 
 pca_plot <- plotOrd(
@@ -473,6 +472,8 @@ pca_plot <- plotOrd(
 #   theme(text = element_text(size=14))
 
 ggsave(filename = "fun_pca_plot.png", plot = pca_plot, path = "figures/")
+
+pca_plot
 ```
 
 ### PCA sum of squares (% var)
@@ -489,13 +490,15 @@ round(colSums(perVar) / sum(colSums(perVar)) * 100, 3)
 ```
 
 ## ADONIS
+
 ```{r}
 vg <- vegdist(t(counts(dds, normalize = DNORM)), method = "bray")
 set.seed(sum(utf8ToInt("Hamish McLean")))
-adonis(update(design, vg~.), colData(dds), permutations = 1000)
+adonis2(update(design, vg ~ .), colData(dds), permutations = 1000)
 ```
 
 ## NMDS ordination
+
 ```{r}
 set.seed(sum(utf8ToInt("Hamish McLean")))
 ord <- metaMDS(vg,trace=0) 
@@ -503,33 +506,57 @@ ord <- metaMDS(vg,trace=0)
 
 nmds <- scores(ord)
 
-g <- plotOrd(nmds,colData(dds),design=Factor2,shape=Factor1,alpha=0.75,cbPalette=T)
-g + theme(text=element_text(size=14))
+nmds_plot <- plotOrd(
+  nmds, colData(dds), design = Factor2, 
+  shape = Factor1, alpha = 0.75, cbPalette = T
+) + theme(text = element_text(size = 14))
 
-ggsave(filename = "fun_nmds_plot.png", plot = g, path = "figures/")
+ggsave(filename = "fun_nmds_plot.png", plot = nmds_plot, path = "figures/")
+
+nmds_plot
 ```
 
 ### NMDS with phylum or class arrows 
-```{r} 
-otus <- scores(ord,"species") 
 
-taxmerge <-data.table(inner_join(data.table(OTU=rownames(otus),as.data.frame(otus)),data.table(OTU=rownames(taxData),taxData))) 
-taxmerge$phy <- taxaConfVec(taxmerge[,c(-1:-3,-8)],conf=0.9,level=which(colnames(taxmerge[,c(-1:-3,-8)])=="phylum"))
-taxmerge$cls <- taxaConfVec(taxmerge[,c(-1:-3,-8)],conf=0.9,level=which(colnames(taxmerge[,c(-1:-3,-8)])=="class")) 
+```{r} 
+otus <- scores(ord, "species") 
+
+taxmerge <- data.table(
+  inner_join(
+    data.table(OTU = rownames(otus), as.data.frame(otus)),
+    data.table(OTU = rownames(taxData), taxData))
+) 
+taxmerge$phy <- taxaConfVec(
+  taxmerge[, c(-1:-3, -8)], conf = 0.9,
+  level = which(colnames(taxmerge[, c(-1:-3, -8)]) == "phylum")
+)
+taxmerge$cls <- taxaConfVec(
+  taxmerge[, c(-1:-3, -8)], conf = 0.9,
+  level = which(colnames(taxmerge[, c(-1:-3, -8)]) == "class")
+) 
 
 phy <- taxmerge[,lapply(.SD,mean),by=phy,.SDcols=c("NMDS1","NMDS2")]
 cls <- taxmerge[,lapply(.SD,mean),by=cls,.SDcols=c("NMDS1","NMDS2")]
 
-g + geom_segment(inherit.aes = F,data=phy,aes(xend=NMDS1,yend=NMDS2,x=0,y=0),size=1.5,arrow=arrow()) + 
- geom_text(inherit.aes = F,data=phy,aes(x=NMDS1,y=(NMDS2+sign(NMDS2)*0.05),label=phy)) 
-``` 
+nmds_plot + geom_segment(
+  inherit.aes = F, data = phy, 
+  aes(xend = NMDS1, yend = NMDS2, x = 0, y = 0), 
+  size = 1.5, arrow = arrow()
+) + 
+  geom_text(
+    inherit.aes = F, data = phy, 
+    aes(x = NMDS1, y = (NMDS2 + sign(NMDS2) * 0.05), label = phy)
+  )
 
+ggsave(filename = "fun_nmds_phy.png", plot = nmds_plot, path = "figures/")
 
-<!-- #=============================================================================== -->
-#       differential analysis
-<!-- #=============================================================================== -->
+fun_nmds_plot
+```
 
-## DESeq design 
+## Differential analysis
+
+### DESeq design
+
 ```{r}
 
 # p value for FDR cutoff
@@ -546,11 +573,12 @@ res <- results(dds,alpha=alpha,contrast=c("Status","Diseased","Healthy"))
 
 ```
 
-## Result summary
+### Result summary
 
 Rank is lowest taxonomic rank with >=0.65 confidence
 
-### All samples
+#### All samples
+
 ```{r}
 summary(res)
 
@@ -566,167 +594,257 @@ res.merge[padj<=alpha,.(OTU,rank,
 
 ```
 
-<!-- ### Write results -->
-<!-- ```{r} -->
+# <!-- ### Write results -->
+# <!-- ```{r} -->
 
-<!-- fwrite(res.merge,paste(RHB,"_DES.txt"),quote=F,na="",sep="\t") -->
-<!-- fwrite(res2.merge,paste(RHB,"_DES_Paired.txt"),quote=F,na="",sep="\t") -->
+# <!-- fwrite(res.merge,paste(RHB,"_DES.txt"),quote=F,na="",sep="\t") -->
+# <!-- fwrite(res2.merge,paste(RHB,"_DES_Paired.txt"),quote=F,na="",sep="\t") -->
 
-<!-- ``` -->
-
-
-#      ***BACTERIA***
-
+# <!-- ``` -->
 
 <!-- #=============================================================================== -->
+# **Bacteria**
+<!-- #=============================================================================== -->
+
 ```{r}
-# Bacteria
-invisible(mapply(assign, names(ubiome_BAC), ubiome_BAC, MoreArgs=list(envir = globalenv())))
-
-# add nested pair column
-dds$field_pair <- as.factor(paste(dds$Field,dds$Pair,sep="_"))
-colData$field_pair <- as.factor(paste(colData$Field,colData$Pair,sep="_"))
-
-## collapse replicates
-dds <- collapseReplicates(dds,groupby = paste0(dds$Status,dds$field_pair))
-sizeFactors(dds) <- sizeFactors(estimateSizeFactors(dds))
-
-## remove chloroplasts/mitochondria
-dds <- dds[!rownames(dds)%in%c(rownames(taxData[taxData$rank=="Streptophyta(g)",]),"OTU3")]
-
-## filter
-keep <- c(which(duplicated(colData(dds)$field_pair,fromLast=T)),
-          which(duplicated(colData(dds)$field_pair,fromLast=F)))
-
+# Unpack bacteria data
+invisible(mapply(assign, names(ubiome_BAC), ubiome_BAC, MoreArgs = list(envir = globalenv())))
 ```
 
-<!-- #=============================================================================== -->
-#       Alpha diversity analysis
-<!-- #=============================================================================== -->
+## OTU and sample summary
 
-## Alpha diversity plot
+### Read and sample summary
+
+```{r}
+cat(
+  "Raw reads", "\n\n",
+  "Total raw reads:\t\t", sum(countData), "\n",
+  "Mean raw reads per sample:\t", mean(colSums(countData)), "\n",
+  "Median raw reads per sample:\t", median(colSums(countData)), "\n",
+  "Max raw reads per sample:\t", max(colSums(countData)), "\n",
+  "Min raw reads per sample:\t", min(colSums(countData)), "\n\n"
+)
+#colSums(countData)
+
+nct <- counts(dds, normalize = T)
+cat("Normalised reads", "\n\n",
+  "Total normalised reads:\t\t", sum(nct), "\n",
+  "Mean normalised reads per sample:\t", mean(colSums(nct)), "\n",
+  "Median normalised reads per sample:\t", median(colSums(nct)), "\n",
+  "Min normalised reads per sample:\t", min(colSums(nct)), "\n",
+  "Max normalised reads per sample:\t", max(colSums(nct)), "\n\n"
+)
+#round(colSums(counts(dds,normalize = DNORM)),0)
+```
+
+### OTU summary 
+
+```{r}
+cat(
+  "Total OTUs:\t\t", nrow(taxData),"\n\n",
+  "Raw reads per OTU summary", "\n\n",
+  "Mean raw reads per OTU:\t", mean(rowSums(countData)),"\n",
+  "Median raw per OTU:\t\t", median(rowSums(countData)),"\n",
+  "OTU raw Min reads:\t\t", min(rowSums(countData)),"\n",
+  "OTU raw Max reads:\t\t", max(rowSums(countData)),"\n\n"
+)
+
+cat(
+  "Normalised reads per OTU summary","\n\n",
+  "Mean normalised reads per OTU:\t\t", mean(rowSums(nct)),"\n",
+  "Median normalised reads per OTU:\t", median(rowSums(nct)),"\n",
+  "OTU normalised Min reads:\t\t", min(rowSums(nct)),"\n",
+  "OTU normalised Max reads:\t\t", max(rowSums(nct)),"\n\n"
+)
+
+y <- rowSums(nct)
+y <- y[order(y, decreasing = T)]
+# proportion
+xy <- y/sum(y)
+
+cat("Top ", TOPOTU, "OTUs:\n")
+data.frame(counts = y[1:TOPOTU], proportion = xy[1:TOPOTU], rank = taxData[names(y)[1:TOPOTU],]$rank)
+```
+
+## Taxonomy Summary
+
+### Taxonomy identifiable
+
+Proportion of OTUs which can be assigned (with the given confidence) at each taxonomic rank
+
 ```{r}
 
-# plot alpha diversity - plot_alpha will convert normalised abundances to integer values
-bac_alpha_plot <- plot_alpha(
-  counts(dds,normalize = DNORM), colData(dds),
-  design = "cultivar", colour = "trial",
-  measures = c("Chao1", "Shannon", "Simpson", "Observed"),
-  type="box"
-) + scale_colour_manual(values = cbPalette) + 
-  theme(axis.title.x =  element_blank()) + 
-  ggtitle("Bacterial ZOTU α-diversity")
+# Proportion of OTUs which can be assigned (with the given confidence) at each taxonomic rank
 
-ggsave(
-  filename = "bac_alpha_diversity.png", plot = bac_alpha_plot, path = "figures/", 
-  height = 20, width = 40, units = "cm"
+tx <- copy(taxData)
+setDT(tx)
+cols <- names(tx)[9:15]
+
+tx[, (cols) := lapply(.SD, as.factor), .SDcols = cols]
+
+data.table(
+  rank = c("kingdom", "phylum", "class", "order", "family", "genus", "species"),
+  "0.8" = round(unlist(lapply(cols, function(col) sum(as.number(tx[[col]]) >= 0.8) / nrow(tx))), 2),
+  "0.65" = round(unlist(lapply(cols, function(col) sum(as.number(tx[[col]]) >= 0.65) / nrow(tx))), 2),
+  "0.5" = round(unlist(lapply(cols, function(col) sum(as.number(tx[[col]]) >= 0.5) / nrow(tx))), 2)
 )
 ```
 
+% of reads which can be assigned to each taxonomic ranks
+
+```{r}
+
+tx <-taxData[rownames(dds),]
+nc <- counts(dds, normalize = DNORM)
+ac <- sum(nc)
+
+data.table(
+  rank = c("kingdom", "phylum", "class", "order", "family", "genus", "species"),
+  "0.8" = round(unlist(lapply(cols, function(col)(sum(nc[which(as.numeric(tx[[col]]) >= 0.8),]) / ac * 100))), 2),
+  "0.65" = round(unlist(lapply(cols, function(col)(sum(nc[which(as.numeric(tx[[col]]) >= 0.65),]) / ac * 100))), 2),
+  "0.5" = round(unlist(lapply(cols, function(col)(sum(nc[which(as.numeric(tx[[col]]) >= 0.5),]) / ac * 100))), 2)
+)
+
+```
+
+# Alpha diversity analysis
+
+## Alpha diversity plot
+
+```{r}
+
+# plot alpha diversity - plot_alpha will convert normalised abundances to integer values
+
+bac_alpha_plot <- plot_alpha(
+  counts(dds,normalize = F), colData(dds),
+  design = "cultivar", colour = "trial",
+  measures = c("Chao1", "Shannon", "Simpson", "Observed"),
+  type="box"
+) + 
+  scale_colour_manual(values = cbPalette) + 
+  theme(axis.title.x =  element_blank()) + 
+  ggtitle("Bacterial α-diversity") +
+  facet_wrap(~planting_season)
+
+ggsave(
+  filename = "bac_alpha.png", plot = bac_alpha_plot, path = "figures/", 
+  height = 20, width = 40, units = "cm"
+)
+
+bac_alpha_plot
+```
+
 ## Permutation based anova on diversity index ranks
+
 ```{r}
 # get the diversity index data
-all_alpha_ord <- plot_alpha(counts(dds,normalize = DNORM),colData(dds),design="Status",returnData=T)
+all_alpha_ord <- plot_alpha(
+  counts(dds, normalize = F), colData(dds), design = "trial", returnData = T
+)
 
 # join diversity indices and metadata
-all_alpha_ord <- all_alpha_ord[as.data.table(colData(dds),keep.rownames="Samples"),
-                               on="Samples"]
+all_alpha_ord <- all_alpha_ord[
+  as.data.table(colData(dds), keep.rownames = "Samples"), on = "Samples"
+]
 
+design <- DESIGN
 ```
 
 ### Chao1
+
 ```{r}
-setkey(all_alpha_ord,S.chao1)
-all_alpha_ord[,measure:=as.numeric(as.factor(S.chao1))]
-summary(aovp(update(design,measure~.),all_alpha_ord,seqs=T))
+setkey(all_alpha_ord, S.chao1)
+all_alpha_ord[, measure := as.numeric(as.factor(S.chao1))]
+summary(aovp(update(design, measure~.), all_alpha_ord, seqs = T))
 ```
 
 ### Shannon
+
 ```{r}
-setkey(all_alpha_ord,shannon)
-all_alpha_ord[,measure:=as.numeric(as.factor(shannon))]
-summary(aovp(update(design,measure~.),all_alpha_ord,seqs=T))
-```  
+setkey(all_alpha_ord, shannon)
+all_alpha_ord[, measure := as.numeric(as.factor(shannon))]
+summary(aovp(update(design, measure~.), all_alpha_ord, seqs = T))
+```
 
 ### Simpson
-```{r}
-setkey(all_alpha_ord,simpson)
-all_alpha_ord[,measure:=as.numeric(as.factor(shannon))]
-summary(aovp(update(design,measure~.),all_alpha_ord,seqs=T))
-```
-
-<!-- #=============================================================================== -->
-#       Filter data
-<!-- #============================================================================ -->
 
 ```{r}
-dds <- dds[rowSums(counts(dds, normalize = DNORM))>5,]
+setkey(all_alpha_ord, simpson)
+all_alpha_ord[, measure := as.numeric(as.factor(simpson))]
+summary(aovp(update(design, measure~.), all_alpha_ord, seqs = T))
 ```
-<!-- #=============================================================================== -->
-#       Beta diversity PCA/NMDS
-<!-- #=============================================================================== -->
+
+# Beta diversity PCA/NMDS
 
 ## PCA 
 ```{r}
-### PCA ###
 
 # perform PC decomposition of DES object
 mypca <- des_to_pca(dds)
 
 # to get pca plot axis into the same scale create a dataframe of PC scores multiplied by their variance
-d <-t(data.frame(t(mypca$x)*mypca$percentVar))
+d <- t(data.frame(t(mypca$x) * mypca$percentVar))
+
+design = DESIGN
 ```
 
 ### Percent variation in first 4 PCs 
 ```{r}
-round(mypca$percentVar[1:4],3)
+round(mypca$percentVar[1:4], 3)
 ```
 
 ### ANOVA of first 4 PCs
 ```{r} 
-apply(mypca$x[,1:4],2,function(x){
-  summary(aov(update(design,x~.),data=as.data.frame(cbind(x,colData(dds)))))
-})
+apply(
+  mypca$x[, 1:4], 2, 
+  function(x){
+    summary(aov(update(design, x~.), data = as.data.frame(cbind(x, colData(dds)))))
+  }
+)
 ```
 
 ### PCA plot
 ```{r, fig.width=8,fig.height=5}
 
-fun_pca_plot <- plotOrd(d,
-        colData(dds),
-        design=Factor2,
-        shape=Factor1,
-        axes=c(1,2),
-   #     facet="field_pair", 
-        cbPalette=T,
-        alpha=0.75,) #+ 
-  #geom_line(aes(group=facet),alpha=0.25,linetype=3,colour="#000000") + 
-  #theme(text = element_text(size=14))
+bac_pca_plot <- plotOrd(
+  d,
+  colData(dds),
+  design = "cultivar",
+  shape = "trial",
+  axes = c(1, 2),
+  facet = "planting_season", 
+  cbPalette = T,
+  alpha = 0.75,
+) #+ facet_wrap(~facet) 
 
-ggsave(filename = "bac_pca_plot.png", plot = fun_pca_plot, path = "figures/")
+ggsave(filename = "bac_pca_plot.png", plot = bac_pca_plot, path = "figures/")
+
+bac_pca_plot
 ```
 
 ### PCA sum of squares (% var)
+
 ```{r}
-sum_squares <- apply(mypca$x,2,function(x) 
-  summary(aov(update(design,x~.),data=cbind(x,colData(dds))))[[1]][2]
+sum_squares <- apply(mypca$x, 2 ,function(x) 
+  summary(aov(update(design, x~.), data = cbind(x, colData(dds))))[[1]][2]
 )
-sum_squares <- do.call(cbind,sum_squares)
-x<-t(apply(sum_squares,2,prop.table))
+sum_squares <- do.call(cbind, sum_squares)
+x <- t(apply(sum_squares, 2, prop.table))
 perVar <- x * mypca$percentVar
 #colSums(perVar)
-round(colSums(perVar)/sum(colSums(perVar))*100,3)
+round(colSums(perVar) / sum(colSums(perVar)) * 100, 3)
 ```
 
 ## ADONIS
-```{r}
-vg <- vegdist(t(counts(dds,normalize = DNORM)),method="bray")
-set.seed(sum(utf8ToInt("Hamish McLean")))
-adonis(update(design,vg~.),colData(dds),permutations = 1000)
 
+```{r}
+vg <- vegdist(t(counts(dds, normalize = DNORM)), method = "bray")
+set.seed(sum(utf8ToInt("Hamish McLean")))
+adonis2(update(design, vg ~ .), colData(dds), permutations = 1000)
 ```
 
 ## NMDS ordination
+
 ```{r}
 set.seed(sum(utf8ToInt("Hamish McLean")))
 ord <- metaMDS(vg,trace=0) 
@@ -734,13 +852,18 @@ ord <- metaMDS(vg,trace=0)
 
 nmds <- scores(ord)
 
-g <- plotOrd(nmds,colData(dds),design=Factor2,shape=Factor1,alpha=0.75,cbPalette=T)
-g + theme(text=element_text(size=14))
+bac_nmds_plot <- plotOrd(
+  nmds, colData(dds), design = Factor2, 
+  shape = Factor1, alpha = 0.75, cbPalette = T
+) + theme(text = element_text(size = 14))
 
-ggsave(filename = "bac_nmds_plot.png", plot = g, path = "figures/")
+ggsave(filename = "fun_nmds_plot.png", plot = bac_nmds_plot, path = "figures/")
+
+bac_nmds_plot
 ```
 
-### NMDS with phylum or class arrows 
+### NMDS with phylum or class arrows
+
 ```{r} 
 otus <- scores(ord,"species") 
 
@@ -751,8 +874,10 @@ taxmerge$cls <- taxaConfVec(taxmerge[,c(-1:-3,-8)],conf=0.9,level=which(colnames
 phy <- taxmerge[,lapply(.SD,mean),by=phy,.SDcols=c("NMDS1","NMDS2")]
 cls <- taxmerge[,lapply(.SD,mean),by=cls,.SDcols=c("NMDS1","NMDS2")]
 
-g + geom_segment(inherit.aes = F,data=phy,aes(xend=NMDS1,yend=NMDS2,x=0,y=0),size=1.5,arrow=arrow()) + 
- geom_text(inherit.aes = F,data=phy,aes(x=NMDS1,y=(NMDS2+sign(NMDS2)*0.05),label=phy)) 
+bac_nmds_plot + geom_segment(inherit.aes = F,data=phy,aes(xend=NMDS1,yend=NMDS2,x=0,y=0),size=1.5,arrow=arrow()) + 
+  geom_text(inherit.aes = F,data=phy,aes(x=NMDS1,y=(NMDS2+sign(NMDS2)*0.05),label=phy))
+
+ggsave(filename = "fun_nmds_phy.png", plot = bac_nmds_plot, path = "figures/")
 ``` 
 
 
