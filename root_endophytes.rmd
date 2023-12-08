@@ -65,8 +65,8 @@ cbPalette <- c(
 )
 
 # source("functions/rarefaction.R")
-source("lauren_analysis/metabarcoding.R")
-source("lauren_analysis/loadme.R")
+source("functions/metabarcoding.R")
+source("functions/loadme.R")
 ```
 
 # Load data
@@ -146,13 +146,13 @@ rare_fun <- gfunc(countData, colData, "Fungi")
 
 rarefaction_plots <- grid.arrange(
   rare_bac, rare_fun,
-  left = textGrob(label = expression("Log"[10] * " aligned sequenecs"), rot = 90),
-  bottom = "ZOTU count", nrow = 2
+  left = textGrob(label = expression("log"[10] * " aligned sequenecs"), rot = 90),
+  bottom = "ASV count", nrow = 2
 )
 
-# ggsave(filename = "rarefaction_plots.png", plot = rarefaction_plots, path = "figures/")
+ggsave(filename = "rarefaction_plots.png", plot = rarefaction_plots, path = "figures/")
 
-# rarefaction_plots
+rarefaction_plots
 
 # Fungi
 med <- median(colSums(ubiome_FUN$countData))
@@ -310,6 +310,23 @@ cat("Top " ,TOPOTU, "OTUs:\n")
 data.frame(counts = y[1:TOPOTU], proportion = xy[1:TOPOTU], rank = taxData[names(y)[1:TOPOTU],]$rank)
 ```
 
+## Abundance
+
+```{r}
+abundance_plot <- ggplot(
+  data = as.data.frame(colData(dds)), 
+  aes(x = trial, y = copy_number, colour = cultivar, shape = planting_season)
+) + geom_point() + 
+  scale_colour_manual(values = cbPalette)
+
+ggsave(
+  filename = "fun_abundance.png", plot = abundance_plot, path = "figures/", 
+  height = 20, width = 40, units = "cm"
+)
+
+abundance_plot
+```
+
 ## Taxonomy Summary
 
 ### Taxonomy identifiable
@@ -362,11 +379,12 @@ data.table(
 fun_alpha_plot <- plot_alpha(
   counts(dds, normalize = F), colData(dds),
   design = "cultivar", colour = "trial",
-  measures = c("Chao1", "Shannon", "Simpson", "Observed"),
+  measures = c("Shannon", "Simpson"),
   type = "box"
 ) + scale_colour_manual(values = cbPalette) + 
   theme(axis.title.x = element_blank()) +
-  ggtitle("Fungal α-diversity")
+  ggtitle("Fungal α-diversity") + 
+  labs(colour = "Site")
   # facet_wrap(~planting_season)
 
 ggsave(
@@ -723,8 +741,9 @@ bac_alpha_plot <- plot_alpha(
 ) + 
   scale_colour_manual(values = cbPalette) + 
   theme(axis.title.x =  element_blank()) + 
-  ggtitle("Bacterial α-diversity") +
-  facet_wrap(~planting_season)
+  ggtitle("Bacterial α-diversity") + 
+  labs(colour = "Site")
+  # facet_wrap(~planting_season)
 
 ggsave(
   filename = "bac_alpha.png", plot = bac_alpha_plot, path = "figures/", 
