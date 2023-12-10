@@ -187,7 +187,8 @@ ubiome_BAC$countData <- ubiome_BAC$countData[rownames(ubiome_BAC$countData) %in%
 
 # Absolute abundance normalisation
 
-OTU normalisation is performed using qPCR theoretical copy number data. 
+OTU normalisation is performed using qPCR theoretical copy number data.
+Copy number is calculated per mg of root sample from the qPCR data.
 
 ## Prepare qPCR abundance data
 
@@ -197,13 +198,27 @@ abundance <- fread("mean_abundance.csv")
 # Add sample ID to abundance data
 abundance$id <- paste0("HM", gsub("-", "", abundance$Sample))
 # abundance$id <- abundance$Sample
-abundance$copy_number <- abundance$MeanAdjustedTCN
+abundance$copy_number <- abundance$MeanAdjustedTCN_mg
 
 # Add bacterial (16S) and fungal (ITS) abundance to ubiome BAC and FUN named lists
 ubiome_FUN$abundance <- abundance[abundance$Target == "ITS"] %>%
   column_to_rownames(var = "id")
 ubiome_BAC$abundance <- abundance[abundance$Target == "16S"] %>%
   column_to_rownames(var = "id")
+
+# Replace outliers with std > 3 with the mean of the remaining values
+replace_outliers <- function(x, threshold, na.rm = TRUE) {
+  med_x <- median(x, na.rm = na.rm)
+  sd_x <- sd(x, na.rm = na.rm)
+  y <- x
+  y[x > (med_x + threshold * sd_x)] <- NA
+  y[x < (med_x - threshold * sd_x)] <- NA
+  mean_y <- mean(y, na.rm = na.rm)
+  y[is.na(y)] <- mean_y
+  y
+}
+
+ubiome_FUN$abundance$copy_number <- replace_outliers(ubiome_FUN$abundance$MeanAdjustedTCN_mg, 3)
 
 # Merge copy number from abundance with colData
 ubiome_FUN$colData <- merge(
