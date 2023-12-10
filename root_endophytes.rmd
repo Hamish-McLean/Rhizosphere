@@ -36,14 +36,14 @@ library(metafuncs)
 ## Functions and constants
 
 ```{r constants}
-ALPHA =      .1    # DESeq2 alpha value
-OTUFILTER =  .001  # Remove OTUs with proportion of total reads below value
-READFILTER = .05   # Will remove samples with read sum below sample_median_reads*READFILTER 
+ALPHA =      0.1    # DESeq2 alpha value
+OTUFILTER =  0.01  # Remove OTUs with proportion of total reads below value
+READFILTER = 0.05   # Will remove samples with read sum below sample_median_reads*READFILTER 
 PAIREDONLY = F     # Will remove the pair of samples which fail the readfilter - probably only useful for DESeq separated by type NOTE removes pairs before DESeq object is created   
-TAXCONF =    .60   # Sets the taxonomy confidence level to get "rank" in taxonomy files
+TAXCONF =    0.60   # Sets the taxonomy confidence level to get "rank" in taxonomy files
 TOPOTU =     10    # Number of Top OTUs for summary information
 
-DNORM = F # Boolean for DeSeq2 normalisation
+DNORM =      F # Boolean for DeSeq2 normalisation
 
 # graphics
 DEVICE =     "png"
@@ -331,7 +331,7 @@ data.frame(counts = y[1:TOPOTU], proportion = xy[1:TOPOTU], rank = taxData[names
 abundance_plot <- ggplot(
   data = as.data.frame(colData(dds)), 
   aes(x = trial, y = copy_number, colour = cultivar, shape = planting_season)
-) + geom_point() + 
+) + geom_jitter() + 
   scale_colour_manual(values = cbPalette)
 
 ggsave(
@@ -340,6 +340,18 @@ ggsave(
 )
 
 abundance_plot
+
+abundance_anova <- aovp(update(DESIGN, copy_number~.), data = as.data.frame(colData(dds)))
+summary(abundance_anova)
+abundance_resid <- data.frame(residuals = residuals(abundance_anova))
+
+norm <- ggplot(abundance_resid, aes(sample = residuals)) + stat_qq() + stat_qq_line()
+ggsave(
+  filename = "fun_abundance_norm.png", plot = norm, path = "figures/", 
+  height = 20, width = 20, units = "cm"
+)
+
+kruskal.test(update(DESIGN, copy_number~.), data = as.data.frame(colData(dds)))
 ```
 
 ## Taxonomy Summary
