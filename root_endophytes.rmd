@@ -36,14 +36,14 @@ library(metafuncs)
 ## Functions and constants
 
 ```{r constants}
-ALPHA =      0.1    # DESeq2 alpha value
+ALPHA =      0.1   # DESeq2 alpha value
 OTUFILTER =  0.01  # Remove OTUs with proportion of total reads below value
-READFILTER = 0.05   # Will remove samples with read sum below sample_median_reads*READFILTER 
+READFILTER = 0.05  # Will remove samples with read sum below sample_median_reads*READFILTER 
 PAIREDONLY = F     # Will remove the pair of samples which fail the readfilter - probably only useful for DESeq separated by type NOTE removes pairs before DESeq object is created   
-TAXCONF =    0.60   # Sets the taxonomy confidence level to get "rank" in taxonomy files
+TAXCONF =    0.60  # Sets the taxonomy confidence level to get "rank" in taxonomy files
 TOPOTU =     10    # Number of Top OTUs for summary information
 
-DNORM =      F # Boolean for DeSeq2 normalisation
+DNORM =      F     # Boolean for DeSeq2 normalisation
 
 # graphics
 DEVICE =     "png"
@@ -71,17 +71,19 @@ source("functions/loadme.R")
 
 # Load data
 
+Bacterial and fungal ASV (ZOTU) tables, sample metadata, and taxonomy files are
+loaded into named lists using the `loadData` function from Greg's `metafuncs` 
+package.
+
 ```{r data}
 metadata <- "sample_metadata.txt"
 
-# Load
-#ubiome_BAC <- loadData("data/BAC.otu_table.txt",metadata,"data/BAC.sintax.taxa",RHB="BAC")
-#ubiome_FUN <- loadData("data/FUN.otu_table.txt",metadata,"data/FUN.sintax.taxa",RHB="FUN")
-
+# Load data
 ubiome_BAC <- loadData("data/BAC.zotu_table.txt",metadata,"data/zBAC.sintax.taxa",RHB="BAC")
 ubiome_FUN <- loadData("data/FUN.zotu_table.txt",metadata,"data/zFUN.sintax.taxa",RHB="FUN")
 
-# Correct for planting date month variability
+# Correct for planting date month variability.
+# March and April are replaced by spring, December by winter.
 ubiome_BAC$colData <- ubiome_BAC$colData %>%
   mutate(
     planting_season = case_when(
@@ -101,6 +103,10 @@ ubiome_FUN$colData <- ubiome_FUN$colData %>%
 # Filter samples and OTUs
 
 ## Filtering taxa
+
+Plantae taxa are filtered from fungal `taxData`.
+Chloroplast and Eukaryote  taxa are filtered from bacterial `taxData`.
+Corresponding OTUs are removed from `countData`.
 
 ```{r filter_taxa}
 # Filter Plant, Chloroplast, and Eukaryote OTUs
