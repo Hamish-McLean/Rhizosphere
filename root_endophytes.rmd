@@ -211,21 +211,48 @@ ubiome_FUN$abundance <- abundance[abundance$Target == "ITS"] %>%
   column_to_rownames(var = "id")
 ubiome_BAC$abundance <- abundance[abundance$Target == "16S"] %>%
   column_to_rownames(var = "id")
+```
 
-# Replace outliers with std > 3 with the mean of the remaining values
-replace_outliers <- function(x, threshold, na.rm = TRUE) {
-  med_x <- median(x, na.rm = na.rm)
-  sd_x <- sd(x, na.rm = na.rm)
-  y <- x
-  y[x > (med_x + threshold * sd_x)] <- NA
-  y[x < (med_x - threshold * sd_x)] <- NA
-  mean_y <- mean(y, na.rm = na.rm)
-  y[is.na(y)] <- mean_y
-  y
+### Remove outliers
+
+```{r}
+# # Replace outliers with std > 3 with the mean of the remaining values
+# replace_outliers <- function(x, threshold, na.rm = TRUE) {
+#   med_x <- median(x, na.rm = na.rm)
+#   sd_x <- sd(x, na.rm = na.rm)
+#   y <- x
+#   y[x > (med_x + threshold * sd_x)] <- NA
+#   y[x < (med_x - threshold * sd_x)] <- NA
+#   mean_y <- mean(y, na.rm = na.rm)
+#   y[is.na(y)] <- mean_y
+#   y
+# }
+
+# ubiome_FUN$abundance$copy_number <- replace_outliers(ubiome_FUN$abundance$MeanAdjustedTCN_mg, 3)
+
+# Detect outliers with std > threshold from the median
+detect_outliers <- function(x, val, threshold, na.rm = TRUE) {
+  med_x <- median(x[[val]], na.rm = na.rm)
+  sd_x <- sd(x[[val]], na.rm = na.rm)
+  outliers <- x[x[[val]] > (med_x + threshold * sd_x) | x[[val]] < (med_x - threshold * sd_x), ]
+  return(outliers)
 }
 
-ubiome_FUN$abundance$copy_number <- replace_outliers(ubiome_FUN$abundance$MeanAdjustedTCN_mg, 3)
+outliers_FUN <- detect_outliers(ubiome_FUN$abundance, "MeanAdjustedTCN_mg", 3)
+outliers_BAC <- detect_outliers(ubiome_BAC$abundance, "MeanAdjustedTCN_mg", 3)
 
+# Remove samples with copy number > 3 std from the median
+outliers <- rownames(outliers_FUN)
+ubiome_FUN$abundance <- ubiome_FUN$abundance[!rownames(ubiome_FUN$abundance) %in% outliers, ]
+ubiome_FUN$countData <- ubiome_FUN$countData[, !colnames(ubiome_FUN$countData) %in% outliers]
+ubiome_FUN$colData <- ubiome_FUN$colData[!rownames(ubiome_FUN$colData) %in% outliers, ]
+
+cat("Fungi: removing", length(outliers), "outlier(s)\n")
+```
+
+### Merge abundance with colData
+
+```{r}
 # Merge copy number from abundance with colData
 ubiome_FUN$colData <- merge(
   ubiome_FUN$colData, 
@@ -243,10 +270,10 @@ ubiome_BAC$colData <- merge(
 
 ```{r DESeq}
 # Make sure countData and colData still match
-# ubiome_FUN$colData <- ubiome_FUN$colData[colnames(ubiome_FUN$countData),]
-# ubiome_BAC$colData <- ubiome_BAC$colData[colnames(ubiome_BAC$countData),]
 identical(colnames(ubiome_FUN$countData), rownames(ubiome_FUN$colData))
 identical(colnames(ubiome_BAC$countData), rownames(ubiome_BAC$colData))
+# ubiome_FUN$colData <- ubiome_FUN$colData[colnames(ubiome_FUN$countData),]
+# ubiome_BAC$colData <- ubiome_BAC$colData[colnames(ubiome_BAC$countData),]
 
 # Create DESeq objects
 ubiome_FUN$dds <- ubiom_to_des(ubiome_FUN)
