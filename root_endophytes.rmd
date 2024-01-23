@@ -211,25 +211,23 @@ ubiome_FUN$abundance <- abundance[abundance$Target == "ITS"] %>%
   column_to_rownames(var = "id")
 ubiome_BAC$abundance <- abundance[abundance$Target == "16S"] %>%
   column_to_rownames(var = "id")
+
+# Merge copy number from abundance with colData
+ubiome_FUN$colData <- merge(
+  ubiome_FUN$colData, 
+  ubiome_FUN$abundance[, c("Target", "copy_number")], 
+  by = 0
+) %>% column_to_rownames(var = "Row.names")
+ubiome_BAC$colData <- merge(
+  ubiome_BAC$colData, 
+  ubiome_BAC$abundance[, c("Target", "copy_number")], 
+  by = 0
+) %>% column_to_rownames(var = "Row.names")
 ```
 
 ### Remove outliers
 
 ```{r}
-# # Replace outliers with std > 3 with the mean of the remaining values
-# replace_outliers <- function(x, threshold, na.rm = TRUE) {
-#   med_x <- median(x, na.rm = na.rm)
-#   sd_x <- sd(x, na.rm = na.rm)
-#   y <- x
-#   y[x > (med_x + threshold * sd_x)] <- NA
-#   y[x < (med_x - threshold * sd_x)] <- NA
-#   mean_y <- mean(y, na.rm = na.rm)
-#   y[is.na(y)] <- mean_y
-#   y
-# }
-
-# ubiome_FUN$abundance$copy_number <- replace_outliers(ubiome_FUN$abundance$MeanAdjustedTCN_mg, 3)
-
 # Detect outliers with std > threshold from the median
 detect_outliers <- function(x, val, threshold, na.rm = TRUE) {
   med_x <- median(x[[val]], na.rm = na.rm)
@@ -248,22 +246,6 @@ ubiome_FUN$countData <- ubiome_FUN$countData[, !colnames(ubiome_FUN$countData) %
 ubiome_FUN$colData <- ubiome_FUN$colData[!rownames(ubiome_FUN$colData) %in% outliers, ]
 
 cat("Fungi: removing", length(outliers), "outlier(s)\n")
-```
-
-### Merge abundance with colData
-
-```{r}
-# Merge copy number from abundance with colData
-ubiome_FUN$colData <- merge(
-  ubiome_FUN$colData, 
-  ubiome_FUN$abundance[, c("Target", "copy_number")], 
-  by = 0
-) %>% column_to_rownames(var = "Row.names")
-ubiome_BAC$colData <- merge(
-  ubiome_BAC$colData, 
-  ubiome_BAC$abundance[, c("Target", "copy_number")], 
-  by = 0
-) %>% column_to_rownames(var = "Row.names")
 ```
 
 ## Create DESeq objects
@@ -350,9 +332,9 @@ cat(
 )
 
 y <- rowSums(nct)
-y <- y[order(y,decreasing = T)]
+y <- y[order(y, decreasing = T)]
 # proportion
-xy <- y/sum(y)
+xy <- y / sum(y)
 
 cat("Top " ,TOPOTU, "OTUs:\n")
 data.frame(counts = y[1:TOPOTU], proportion = xy[1:TOPOTU], rank = taxData[names(y)[1:TOPOTU],]$rank)
@@ -362,7 +344,7 @@ data.frame(counts = y[1:TOPOTU], proportion = xy[1:TOPOTU], rank = taxData[names
 
 ### Taxonomy identifiable
 
-Proportion of OTUs which can be assigned (with the given confidence) at each taxonomic rank
+Proportion of OTUs which can be assigned (with the given confidence) at each taxonomic rank.
 
 ```{r}
 
@@ -400,6 +382,9 @@ data.table(
 ```
 
 ## Abundance
+
+Plot copy number for each sample grouped by site, cultivar, and planting season.
+Test the effect of site, cultivar, and planting season on copy number using ANOVA.
 
 ```{r}
 abundance_plot <- ggplot(
