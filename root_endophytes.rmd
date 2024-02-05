@@ -262,34 +262,6 @@ cat("Fungi: removing", length(outliers), "outlier(s)\n")
 
 Sample A1-3 is removed from the fungal data due to abnormally high copy number.
 
-## Create DESeq objects
-
-```{r DESeq}
-# Make sure countData and colData still match
-identical(colnames(ubiome_FUN$countData), rownames(ubiome_FUN$colData))
-identical(colnames(ubiome_BAC$countData), rownames(ubiome_BAC$colData))
-# ubiome_FUN$colData <- ubiome_FUN$colData[colnames(ubiome_FUN$countData),]
-# ubiome_BAC$colData <- ubiome_BAC$colData[colnames(ubiome_BAC$countData),]
-
-# Create DESeq objects
-ubiome_FUN$dds <- ubiom_to_des(ubiome_FUN)
-ubiome_BAC$dds <- ubiom_to_des(ubiome_BAC)
-```
-
-# Abundance normalisation
-
-Absolute abundance normalisation using DESeq2 size factors.
-
-Values are centred around the mean of the copy number.
-
-```{r}
-# Normalise count data using DESeq2 size factors
-
-ubiome_FUN$dds$sizeFactor <- ubiome_FUN$dds$copy_number / mean(ubiome_FUN$dds$copy_number)
-ubiome_BAC$dds$sizeFactor <- ubiome_BAC$dds$copy_number / mean(ubiome_BAC$dds$copy_number)
-
-```
-
 # Canker count data
 
 Canker count data for differential expression analysis.
@@ -317,7 +289,7 @@ all_canker_data <- mutate(
 
 # Filter canker data to match both id and planting season from colData
 all_canker_data <- all_canker_data %>% 
-  semi_join(ubiome_FUN$colData, by = c("id", "planting_season"))
+  semi_join(ubiome_BAC$colData, by = c("id", "planting_season"))
 
 # Filter out replacement "7 (GD)" trees
 all_canker_data <- all_canker_data[all_canker_data$cultivar_number != "7 (GD)", ]
@@ -346,6 +318,34 @@ ubiome_BAC$colData <- merge(
   canker_data[, c("id", "mainstem", "peripheral")], 
   by = "id"
 ) %>% column_to_rownames("Row.names")
+```
+
+# Create DESeq objects
+
+```{r DESeq}
+# Make sure countData and colData still match
+identical(colnames(ubiome_FUN$countData), rownames(ubiome_FUN$colData))
+identical(colnames(ubiome_BAC$countData), rownames(ubiome_BAC$colData))
+# ubiome_FUN$colData <- ubiome_FUN$colData[colnames(ubiome_FUN$countData),]
+# ubiome_BAC$colData <- ubiome_BAC$colData[colnames(ubiome_BAC$countData),]
+
+# Create DESeq objects
+ubiome_FUN$dds <- ubiom_to_des(ubiome_FUN)
+ubiome_BAC$dds <- ubiom_to_des(ubiome_BAC)
+```
+
+# Abundance normalisation
+
+Absolute abundance normalisation using DESeq2 size factors.
+
+Values are centred around the mean of the copy number.
+
+```{r}
+# Normalise count data using DESeq2 size factors
+
+ubiome_FUN$dds$sizeFactor <- ubiome_FUN$dds$copy_number / mean(ubiome_FUN$dds$copy_number)
+ubiome_BAC$dds$sizeFactor <- ubiome_BAC$dds$copy_number / mean(ubiome_BAC$dds$copy_number)
+
 ```
 
 <!-- #=============================================================================== -->
