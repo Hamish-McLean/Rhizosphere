@@ -42,6 +42,7 @@ READFILTER = 0.05  # Will remove samples with read sum below sample_median_reads
 PAIREDONLY = F     # Will remove the pair of samples which fail the readfilter - probably only useful for DESeq separated by type NOTE removes pairs before DESeq object is created   
 TAXCONF =    0.60  # Sets the taxonomy confidence level to get "rank" in taxonomy files
 TOPOTU =     10    # Number of Top OTUs for summary information
+DIFFOTU =    10    # Number of Top OTUs for differential analysis
 
 DNORM =      F     # Boolean for DeSeq2 normalisation
 
@@ -471,7 +472,10 @@ ggsave(
 
 abundance_plot
 
-abundance_anova <- aovp(update(DESIGN, copy_number~.), data = as.data.frame(colData(dds)))
+# Formula for ANOVA
+formula <- update(DESIGN, copy_number ~ .)
+
+abundance_anova <- aovp(formula, data = as.data.frame(colData(dds)))
 summary(abundance_anova)
 # abundance_resid <- data.frame(residuals = residuals(abundance_anova))
 
@@ -527,7 +531,7 @@ all_alpha_ord <- all_alpha_ord[
 ]
 
 # all_alpha_ord[, trial.block := as.factor(paste0(trial, block))]
-design <- DESIGN # x ~ trial * planting_date * cultivar + trial / trial.block
+formula <- DESIGN # x ~ trial * planting_date * cultivar + trial / trial.block
 ```
 
 ### Chao1
@@ -535,7 +539,7 @@ design <- DESIGN # x ~ trial * planting_date * cultivar + trial / trial.block
 ```{r}
 setkey(all_alpha_ord, S.chao1)
 all_alpha_ord[, measure := as.numeric(as.factor(S.chao1))]
-summary(aovp(update(design, measure~.), all_alpha_ord, seqs = T))
+summary(aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T))
 ```
 
 ### Shannon
@@ -543,7 +547,7 @@ summary(aovp(update(design, measure~.), all_alpha_ord, seqs = T))
 ```{r}
 setkey(all_alpha_ord, shannon)
 all_alpha_ord[, measure := as.numeric(as.factor(shannon))]
-summary(aovp(update(design, measure~.), all_alpha_ord, seqs = T))
+summary(aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T))
 ```
 
 ### Simpson
@@ -551,7 +555,7 @@ summary(aovp(update(design, measure~.), all_alpha_ord, seqs = T))
 ```{r}
 setkey(all_alpha_ord, simpson)
 all_alpha_ord[, measure := as.numeric(as.factor(simpson))]
-summary(aovp(update(design, measure~.), all_alpha_ord, seqs = T))
+summary(aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T))
 ```
 
 # Beta diversity PCA/NMDS
@@ -566,7 +570,7 @@ mypca <- des_to_pca(dds)
 # To get pca plot axis into the same scale create a dataframe of PC scores multiplied by their variance
 d <- t(data.frame(t(mypca$x) * mypca$percentVar))
 
-design = DESIGN
+formula = DESIGN
 ```
 
 ### Percent variation in first 4 PCs 
@@ -581,7 +585,7 @@ round(mypca$percentVar[1:4], 3)
 apply(
   mypca$x[, 1:4], 2, 
   function(x){
-    summary(aov(update(design, x~.), data = as.data.frame(cbind(x, colData(dds)))))
+    summary(aov(update(formula, x ~ .), data = as.data.frame(cbind(x, colData(dds)))))
   }
 )
 ```
@@ -612,7 +616,7 @@ pca_plot
 
 ```{r}
 sum_squares <- apply(mypca$x, 2 ,function(x) 
-  summary(aov(update(design, x~.), data = cbind(x, colData(dds))))[[1]][2]
+  summary(aov(update(formula, x ~ .), data = cbind(x, colData(dds))))[[1]][2]
 )
 sum_squares <- do.call(cbind, sum_squares)
 x <- t(apply(sum_squares, 2, prop.table))
@@ -626,7 +630,7 @@ round(colSums(perVar) / sum(colSums(perVar)) * 100, 3)
 ```{r}
 vg <- vegdist(t(counts(dds, normalize = DNORM)), method = "bray")
 set.seed(sum(utf8ToInt("Hamish McLean")))
-adonis2(update(design, vg ~ .), colData(dds), permutations = 1000)
+adonis2(update(formula, vg ~ .), colData(dds), permutations = 1000)
 ```
 
 ## NMDS ordination
@@ -691,17 +695,21 @@ fun_nmds_plot
 
 ```{r}
 
-# p value for FDR cutoff
-alpha <- 0.1
+# P value for FDR cutoff
+alpha <- ALPHA
 
-# add design to dds object
-design(dds) <- design
+# Model design
+formula <- ~ mainstem
 
-# run model
-dds <- DESeq(dds,parallel=F)
+# Add design to dds object
+design(dds) <- formula
 
-# build results table
-res <- results(dds,alpha=alpha,contrast=c("Status","Diseased","Healthy"))
+# Run model
+dds <- DESeq(dds, parallel=F)
+
+# Build results table
+res <- results(dds, alpha = alpha, contrast = "mainstem")
+
 
 ```
 
@@ -855,7 +863,10 @@ ggsave(
 
 abundance_plot
 
-abundance_anova <- aovp(update(DESIGN, copy_number~.), data = as.data.frame(colData(dds)))
+# Formula for ANOVA
+formula <- update(DESIGN, copy_number ~ .)
+
+abundance_anova <- aovp(formula, data = as.data.frame(colData(dds)))
 summary(abundance_anova)
 ```
 
@@ -900,7 +911,7 @@ all_alpha_ord <- all_alpha_ord[
   as.data.table(colData(dds), keep.rownames = "Samples"), on = "Samples"
 ]
 
-design <- DESIGN
+formula <- DESIGN
 ```
 
 ### Chao1
@@ -908,7 +919,7 @@ design <- DESIGN
 ```{r}
 setkey(all_alpha_ord, S.chao1)
 all_alpha_ord[, measure := as.numeric(as.factor(S.chao1))]
-summary(aovp(update(design, measure~.), all_alpha_ord, seqs = T))
+summary(aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T))
 ```
 
 ### Shannon
@@ -916,7 +927,7 @@ summary(aovp(update(design, measure~.), all_alpha_ord, seqs = T))
 ```{r}
 setkey(all_alpha_ord, shannon)
 all_alpha_ord[, measure := as.numeric(as.factor(shannon))]
-summary(aovp(update(design, measure~.), all_alpha_ord, seqs = T))
+summary(aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T))
 ```
 
 ### Simpson
@@ -924,7 +935,7 @@ summary(aovp(update(design, measure~.), all_alpha_ord, seqs = T))
 ```{r}
 setkey(all_alpha_ord, simpson)
 all_alpha_ord[, measure := as.numeric(as.factor(simpson))]
-summary(aovp(update(design, measure~.), all_alpha_ord, seqs = T))
+summary(aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T))
 ```
 
 # Beta diversity PCA/NMDS
@@ -938,7 +949,7 @@ mypca <- des_to_pca(dds)
 # to get pca plot axis into the same scale create a dataframe of PC scores multiplied by their variance
 d <- t(data.frame(t(mypca$x) * mypca$percentVar))
 
-design = DESIGN
+formula = DESIGN
 ```
 
 ### Percent variation in first 4 PCs 
@@ -951,7 +962,7 @@ round(mypca$percentVar[1:4], 3)
 apply(
   mypca$x[, 1:4], 2, 
   function(x){
-    summary(aov(update(design, x~.), data = as.data.frame(cbind(x, colData(dds)))))
+    summary(aov(update(formula, x ~ .), data = as.data.frame(cbind(x, colData(dds)))))
   }
 )
 ```
@@ -979,7 +990,7 @@ bac_pca_plot
 
 ```{r}
 sum_squares <- apply(mypca$x, 2 ,function(x) 
-  summary(aov(update(design, x~.), data = cbind(x, colData(dds))))[[1]][2]
+  summary(aov(update(formula, x ~ .), data = cbind(x, colData(dds))))[[1]][2]
 )
 sum_squares <- do.call(cbind, sum_squares)
 x <- t(apply(sum_squares, 2, prop.table))
@@ -993,7 +1004,7 @@ round(colSums(perVar) / sum(colSums(perVar)) * 100, 3)
 ```{r}
 vg <- vegdist(t(counts(dds, normalize = DNORM)), method = "bray")
 set.seed(sum(utf8ToInt("Hamish McLean")))
-adonis2(update(design, vg ~ .), colData(dds), permutations = 1000)
+adonis2(update(formula, vg ~ .), colData(dds), permutations = 1000)
 ```
 
 ## NMDS ordination
@@ -1045,7 +1056,7 @@ ggsave(filename = "fun_nmds_phy.png", plot = bac_nmds_plot, path = "figures/")
 alpha <- 0.1
 
 # add design to dds object
-design(dds) <- design
+design(dds) <- formula
 
 # run model
 dds <- DESeq(dds,parallel=F)
