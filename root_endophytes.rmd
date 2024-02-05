@@ -689,9 +689,9 @@ ggsave(filename = "fun_nmds_phy.png", plot = nmds_plot, path = "figures/")
 fun_nmds_plot
 ```
 
-## Differential analysis
+# Differential analysis
 
-### DESeq design
+## DESeq design
 
 ```{r}
 
@@ -708,7 +708,7 @@ design(dds) <- formula
 dds <- DESeq(dds, parallel=F)
 
 # Build results table
-res <- results(dds, alpha = alpha, contrast = "mainstem")
+res <- results(dds, alpha = alpha)
 
 
 ```
@@ -717,7 +717,7 @@ res <- results(dds, alpha = alpha, contrast = "mainstem")
 
 Rank is lowest taxonomic rank with >=0.65 confidence
 
-#### All samples
+### All samples
 
 ```{r}
 summary(res)
@@ -734,13 +734,33 @@ res.merge[padj<=alpha,.(OTU,rank,
 
 ```
 
-# <!-- ### Write results -->
-# <!-- ```{r} -->
+## Pearson correlation
 
-# <!-- fwrite(res.merge,paste(RHB,"_DES.txt"),quote=F,na="",sep="\t") -->
-# <!-- fwrite(res2.merge,paste(RHB,"_DES_Paired.txt"),quote=F,na="",sep="\t") -->
+```{r}
+# Extract normalised counts from DESeq object
+nc <- counts(dds, normalize = T) %>% as.data.frame()
 
-# <!-- ``` -->
+# Filter the top x abundant OTUs by the sum of their normalised counts
+top_otus <- nc[order(rowSums(nc), decreasing = T)[1:DIFFOTU], ]
+
+# Check that sample names match
+identical(names(top_otus), col$rn)
+
+# Calculate Pearson correlation for each OTU in nc with mainstem canker count for each sample from colData
+correlations <- data.frame(
+  pearson = apply(top_otus, 1, function(x) cor.test(x, colData$mainstem, method = "pearson")$estimate),
+  p_pearson = apply(top_otus, 1, function(x) cor.test(x, colData$mainstem, method = "pearson")$p.value),
+  spearman = apply(top_otus, 1, function(x) cor.test(x, colData$mainstem, method = "spearman", exact = F)$estimate),
+  p_spearman = apply(top_otus, 1, function(x) cor.test(x, colData$mainstem, method = "spearman", exact = F)$p.value)
+)
+
+# Adjust p-values for multiple testing
+correlations$p_pearson_adjusted <- p.adjust(correlations$p_pearson, method = "BH")
+correlations$p_spearman_adjusted <- p.adjust(correlations$p_spearman, method = "BH")
+
+# Merge correlations with taxData
+
+```
 
 <!-- #=============================================================================== -->
 # **Bacteria**
