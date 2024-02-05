@@ -104,8 +104,11 @@ ubiome_FUN$colData <- ubiome_FUN$colData %>%
 ## Global removals
 
 ```{r}
-# Remove sample with id "A2-7" from colData and countData
-
+# Sample "A2-7" removed due to missampling.
+ubiome_BAC$colData <- ubiome_BAC$colData[!rownames(ubiome_BAC$colData) %in% "HMA27", ]
+ubiome_BAC$countData <- ubiome_BAC$countData[, !colnames(ubiome_BAC$countData) %in% "HMA27"]
+ubiome_FUN$colData <- ubiome_FUN$colData[!rownames(ubiome_FUN$colData) %in% "HMA27", ]
+ubiome_FUN$countData <- ubiome_FUN$countData[, !colnames(ubiome_FUN$countData) %in% "HMA27"]
 ```
 
 # Filter samples and OTUs
