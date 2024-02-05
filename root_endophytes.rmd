@@ -259,6 +259,8 @@ ubiome_FUN$colData <- ubiome_FUN$colData[!rownames(ubiome_FUN$colData) %in% outl
 cat("Fungi: removing", length(outliers), "outlier(s)\n")
 ```
 
+Sample A1-3 is removed from the fungal data due to abnormally high copy number.
+
 ## Create DESeq objects
 
 ```{r DESeq}
@@ -343,55 +345,6 @@ ubiome_BAC$colData <- merge(
   canker_data[, c("id", "mainstem", "peripheral")], 
   by = "id"
 ) %>% column_to_rownames("Row.names")
-```
-
-```{r}
-canker_data <- fread("canker_data.csv", select = 1:34)
-
-# Clean up canker data
-
-
-
-# Sum mainstem and peripheral canker counts
-canker_data$M1 <- canker_data$A1 + canker_data$B1
-canker_data$P1 <- canker_data$C1 + canker_data$D1 + canker_data$E1
-
-canker_data$M2 <- canker_data$A2 + canker_data$B2
-canker_data$P2 <- canker_data$C2 + canker_data$D2 + canker_data$E2
-
-canker_data$M3 <- canker_data$A3 + canker_data$B3
-canker_data$P3 <- canker_data$C3 + canker_data$D3 + canker_data$E3
-
-canker_data$M4 <- canker_data$A4 + canker_data$B4
-canker_data$P4 <- canker_data$C4 + canker_data$D4 + canker_data$E4
-
-# Calculate area under the disease progression curve
-audpc <- function(counts, timepoints) {
-  # Calculate average count between timepoints
-  avg <- (counts[-1] + counts[-length(counts)]) / 2
-
-  # Calculate time between timepoints
-  #time <- timepoints[-1] - timepoints[-length(timepoints)]
-  time <- diff(timepoints)
-
-  audpc <- sum(avg * time)
-
-  return(audpc)
-}
-
-dates <- c("2019-10-08", "2020-06-01", "2020-11-11", "2021-05-01")
-timepoints <- as.Date(dates, format = "%Y-%m-%d")
-
-canker_data$mainstem_auc <- apply(
-  canker_data[, c("M1", "M2", "M3", "M4")], 
-  1, audpc, timepoints = timepoints
-)
-
-canker_data$peripheral_auc <- apply(
-  canker_data[, c("P1", "P2", "P3", "P4")], 
-  1, audpc, timepoints = timepoints
-)
-
 ```
 
 <!-- #=============================================================================== -->
