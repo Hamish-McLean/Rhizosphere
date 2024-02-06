@@ -737,7 +737,7 @@ correlations$p_spearman_adjusted <- p.adjust(correlations$p_spearman, method = "
 ```{r}
 
 measures <- c("shannon", "simpson") #, "S.chao1", "S.obs", "S.ACE")
-methods <- c("pearson", "spearman")
+corr_methods <- c("pearson", "spearman")
 
 # Calculate correlations for each α-diversity measure with canker count
 alpha_correlations <- data.table(
@@ -758,9 +758,53 @@ alpha_correlations <- data.table(
 )
 ```
 
+Alternative method
+
+```{r}
+# Calculate correlations for each α-diversity measure with canker count
+correlate <- function(df, canker_count, measures, corr_methods, return) {
+  mat <- sapply(
+    corr_methods, 
+    function(x) sapply(
+      measures, 
+      function(y) cor.test(df[[y]], df[[canker_count]], method = x, exact = F)[[return]]
+    )
+  )
+  return(c(mat[,1], mat[,2]))
+}
+
+alpha_correlations <- data.table(
+  measure = rep(measures, each = length(corr_methods)),
+  method = rep(corr_methods, times = length(measures)),
+  estimate = correlate(all_alpha_ord, "total_cankers", measures, corr_methods, "estimate"),
+  p_value = correlate(all_alpha_ord, "total_cankers", measures, corr_methods, "p.value")
+)
+
+# Adjust p-values for multiple testing
+alpha_correlations$p_adjusted <- p.adjust(alpha_correlations$p_value, method = "BH")
+```
+
 ## Correlation of β-diversity PCs with canker count
 
 ```{r}
+no_pcs <- 4
+
+# Merge PC scores with canker data
+pc_scores <- merge(colData, data.frame(mypca$x[, 1:no_pcs]), by = "row.names") %>% 
+  column_to_rownames("Row.names")
+
+pcs <- tail(colnames(pc_scores), no_pcs)
+
+# Calculate correlations for each PC with canker count
+beta_correlations <- data.table(
+  PC = rep(1:no_pcs, each = length(corr_methods)),
+  method = rep(corr_methods, times = no_pcs),
+  estimate = correlate(pc_scores, "total_cankers", pcs, corr_methods, "estimate"),
+  p_value = correlate(pc_scores, "total_cankers", pcs, corr_methods, "p.value")
+)
+
+# Adjust p-values for multiple testing
+beta_correlations$p_adjusted <- p.adjust(beta_correlations$p_value, method = "BH")
 
 ```
 
