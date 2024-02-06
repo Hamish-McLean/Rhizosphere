@@ -304,7 +304,7 @@ canker_data <- all_canker_data %>%
   group_by(id, planting_season, cultivar_number, cultivar) %>%
   summarise(
     mainstem_cankers = mean(mainstem_cankers, na.rm = T),
-    peripheral_cankers = mean(peripheral_cankers, na.rm = T)
+    peripheral_cankers = mean(peripheral_cankers, na.rm = T),
     total_cankers = mean(total_cankers, na.rm = T)
   )
 
@@ -535,7 +535,6 @@ fun_alpha_plot
 all_alpha_ord <- plot_alpha(
   counts(dds, normalize = F),
   colData(dds),
-  design = "trial",
   returnData = T
 )
 
@@ -545,7 +544,6 @@ all_alpha_ord <- all_alpha_ord[
   on = "Samples"
 ]
 
-# all_alpha_ord[, trial.block := as.factor(paste0(trial, block))]
 formula <- DESIGN # x ~ trial * planting_date * cultivar + trial / trial.block
 ```
 
@@ -704,52 +702,9 @@ ggsave(filename = "fun_nmds_phy.png", plot = nmds_plot, path = "figures/")
 fun_nmds_plot
 ```
 
-# Differential analysis
+# Correlation analysis
 
-## DESeq design
-
-```{r}
-
-# P value for FDR cutoff
-alpha <- ALPHA
-
-# Model design
-formula <- ~ mainstem
-
-# Add design to dds object
-design(dds) <- formula
-
-# Run model
-dds <- DESeq(dds, parallel=F)
-
-# Build results table
-res <- results(dds, alpha = alpha)
-
-
-```
-
-### Result summary
-
-Rank is lowest taxonomic rank with >=0.65 confidence
-
-### All samples
-
-```{r}
-summary(res)
-
-# merge DESeq results with taxonomy
-res.merge <- as.data.table(res,keep.rownames="OTU")[
-  as.data.table(taxData,keep.rownames="OTU"),on="OTU"]
-
-# print sig. results
-res.merge[padj<=alpha,.(OTU,rank,
-                        baseMean=round(baseMean,2),
-                        FC=round(log2FoldChange,2),
-                        padj=round(padj,4))][order(FC,decreasing = T),]
-
-```
-
-## Pearson correlation
+## Correlation of abundance of top `r DIFFOTU` OTUs with canker count
 
 ```{r}
 # Extract normalised counts from DESeq object
@@ -759,14 +714,14 @@ nc <- counts(dds, normalize = T) %>% as.data.frame()
 top_otus <- nc[order(rowSums(nc), decreasing = T)[1:DIFFOTU], ]
 
 # Check that sample names match
-identical(names(top_otus), col$rn)
+identical(names(top_otus), rownames(colData))
 
 # Calculate Pearson correlation for each OTU in nc with mainstem canker count for each sample from colData
 correlations <- data.frame(
-  pearson = apply(top_otus, 1, function(x) cor.test(x, colData$mainstem, method = "pearson")$estimate),
-  p_pearson = apply(top_otus, 1, function(x) cor.test(x, colData$mainstem, method = "pearson")$p.value),
-  spearman = apply(top_otus, 1, function(x) cor.test(x, colData$mainstem, method = "spearman", exact = F)$estimate),
-  p_spearman = apply(top_otus, 1, function(x) cor.test(x, colData$mainstem, method = "spearman", exact = F)$p.value)
+  pearson = apply(top_otus, 1, function(x) cor.test(x, colData$total_cankers, method = "pearson")$estimate),
+  p_pearson = apply(top_otus, 1, function(x) cor.test(x, colData$total_cankers, method = "pearson")$p.value),
+  spearman = apply(top_otus, 1, function(x) cor.test(x, colData$total_cankers, method = "spearman", exact = F)$estimate),
+  p_spearman = apply(top_otus, 1, function(x) cor.test(x, colData$total_cankers, method = "spearman", exact = F)$p.value)
 )
 
 # Adjust p-values for multiple testing
@@ -776,6 +731,40 @@ correlations$p_spearman_adjusted <- p.adjust(correlations$p_spearman, method = "
 # Merge correlations with taxData
 
 ```
+
+## Correlation of α-diversity with canker count
+
+```{r}
+
+measures <- c("shannon", "simpson") #, "S.chao1", "S.obs", "S.ACE")
+methods <- c("pearson", "spearman")
+
+# Calculate correlations for each α-diversity measure with canker count
+alpha_correlations <- data.table(
+  measure = rep(measures, each = length(methods)),
+  method = rep(methods, times = length(measures)),
+  estimate = c(
+    sapply(measures, function(x) cor.test(all_alpha_ord[[x]], all_alpha_ord$total_cankers, method = "pearson")$estimate),
+    sapply(measures, function(x) cor.test(all_alpha_ord[[x]], all_alpha_ord$total_cankers, method = "spearman", exact = F)$estimate)
+  ),
+  p_value = c(
+    sapply(measures, function(x) cor.test(all_alpha_ord[[x]], all_alpha_ord$total_cankers, method = "pearson")$p.value),
+    sapply(measures, function(x) cor.test(all_alpha_ord[[x]], all_alpha_ord$total_cankers, method = "spearman", exact = F)$p.value)
+  ),
+  p_adjusted = c(
+    p.adjust(sapply(measures, function(x) cor.test(all_alpha_ord[[x]], all_alpha_ord$total_cankers, method = "pearson")$p.value), method = "BH"),
+    p.adjust(sapply(measures, function(x) cor.test(all_alpha_ord[[x]], all_alpha_ord$total_cankers, method = "spearman", exact = F)$p.value), method = "BH")
+  )
+)
+```
+
+## Correlation of β-diversity PCs with canker count
+
+```{r}
+
+```
+
+
 
 <!-- #=============================================================================== -->
 # **Bacteria**
@@ -1128,3 +1117,48 @@ res.merge[padj<=alpha,.(OTU,rank,
 <!-- fwrite(res2.merge,paste(RHB,"_DES_Paired.txt"),quote=F,na="",sep="\t") -->
 
 <!-- ``` -->
+
+# Differential analysis
+
+## DESeq design
+
+```{r}
+
+# P value for FDR cutoff
+alpha <- ALPHA
+
+# Model design
+formula <- ~ mainstem
+
+# Add design to dds object
+design(dds) <- formula
+
+# Run model
+dds <- DESeq(dds, parallel=F)
+
+# Build results table
+res <- results(dds, alpha = alpha)
+
+
+```
+
+### Result summary
+
+Rank is lowest taxonomic rank with >=0.65 confidence
+
+### All samples
+
+```{r}
+summary(res)
+
+# merge DESeq results with taxonomy
+res.merge <- as.data.table(res,keep.rownames="OTU")[
+  as.data.table(taxData,keep.rownames="OTU"),on="OTU"]
+
+# print sig. results
+res.merge[padj<=alpha,.(OTU,rank,
+                        baseMean=round(baseMean,2),
+                        FC=round(log2FoldChange,2),
+                        padj=round(padj,4))][order(FC,decreasing = T),]
+
+```
