@@ -42,7 +42,7 @@ READFILTER = 0.05  # Will remove samples with read sum below sample_median_reads
 PAIREDONLY = F     # Will remove the pair of samples which fail the readfilter - probably only useful for DESeq separated by type NOTE removes pairs before DESeq object is created   
 TAXCONF =    0.80  # Sets the taxonomy confidence level to get "rank" in taxonomy files
 TOPOTU =     10    # Number of Top OTUs for summary information
-DIFFOTU =    10    # Number of Top OTUs for differential analysis
+DIFFOTU =    200    # Number of Top OTUs for correlation analysis
 
 DNORM =      F     # Boolean for DeSeq2 normalisation
 
@@ -732,7 +732,7 @@ fun_nmds_plot
 
 ## Correlation of abundance of top `r DIFFOTU` ASVs with canker count
 
-```{r}
+```{r ASV correlations}
 # Extract normalised counts from DESeq object
 nc <- counts(dds, normalize = T) %>% as.data.frame()
 
@@ -744,9 +744,9 @@ identical(names(top_otus), rownames(colData))
 
 top_taxa <- taxData[rownames(top_otus), ]
 
-# Calculate Pearson correlation for each OTU in nc with mainstem canker count for each sample from colData
+# Calculate Pearson correlation for each OTU with mainstem canker count for each sample from colData
 correlations <- data.table(
-  OTU = rownames(top_taxa),
+  OTU = rownames(top_otus),
   Taxonomy = top_taxa$rank,
   pearson = apply(top_otus, 1, function(x) cor.test(x, colData$total_cankers, method = "pearson")$estimate),
   spearman = apply(top_otus, 1, function(x) cor.test(x, colData$total_cankers, method = "spearman", exact = F)$estimate),
@@ -754,47 +754,31 @@ correlations <- data.table(
   p_spearman = apply(top_otus, 1, function(x) cor.test(x, colData$total_cankers, method = "spearman", exact = F)$p.value)
 )
 
-
-
 # Adjust p-values for multiple testing
 correlations$p_pearson_adjusted <- p.adjust(correlations$p_pearson, method = "BH")
 correlations$p_spearman_adjusted <- p.adjust(correlations$p_spearman, method = "BH")
 
-# Merge correlations with taxData
-
-
 correlations
+```
+
+### ASV correlation summary
+
+Summary of the top `r DIFFOTU` ASVs with statistically significant (*P* < 0.05)
+adjusted Pearson or Spearman correlation with canker count.
+
+```{r ASV correlation summary}
+a <- 0.001
+
+# Correlations where p_pearson < a or p_spearman < a
+correlations[correlations$p_pearson_adjusted < a | correlations$p_spearman_adjusted < a, ]
 ```
 
 ## Correlation of α-diversity with canker count
 
-```{r}
-
+```{r α-diversity correlations}
 measures <- c("shannon", "simpson") #, "S.chao1", "S.obs", "S.ACE")
 corr_methods <- c("pearson", "spearman")
 
-# Calculate correlations for each α-diversity measure with canker count
-alpha_correlations <- data.table(
-  measure = rep(measures, each = length(methods)),
-  method = rep(methods, times = length(measures)),
-  estimate = c(
-    sapply(measures, function(x) cor.test(all_alpha_ord[[x]], all_alpha_ord$total_cankers, method = "pearson")$estimate),
-    sapply(measures, function(x) cor.test(all_alpha_ord[[x]], all_alpha_ord$total_cankers, method = "spearman", exact = F)$estimate)
-  ),
-  p_value = c(
-    sapply(measures, function(x) cor.test(all_alpha_ord[[x]], all_alpha_ord$total_cankers, method = "pearson")$p.value),
-    sapply(measures, function(x) cor.test(all_alpha_ord[[x]], all_alpha_ord$total_cankers, method = "spearman", exact = F)$p.value)
-  ),
-  p_adjusted = c(
-    p.adjust(sapply(measures, function(x) cor.test(all_alpha_ord[[x]], all_alpha_ord$total_cankers, method = "pearson")$p.value), method = "BH"),
-    p.adjust(sapply(measures, function(x) cor.test(all_alpha_ord[[x]], all_alpha_ord$total_cankers, method = "spearman", exact = F)$p.value), method = "BH")
-  )
-)
-```
-
-Alternative method
-
-```{r}
 # Calculate correlations for each α-diversity measure with canker count
 correlate <- function(df, canker_count, measures, corr_methods, return) {
   mat <- sapply(
@@ -822,7 +806,7 @@ alpha_correlations
 
 ## Correlation of β-diversity PCs with canker count
 
-```{r}
+```{r β-diversity correlations}
 no_pcs <- 4
 
 # Merge PC scores with canker data
@@ -844,8 +828,6 @@ beta_correlations$p_adjusted <- p.adjust(beta_correlations$p_value, method = "BH
 
 beta_correlations
 ```
-
-
 
 <!-- #=============================================================================== -->
 # **Bacteria**
