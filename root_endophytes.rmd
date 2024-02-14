@@ -40,7 +40,7 @@ ALPHA =      0.1   # DESeq2 alpha value
 OTUFILTER =  0.01  # Remove OTUs with proportion of total reads below value
 READFILTER = 0.05  # Will remove samples with read sum below sample_median_reads*READFILTER 
 PAIREDONLY = F     # Will remove the pair of samples which fail the readfilter - probably only useful for DESeq separated by type NOTE removes pairs before DESeq object is created   
-TAXCONF =    0.60  # Sets the taxonomy confidence level to get "rank" in taxonomy files
+TAXCONF =    0.80  # Sets the taxonomy confidence level to get "rank" in taxonomy files
 TOPOTU =     10    # Number of Top OTUs for summary information
 DIFFOTU =    10    # Number of Top OTUs for differential analysis
 
@@ -730,7 +730,7 @@ fun_nmds_plot
 
 # Correlation analysis
 
-## Correlation of abundance of top `r DIFFOTU` OTUs with canker count
+## Correlation of abundance of top `r DIFFOTU` ASVs with canker count
 
 ```{r}
 # Extract normalised counts from DESeq object
@@ -742,13 +742,19 @@ top_otus <- nc[order(rowSums(nc), decreasing = T)[1:DIFFOTU], ]
 # Check that sample names match
 identical(names(top_otus), rownames(colData))
 
+top_taxa <- taxData[rownames(top_otus), ]
+
 # Calculate Pearson correlation for each OTU in nc with mainstem canker count for each sample from colData
-correlations <- data.frame(
+correlations <- data.table(
+  OTU = rownames(top_taxa),
+  Taxonomy = top_taxa$rank,
   pearson = apply(top_otus, 1, function(x) cor.test(x, colData$total_cankers, method = "pearson")$estimate),
-  p_pearson = apply(top_otus, 1, function(x) cor.test(x, colData$total_cankers, method = "pearson")$p.value),
   spearman = apply(top_otus, 1, function(x) cor.test(x, colData$total_cankers, method = "spearman", exact = F)$estimate),
+  p_pearson = apply(top_otus, 1, function(x) cor.test(x, colData$total_cankers, method = "pearson")$p.value),
   p_spearman = apply(top_otus, 1, function(x) cor.test(x, colData$total_cankers, method = "spearman", exact = F)$p.value)
 )
+
+
 
 # Adjust p-values for multiple testing
 correlations$p_pearson_adjusted <- p.adjust(correlations$p_pearson, method = "BH")
@@ -756,6 +762,8 @@ correlations$p_spearman_adjusted <- p.adjust(correlations$p_spearman, method = "
 
 # Merge correlations with taxData
 
+
+correlations
 ```
 
 ## Correlation of α-diversity with canker count
@@ -808,6 +816,8 @@ alpha_correlations <- data.table(
 
 # Adjust p-values for multiple testing
 alpha_correlations$p_adjusted <- p.adjust(alpha_correlations$p_value, method = "BH")
+
+alpha_correlations
 ```
 
 ## Correlation of β-diversity PCs with canker count
