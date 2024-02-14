@@ -183,9 +183,35 @@ filt <- !colSums(ubiome_BAC$countData) > med * READFILTER
 cat("Bacteria: ",sum(filt),"sample(s) removed\n")
 ```
 
-## Filter reads
+## Filter ASVs
 
-Remove OTUs with read count below `r OTUFILTER * 100` % of total reads.
+### ASV read count
+
+Number of ASVs which account for 50 %, 80 %, and 99 % of total reads.
+
+```{r}
+asv_propotions <- function(countData, proportion){
+  i <- sum(countData)
+  y <- rowSums(countData)
+  y <- y[order(y, decreasing = T)]
+  asvs <- length(y[(cumsum(y) / i <= proportion)])
+  return(asvs)
+}
+
+proportions <- c(0.5, 0.9, 0.99, 1)
+
+top_asvs <- data.table(
+  "proportion" = proportions,
+  "Fungi" = lapply(proportions, function(x) asv_propotions(ubiome_FUN$countData, x)),
+  "Bacteria" = lapply(proportions, function(x) asv_propotions(ubiome_BAC$countData, x))
+)
+
+top_asvs
+```
+
+### Filter ASVs
+
+Remove ASVs with read count below `r OTUFILTER * 100` % of total reads.
 
 ```{r filter_reads}
 # Fungi
@@ -806,6 +832,7 @@ beta_correlations <- data.table(
 # Adjust p-values for multiple testing
 beta_correlations$p_adjusted <- p.adjust(beta_correlations$p_value, method = "BH")
 
+beta_correlations
 ```
 
 
