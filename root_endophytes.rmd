@@ -615,18 +615,50 @@ formula = DESIGN
 ### Percent variation in first 4 PCs 
 
 ```{r}
-round(mypca$percentVar[1:4], 3)
+pca_var <- data.frame(
+  row.names = c("PC1", "PC2", "PC3", "PC4"),
+  perc_var = round(mypca$percentVar[1:4] * 100, 3)
+)
+
+pca_var
 ```
 
 ### ANOVA of first 4 PCs
 
 ```{r} 
-apply(
+pca_summary <- apply(
   mypca$x[, 1:4], 2, 
   function(x){
     summary(aov(update(formula, x ~ .), data = as.data.frame(cbind(x, colData(dds)))))
   }
 )
+
+pca_summary
+```
+
+### Percent variation in first 4 PCs for each factor
+
+```{r}
+pcas <- list(
+  PC1 = data.frame(unclass(pca_summary$PC1)),
+  PC2 = data.frame(unclass(pca_summary$PC2)),
+  PC3 = data.frame(unclass(pca_summary$PC3)),
+  PC4 = data.frame(unclass(pca_summary$PC4))
+)
+
+pca_factors <- data.table(
+  PCs = names(pcas),
+  total_var = pca_var$perc_var,
+  site_var = sapply(pcas, function(x) (x['trial', 'Sum.Sq'] / sum(x['Sum.Sq'])) * 100),
+  site_p = sapply(pcas, function(x) x['trial', 'Pr..F.']),
+  cultivar_var = sapply(pcas, function(x) (x['cultivar', 'Sum.Sq'] / sum(x['Sum.Sq'])) * 100),
+  cultivar_p = sapply(pcas, function(x) x['cultivar', 'Pr..F.']),
+  season_var = sapply(pcas, function(x) (x['planting_season', 'Sum.Sq'] / sum(x['Sum.Sq'])) * 100),
+  season_p = sapply(pcas, function(x) x['planting_season', 'Pr..F.']),
+  residuals_var = sapply(pcas, function(x) (x['Residuals', 'Sum.Sq'] / sum(x['Sum.Sq'])) * 100)
+)
+
+pca_factors
 ```
 
 ### PCA plot
@@ -1041,17 +1073,49 @@ formula = DESIGN
 
 ### Percent variation in first 4 PCs 
 ```{r}
-round(mypca$percentVar[1:4], 3)
+pca_var <- data.frame(
+  row.names = c("PC1", "PC2", "PC3", "PC4"),
+  perc_var = round(mypca$percentVar[1:4] * 100, 3)
+)
+
+pca_var
 ```
 
 ### ANOVA of first 4 PCs
 ```{r} 
-apply(
+pca_summary <- apply(
   mypca$x[, 1:4], 2, 
   function(x){
     summary(aov(update(formula, x ~ .), data = as.data.frame(cbind(x, colData(dds)))))
   }
 )
+
+pca_summary
+```
+
+### Percent variation in first 4 PCs for each factor
+
+```{r}
+pcas <- list(
+  PC1 = data.frame(unclass(pca_summary$PC1)),
+  PC2 = data.frame(unclass(pca_summary$PC2)),
+  PC3 = data.frame(unclass(pca_summary$PC3)),
+  PC4 = data.frame(unclass(pca_summary$PC4))
+)
+
+pca_factors <- data.table(
+  PCs = names(pcas),
+  total_var = pca_var$perc_var,
+  site_var = sapply(pcas, function(x) (x['trial', 'Sum.Sq'] / sum(x['Sum.Sq'])) * 100),
+  site_p = sapply(pcas, function(x) x['trial', 'Pr..F.']),
+  cultivar_var = sapply(pcas, function(x) (x['cultivar', 'Sum.Sq'] / sum(x['Sum.Sq'])) * 100),
+  cultivar_p = sapply(pcas, function(x) x['cultivar', 'Pr..F.']),
+  season_var = sapply(pcas, function(x) (x['planting_season', 'Sum.Sq'] / sum(x['Sum.Sq'])) * 100),
+  season_p = sapply(pcas, function(x) x['planting_season', 'Pr..F.']),
+  residuals_var = sapply(pcas, function(x) (x['Residuals', 'Sum.Sq'] / sum(x['Sum.Sq'])) * 100)
+)
+
+pca_factors
 ```
 
 ### PCA plot
