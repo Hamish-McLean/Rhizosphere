@@ -1,4 +1,4 @@
-code	id	trial	row	block	cultivar_code 	cultivar	planting_date	health_1	health_2
+code	id	site	row	block	cultivar_code 	cultivar	planting_date	health_1	health_2
 HMS22	S2-2	Scripps	17	2	2	Golden Delicious	dec	0	0
 HMS23	S2-3	Scripps	17	2	3	Grenadier	dec	0	0
 HMS24	S2-4	Scripps	17	2	4	Gala	dec	0	0
