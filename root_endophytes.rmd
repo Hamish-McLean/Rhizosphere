@@ -869,7 +869,48 @@ correlations[correlations$p_pearson_adjusted < a | correlations$p_spearman_adjus
 ## Effect of site, cultivar, and planting season on abundance of top `r DIFFOTU` ASVs
 
 ```{r ASV anova}
+top_otu_data <- data.frame(t(top_otus))
+top_otu_ids <- rownames(top_otus)
+identical(rownames(top_otu_data), rownames(colData))
 
+top_otu_data <- merge(top_otu_data, colData, by = 0) %>% column_to_rownames("Row.names")
+
+for (i in 1:length(top_otu_ids)) {
+  a = aov(update(formula, top_otu_data[[i]] ~ .), data = top_otu_data)
+  print(summary(a))
+}
+
+
+
+
+otu_anova <- function(otu, formula, data) {
+  a = data.frame(unclass(summary(aov(update(formula, paste(otu, "~ .")), data = data))))
+  d = data.frame(
+    OTU = otu,
+    Taxonomy = taxData[otu, "rank"],
+    site_var = a['site', 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
+    site_p = a['site', 'Pr..F.'],
+    cultivar_var = a['cultivar', 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
+    cultivar_p = a['cultivar', 'Pr..F.'],
+    season_var = a['planting_season', 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
+    season_p = a['planting_season', 'Pr..F.'],
+    residuals_var = a['Residuals', 'Sum.Sq'] / sum(a$Sum.Sq) * 100
+  )
+  return(d)
+}
+
+formula <- DESIGN
+
+otu_anova_results <- data.table(t(sapply(top_otu_ids, function(x) otu_anova(x, formula, top_otu_data))))
+
+otu_anova_results_adjusted <- otu_anova_results %>% 
+  mutate(
+    site_p = p.adjust(site_p, method = "BH"),
+    cultivar_p = p.adjust(cultivar_p, method = "BH"),
+    season_p = p.adjust(season_p, method = "BH")
+  )
+
+otu_anova_results_adjusted
 ```
 
 ## Correlation of α-diversity with canker count
