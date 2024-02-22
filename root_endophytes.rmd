@@ -42,7 +42,7 @@ READFILTER = 0.05  # Will remove samples with read sum below sample_median_reads
 PAIREDONLY = F     # Will remove the pair of samples which fail the readfilter - probably only useful for DESeq separated by type NOTE removes pairs before DESeq object is created   
 TAXCONF =    0.80  # Sets the taxonomy confidence level to get "rank" in taxonomy files
 TOPOTU =     10    # Number of Top OTUs for summary information
-DIFFOTU =    10    # Number of Top OTUs for correlation analysis
+DIFFOTU =    200    # Number of Top OTUs for correlation analysis
 
 DNORM =      F     # Boolean for DeSeq2 normalisation
 
@@ -295,6 +295,29 @@ Canker count data for differential expression analysis.
 Area under the disease progression curve (AUDPC) is calculated for each tree
 using the formula $$\sum_{i=1}^{n-1} \frac{(y_i + y_{i+1})}{2} (x_{i+1} - x_i)$$
 where $y_i$ is the canker count at time $x_i$.
+
+```{r canker_data}
+# Canker count data for sampled trees only
+
+all_canker_data <- fread("all_canker_data.csv")
+
+# Remove spaces from column names and convert to lowercase
+colnames(all_canker_data) <- tolower(gsub(" ", "_", colnames(all_canker_data)))
+
+# Add planting season to canker data and set tree_id and id columns
+all_canker_data <- mutate(
+  all_canker_data,
+  planting_season = case_when(
+    planting_date %in% c("March", "April") ~ "spring",
+    planting_date %in% c("Dec") ~ "winter"
+  ),
+  tree_id = id,
+  id = substr(tree_id, 1, 4)
+)
+
+# Filter canker data to match tree id
+
+```
 
 ```{r}
 all_canker_data <- fread("all_canker_data.csv")
@@ -763,11 +786,11 @@ ggsave(filename = "fun_nmds_phy.png", plot = nmds_plot, path = "figures/")
 fun_nmds_plot
 ```
 
-# Correlation analysis
+# ASV abundance
 
-## Correlation of abundance of top `r DIFFOTU` ASVs with canker count
+## Filter top ASVs
 
-```{r ASV correlations}
+```{r top ASVs}
 # Extract normalised counts from DESeq object
 nc <- counts(dds, normalize = T) %>% as.data.frame()
 
@@ -778,7 +801,54 @@ top_otus <- nc[order(rowSums(nc), decreasing = T)[1:DIFFOTU], ]
 identical(names(top_otus), rownames(colData))
 
 top_taxa <- taxData[rownames(top_otus), ]
+```
 
+## Effect of design factors on abundance of top ASVs
+
+Effect of site, cultivar, and planting season on abundance of top `r DIFFOTU` ASVs
+
+```{r ASV anova}
+top_otu_data <- data.frame(t(top_otus))
+top_otu_ids <- rownames(top_otus)
+identical(rownames(top_otu_data), rownames(colData))
+
+top_otu_data <- merge(top_otu_data, colData, by = 0) %>% column_to_rownames("Row.names")
+
+otu_anova <- function(otu, formula, data) {
+  a = data.frame(unclass(summary(aov(update(formula, paste(otu, "~ .")), data = data))))
+  d = data.frame(
+    OTU = otu,
+    Taxonomy = taxData[otu, "rank"],
+    site_var = a['site', 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
+    site_p = a['site', 'Pr..F.'],
+    cultivar_var = a['cultivar', 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
+    cultivar_p = a['cultivar', 'Pr..F.'],
+    season_var = a['planting_season', 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
+    season_p = a['planting_season', 'Pr..F.'],
+    residuals_var = a['Residuals', 'Sum.Sq'] / sum(a$Sum.Sq) * 100
+  )
+  return(d)
+}
+
+formula <- DESIGN
+
+otu_anova_results <- data.table(t(sapply(top_otu_ids, function(x) otu_anova(x, formula, top_otu_data))))
+
+otu_anova_results_adjusted <- otu_anova_results %>% 
+  mutate(
+    site_p = p.adjust(site_p, method = "BH"),
+    cultivar_p = p.adjust(cultivar_p, method = "BH"),
+    season_p = p.adjust(season_p, method = "BH")
+  )
+
+otu_anova_results_adjusted
+```
+
+# Correlations
+
+## Correlation of abundance of top `r DIFFOTU` ASVs with canker count
+
+```{r ASV correlations}
 # Calculate Pearson correlation for each OTU with mainstem canker count for each sample from colData
 correlations <- data.table(
   OTU = rownames(top_otus),
@@ -864,53 +934,6 @@ a <- 0.001
 
 # Correlations where p_pearson < a or p_spearman < a
 correlations[correlations$p_pearson_adjusted < a | correlations$p_spearman_adjusted < a, ]
-```
-
-## Effect of site, cultivar, and planting season on abundance of top `r DIFFOTU` ASVs
-
-```{r ASV anova}
-top_otu_data <- data.frame(t(top_otus))
-top_otu_ids <- rownames(top_otus)
-identical(rownames(top_otu_data), rownames(colData))
-
-top_otu_data <- merge(top_otu_data, colData, by = 0) %>% column_to_rownames("Row.names")
-
-for (i in 1:length(top_otu_ids)) {
-  a = aov(update(formula, top_otu_data[[i]] ~ .), data = top_otu_data)
-  print(summary(a))
-}
-
-
-
-
-otu_anova <- function(otu, formula, data) {
-  a = data.frame(unclass(summary(aov(update(formula, paste(otu, "~ .")), data = data))))
-  d = data.frame(
-    OTU = otu,
-    Taxonomy = taxData[otu, "rank"],
-    site_var = a['site', 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
-    site_p = a['site', 'Pr..F.'],
-    cultivar_var = a['cultivar', 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
-    cultivar_p = a['cultivar', 'Pr..F.'],
-    season_var = a['planting_season', 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
-    season_p = a['planting_season', 'Pr..F.'],
-    residuals_var = a['Residuals', 'Sum.Sq'] / sum(a$Sum.Sq) * 100
-  )
-  return(d)
-}
-
-formula <- DESIGN
-
-otu_anova_results <- data.table(t(sapply(top_otu_ids, function(x) otu_anova(x, formula, top_otu_data))))
-
-otu_anova_results_adjusted <- otu_anova_results %>% 
-  mutate(
-    site_p = p.adjust(site_p, method = "BH"),
-    cultivar_p = p.adjust(cultivar_p, method = "BH"),
-    season_p = p.adjust(season_p, method = "BH")
-  )
-
-otu_anova_results_adjusted
 ```
 
 ## Correlation of α-diversity with canker count
@@ -1303,97 +1326,60 @@ bac_nmds_plot + geom_segment(inherit.aes = F,data=phy,aes(xend=NMDS1,yend=NMDS2,
 ggsave(filename = "fun_nmds_phy.png", plot = bac_nmds_plot, path = "figures/")
 ``` 
 
+# ASV abundance
 
-<!-- #=============================================================================== -->
-#       differential analysis
-<!-- #=============================================================================== -->
+## Filter top ASVs
 
-## DESeq design 
-```{r}
+```{r Bac top ASVs}
+# Extract normalised counts from DESeq object
+nc <- counts(dds, normalize = T) %>% as.data.frame()
 
-# p value for FDR cutoff
-alpha <- 0.1
+# Filter the top x abundant OTUs by the sum of their normalised counts
+top_otus <- nc[order(rowSums(nc), decreasing = T)[1:DIFFOTU], ]
 
-# add design to dds object
-design(dds) <- formula
+# Check that sample names match
+identical(names(top_otus), rownames(colData))
 
-# run model
-dds <- DESeq(dds,parallel=F)
-
-# build results table
-res <- results(dds,alpha=alpha,contrast=c("Status","Diseased","Healthy"))
-
+top_taxa <- taxData[rownames(top_otus), ]
 ```
 
-## Result summary
+## Effect of design factors on top ASVs
 
-Rank is lowest taxonomic rank with >=0.65 confidence
+Effect of site, cultivar, and planting season on abundance of top `r DIFFOTU` ASVs
 
-### All samples
-```{r}
-summary(res)
+```{r Bac ASV anova}
+top_otu_data <- data.frame(t(top_otus))
+top_otu_ids <- rownames(top_otus)
+identical(rownames(top_otu_data), rownames(colData))
 
-# merge DESeq results with taxonomy
-res.merge <- as.data.table(res,keep.rownames="OTU")[
-  as.data.table(taxData,keep.rownames="OTU"),on="OTU"]
+top_otu_data <- merge(top_otu_data, colData, by = 0) %>% column_to_rownames("Row.names")
 
-# print sig. results
-res.merge[padj<=alpha,.(OTU,rank,
-                        baseMean=round(baseMean,2),
-                        FC=round(log2FoldChange,2),
-                        padj=round(padj,4))][order(FC,decreasing = T),]
+otu_anova <- function(otu, formula, data) {
+  a = data.frame(unclass(summary(aov(update(formula, paste(otu, "~ .")), data = data))))
+  d = data.frame(
+    OTU = otu,
+    Taxonomy = taxData[otu, "rank"],
+    site_var = a['site', 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
+    site_p = a['site', 'Pr..F.'],
+    cultivar_var = a['cultivar', 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
+    cultivar_p = a['cultivar', 'Pr..F.'],
+    season_var = a['planting_season', 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
+    season_p = a['planting_season', 'Pr..F.'],
+    residuals_var = a['Residuals', 'Sum.Sq'] / sum(a$Sum.Sq) * 100
+  )
+  return(d)
+}
 
-```
+formula <- DESIGN
 
-<!-- ### Write results -->
-<!-- ```{r} -->
+otu_anova_results <- data.table(t(sapply(top_otu_ids, function(x) otu_anova(x, formula, top_otu_data))))
 
-<!-- fwrite(res.merge,paste(RHB,"_DES.txt"),quote=F,na="",sep="\t") -->
-<!-- fwrite(res2.merge,paste(RHB,"_DES_Paired.txt"),quote=F,na="",sep="\t") -->
+otu_anova_results_adjusted <- otu_anova_results %>% 
+  mutate(
+    site_p = p.adjust(site_p, method = "BH"),
+    cultivar_p = p.adjust(cultivar_p, method = "BH"),
+    season_p = p.adjust(season_p, method = "BH")
+  )
 
-<!-- ``` -->
-
-# Differential analysis
-
-## DESeq design
-
-```{r}
-
-# P value for FDR cutoff
-alpha <- ALPHA
-
-# Model design
-formula <- ~ mainstem
-
-# Add design to dds object
-design(dds) <- formula
-
-# Run model
-dds <- DESeq(dds, parallel=F)
-
-# Build results table
-res <- results(dds, alpha = alpha)
-
-
-```
-
-### Result summary
-
-Rank is lowest taxonomic rank with >=0.65 confidence
-
-### All samples
-
-```{r}
-summary(res)
-
-# merge DESeq results with taxonomy
-res.merge <- as.data.table(res,keep.rownames="OTU")[
-  as.data.table(taxData,keep.rownames="OTU"),on="OTU"]
-
-# print sig. results
-res.merge[padj<=alpha,.(OTU,rank,
-                        baseMean=round(baseMean,2),
-                        FC=round(log2FoldChange,2),
-                        padj=round(padj,4))][order(FC,decreasing = T),]
-
+otu_anova_results_adjusted
 ```
