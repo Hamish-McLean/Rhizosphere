@@ -164,7 +164,7 @@ rare_fun <- gfunc(countData, colData, "Fungi")
 
 rarefaction_plots <- grid.arrange(
   rare_bac, rare_fun,
-  left = textGrob(label = expression("log"[10] * " aligned sequenecs"), rot = 90),
+  left = textGrob(label = expression("log"[10] * " aligned sequences"), rot = 90),
   bottom = "ASV count", nrow = 2
 )
 
@@ -243,6 +243,7 @@ abundance <- fread("mean_abundance.csv")
 abundance$id <- paste0("HM", gsub("-", "", abundance$Sample))
 # abundance$id <- abundance$Sample
 abundance$copy_number <- abundance$MeanAdjustedTCN_mg
+abundance$log_copy_number <- log10(abundance$copy_number)
 
 # Add bacterial (16S) and fungal (ITS) abundance to ubiome BAC and FUN named lists
 ubiome_FUN$abundance <- abundance[abundance$Target == "ITS"] %>%
@@ -253,12 +254,12 @@ ubiome_BAC$abundance <- abundance[abundance$Target == "16S"] %>%
 # Merge copy number from abundance with colData
 ubiome_FUN$colData <- merge(
   ubiome_FUN$colData, 
-  ubiome_FUN$abundance[, c("Target", "copy_number")], 
+  ubiome_FUN$abundance[, c("Target", "copy_number", "log_copy_number")], 
   by = 0
 ) %>% column_to_rownames(var = "Row.names")
 ubiome_BAC$colData <- merge(
   ubiome_BAC$colData, 
-  ubiome_BAC$abundance[, c("Target", "copy_number")], 
+  ubiome_BAC$abundance[, c("Target", "copy_number", "log_copy_number")], 
   by = 0
 ) %>% column_to_rownames(var = "Row.names")
 ```
@@ -525,7 +526,7 @@ Test the effect of site, cultivar, and planting season on copy number using ANOV
 ```{r}
 abundance_plot <- ggplot(
   data = as.data.frame(colData(dds)), 
-  aes(x = site, y = copy_number, colour = cultivar, shape = planting_season)
+  aes(x = site, y = log_copy_number, colour = cultivar, shape = planting_season)
 ) + geom_jitter() + 
   scale_colour_manual(values = cbPalette)
 
@@ -537,20 +538,20 @@ ggsave(
 abundance_plot
 
 # Formula for ANOVA
-formula <- update(DESIGN, copy_number ~ .)
+formula <- update(DESIGN, log_copy_number ~ .)
 
-abundance_anova <- aovp(formula, data = as.data.frame(colData(dds)))
+abundance_anova <- aov(formula, data = as.data.frame(colData(dds)))
 summary(abundance_anova)
 
-abundance_resid <- data.frame(residuals = residuals(abundance_anova))
+# abundance_resid <- data.frame(residuals = residuals(abundance_anova))
 
-norm <- ggplot(abundance_resid, aes(sample = residuals)) + stat_qq() + stat_qq_line()
-ggsave(
-  filename = "fun_abundance_norm.png", plot = norm, path = "figures/", 
-  height = 20, width = 20, units = "cm"
-)
+# norm <- ggplot(abundance_resid, aes(sample = residuals)) + stat_qq() + stat_qq_line()
+# ggsave(
+#   filename = "fun_abundance_norm.png", plot = norm, path = "figures/", 
+#   height = 20, width = 20, units = "cm"
+# )
 
-norm
+# norm
 ```
 
 # Alpha diversity analysis
@@ -1109,7 +1110,7 @@ data.table(
 ```{r}
 abundance_plot <- ggplot(
   data = as.data.frame(colData(dds)), 
-  aes(x = site, y = copy_number, colour = cultivar, shape = planting_season)
+  aes(x = site, y = log_copy_number, colour = cultivar, shape = planting_season)
 ) + geom_jitter() + 
   scale_colour_manual(values = cbPalette)
 
@@ -1121,9 +1122,9 @@ ggsave(
 abundance_plot
 
 # Formula for ANOVA
-formula <- update(DESIGN, copy_number ~ .)
+formula <- update(DESIGN, log_copy_number ~ .)
 
-abundance_anova <- aovp(formula, data = as.data.frame(colData(dds)))
+abundance_anova <- aov(formula, data = as.data.frame(colData(dds)))
 summary(abundance_anova)
 ```
 
