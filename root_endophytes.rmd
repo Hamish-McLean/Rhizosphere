@@ -44,7 +44,7 @@ TAXCONF =    0.80  # Sets the taxonomy confidence level to get "rank" in taxonom
 TOPOTU =     10    # Number of Top OTUs for summary information
 DIFFOTU =    200    # Number of Top OTUs for correlation analysis
 
-DNORM =      F     # Boolean for DeSeq2 normalisation
+DNORM =      T     # Boolean for DeSeq2 normalisation
 
 # graphics
 DEVICE =     "png"
@@ -725,7 +725,7 @@ round(colSums(perVar) / sum(colSums(perVar)) * 100, 3)
 ## ADONIS
 
 ```{r}
-vg <- vegdist(t(counts(dds, normalize = DNORM)), method = "bray")
+vg <- vegdist(t(counts(dds, normalize = T)), method = "bray")
 set.seed(sum(utf8ToInt("Hamish McLean")))
 adonis2(update(formula, vg ~ .), colData(dds), permutations = 1000)
 ```
@@ -800,7 +800,11 @@ top_otus <- nc[order(rowSums(nc), decreasing = T)[1:DIFFOTU], ]
 # Check that sample names match
 identical(names(top_otus), rownames(colData))
 
+# Extract taxonomic data for top OTUs
 top_taxa <- taxData[rownames(top_otus), ]
+
+# Log transform normalised counts
+top_otus <- log10(top_otus + 1)
 ```
 
 ## Effect of design factors on abundance of top ASVs
@@ -842,6 +846,9 @@ otu_anova_results_adjusted <- otu_anova_results %>%
   )
 
 otu_anova_results_adjusted
+
+nrow(otu_anova_results_adjusted[otu_anova_results_adjusted$site_p < 0.05, ])
+nrow(otu_anova_results_adjusted[otu_anova_results_adjusted$cultivar_p < 0.05, ])
 ```
 
 # Correlations
@@ -1284,7 +1291,7 @@ round(colSums(perVar) / sum(colSums(perVar)) * 100, 3)
 ## ADONIS
 
 ```{r}
-vg <- vegdist(t(counts(dds, normalize = DNORM)), method = "bray")
+vg <- vegdist(t(counts(dds, normalize = T)), method = "bray")
 set.seed(sum(utf8ToInt("Hamish McLean")))
 adonis2(update(formula, vg ~ .), colData(dds), permutations = 1000)
 ```
@@ -1340,7 +1347,11 @@ top_otus <- nc[order(rowSums(nc), decreasing = T)[1:DIFFOTU], ]
 # Check that sample names match
 identical(names(top_otus), rownames(colData))
 
+# Extract taxonomic data for top OTUs
 top_taxa <- taxData[rownames(top_otus), ]
+
+# Log transform normalised counts
+top_otus <- log10(top_otus + 1)
 ```
 
 ## Effect of design factors on top ASVs
@@ -1382,4 +1393,9 @@ otu_anova_results_adjusted <- otu_anova_results %>%
   )
 
 otu_anova_results_adjusted
+
+nrow(otu_anova_results_adjusted[otu_anova_results_adjusted$site_p < 0.05, ])
+nrow(otu_anova_results_adjusted[otu_anova_results_adjusted$cultivar_p < 0.05, ])
+
+otu_anova_results_adjusted[otu_anova_results_adjusted$cultivar_p < 0.05, ]
 ```
