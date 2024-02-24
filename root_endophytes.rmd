@@ -932,7 +932,7 @@ asv_canker_anova <- function(otu, data) {
   return(d)
 }
 
-# Effect of ASV abundance on canker count for all ASVs
+# Effect of ASV abundance on canker count for top ASVs
 asv_canker_results <- data.table(t(sapply(top_otu_ids, function(x) asv_canker_anova(x, top_otu_data))))
 
 # Adjust p-values for multiple testing
@@ -941,6 +941,61 @@ asv_canker_results$p_adjusted <- p.adjust(asv_canker_results$p, method = "BH")
 # Summary of ASVs with statistically significant (*P* < 0.05) adjusted p-values
 nrow(asv_canker_results[asv_canker_results$p_adjusted < 0.05, ])
 asv_canker_results[asv_canker_results$p_adjusted < 0.05, ]
+```
+
+## Effect of α-diversity on canker count
+
+```{r}
+# ANOVA of α-diversity with canker count
+
+measures <- c("shannon", "simpson")
+
+# ANOVA of α-diversity with canker count
+alpha_canker_anova <- function(measure, data) {
+  f = paste0("total_cankers ~ site + cultivar + planting_season + ", measure)
+  m = Anova(glm(f, data = data, family = "poisson"), type = "II", test = "F")
+  a = data.frame(m)
+  d = data.frame(
+    measure = measure,
+    var = a[measure, 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
+    p = a[measure, 'Pr..F.']
+  )
+  return(d)
+}
+
+# Effect of α-diversity on canker count for each measure
+alpha_canker_results <- data.table(t(sapply(measures, function(x) alpha_canker_anova(x, all_alpha_ord))))
+
+alpha_canker_results
+```
+
+## Effect of β-diversity on canker count
+
+```{r}
+no_pcs <- 4
+
+# Merge PC scores with canker data
+pc_scores <- merge(colData, data.frame(mypca$x[, 1:no_pcs]), by = "row.names") %>% 
+  column_to_rownames("Row.names")
+
+pcs <- tail(colnames(pc_scores), no_pcs)
+
+beta_canker_anova <- function(pc, data) {
+  f = paste0("total_cankers ~ site + cultivar + planting_season + ", pc)
+  m = Anova(glm(f, data = data, family = "poisson"), type = "II", test = "F")
+  a = data.frame(m)
+  d = data.frame(
+    PC = pc,
+    var = a[pc, 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
+    p = a[pc, 'Pr..F.']
+  )
+  return(d)
+}
+
+# Effect of β-diversity on canker count for each PC
+beta_canker_results <- data.table(t(sapply(pcs, function(x) beta_canker_anova(x, pc_scores))))
+
+beta_canker_results
 ```
 
 ## Correlation of abundance of top `r DIFFOTU` ASVs with canker count
@@ -1513,7 +1568,7 @@ asv_canker_anova <- function(otu, data) {
   return(d)
 }
 
-# Effect of ASV abundance on canker count for all ASVs
+# Effect of ASV abundance on canker count for top ASVs
 asv_canker_results <- data.table(t(sapply(top_otu_ids, function(x) asv_canker_anova(x, top_otu_data))))
 
 # Adjust p-values for multiple testing
@@ -1522,4 +1577,59 @@ asv_canker_results$p_adjusted <- p.adjust(asv_canker_results$p, method = "BH")
 # Summary of ASVs with statistically significant (*P* < 0.05) adjusted p-values
 nrow(asv_canker_results[asv_canker_results$p_adjusted < 0.05, ])
 asv_canker_results[asv_canker_results$p_adjusted < 0.05, ]
+```
+
+## Effect of α-diversity on canker count
+
+```{r}
+# ANOVA of α-diversity with canker count
+
+measures <- c("shannon", "simpson")
+
+# ANOVA of α-diversity with canker count
+alpha_canker_anova <- function(measure, data) {
+  f = paste0("total_cankers ~ site + cultivar + planting_season + ", measure)
+  m = Anova(glm(f, data = data, family = "poisson"), type = "II", test = "F")
+  a = data.frame(m)
+  d = data.frame(
+    measure = measure,
+    var = a[measure, 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
+    p = a[measure, 'Pr..F.']
+  )
+  return(d)
+}
+
+# Effect of α-diversity on canker count for each measure
+alpha_canker_results <- data.table(t(sapply(measures, function(x) alpha_canker_anova(x, all_alpha_ord))))
+
+alpha_canker_results
+```
+
+## Effect of β-diversity on canker count
+
+```{r}
+no_pcs <- 4
+
+# Merge PC scores with canker data
+pc_scores <- merge(colData, data.frame(mypca$x[, 1:no_pcs]), by = "row.names") %>% 
+  column_to_rownames("Row.names")
+
+pcs <- tail(colnames(pc_scores), no_pcs)
+
+beta_canker_anova <- function(pc, data) {
+  f = paste0("total_cankers ~ site + cultivar + planting_season + ", pc)
+  m = Anova(glm(f, data = data, family = "poisson"), type = "II", test = "F")
+  a = data.frame(m)
+  d = data.frame(
+    PC = pc,
+    var = a[pc, 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
+    p = a[pc, 'Pr..F.']
+  )
+  return(d)
+}
+
+# Effect of β-diversity on canker count for each PC
+beta_canker_results <- data.table(t(sapply(pcs, function(x) beta_canker_anova(x, pc_scores))))
+
+beta_canker_results
 ```
