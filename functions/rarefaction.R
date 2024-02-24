@@ -29,7 +29,7 @@ gfunc <- function(countData,colData,title) {
     theme(legend.position="none",axis.title=element_blank())
   
   # plot cumulative reads
-  g <- g + geom_line(size=1.5) + scale_colour_viridis(discrete=T)
+  g <- g + geom_line(linewidth=1.5) + scale_colour_viridis(discrete=T)
   
   # add axis lables
   g <- g + ggtitle(title)

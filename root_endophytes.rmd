@@ -3,6 +3,8 @@ title: "Root endophyte analysis"
 output: html_document
 ---
 
+Built with R version  `r getRversion()`.
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T)
 knitr::opts_chunk$set(message = F)
@@ -27,6 +29,7 @@ library(grid)
 library(gridExtra)
 library(cowplot)
 library(iNEXT)
+library(car)
 
 # library(devtools)
 # install_github("eastmallingresearch/Metabarcoding_pipeline/scripts")
@@ -56,6 +59,7 @@ HEIGHT =     9
 Factor1 = "site"
 Factor2 = "cultivar"
 DESIGN = y ~ site + planting_season + cultivar
+FULL_DESIGN = y ~ site * planting_season * cultivar
 ```
 
 ```{r functions}
@@ -65,7 +69,7 @@ cbPalette <- c(
   "#F0E442", "#0072B2", "#D55E00", "#CC79A7"
 )
 
-# source("functions/rarefaction.R")
+source("functions/rarefaction.R")
 source("functions/metabarcoding.R")
 source("functions/loadme.R")
 ```
@@ -291,36 +295,86 @@ Sample A1-3 is removed from the fungal data due to abnormally high copy number.
 
 # Canker count data
 
-Canker count data for differential expression analysis.
+Canker count data for sampled trees only.
 
-Area under the disease progression curve (AUDPC) is calculated for each tree
-using the formula $$\sum_{i=1}^{n-1} \frac{(y_i + y_{i+1})}{2} (x_{i+1} - x_i)$$
-where $y_i$ is the canker count at time $x_i$.
-
-```{r canker_data}
+```{r canker data}
 # Canker count data for sampled trees only
 
-all_canker_data <- fread("all_canker_data.csv")
+canker_data <- fread("canker_data.csv", select = c(1:5, 7:34))
 
 # Remove spaces from column names and convert to lowercase
-colnames(all_canker_data) <- tolower(gsub(" ", "_", colnames(all_canker_data)))
+colnames(canker_data) <- tolower(gsub(" ", "_", colnames(canker_data)))
 
-# Add planting season to canker data and set tree_id and id columns
-all_canker_data <- mutate(
-  all_canker_data,
+# Add planting season to canker data and total canker count for timepoint 4
+canker_data <- mutate(
+  canker_data,
   planting_season = case_when(
     planting_date %in% c("March", "April") ~ "spring",
     planting_date %in% c("Dec") ~ "winter"
   ),
-  tree_id = id,
-  id = substr(tree_id, 1, 4)
+  total_cankers = a4 + b4 + c4 + d4 + e4
 )
 
-# Filter canker data to match tree id
+# Identify samples with missing values
+missing <- unique(canker_data[!complete.cases(canker_data), code])
 
+# Also remove sample A2-7 due to missampling
+missing <- c(missing, "HMA27")
+
+# Remove missing samples from canker data
+canker_data <- canker_data[!canker_data$code %in% missing, ]
+
+# Verify that there are two trees for each sample
+canker_data %>% group_by(code) %>% summarise(n = n()) %>% filter(n != 2)
+
+# Sum of total cankers for each pair of trees with matching code
+cankers <- canker_data %>% 
+  group_by(code) %>% 
+  summarise(
+    site = first(site),
+    planting_season = first(planting_season),
+    cultivar = first(cultivar),
+    total_cankers = sum(total_cankers)
+  ) %>% 
+  column_to_rownames("code")
+
+# Add total canker count to colData for both FUN and BAC
+ubiome_FUN$colData <- merge(
+  ubiome_FUN$colData, 
+  cankers, 
+  by = 0,
+  all.x = T
+) %>% column_to_rownames("Row.names")
+
+ubiome_BAC$colData <- merge(
+  ubiome_BAC$colData, 
+  cankers, 
+  by = 0,
+  all.x = T
+) %>% column_to_rownames("Row.names")
 ```
 
+Summary stats
+
 ```{r}
+png("figures/hist.png", width = 800, height = 600)
+hist(cankers$total_cankers, breaks = 20, main = "Total canker count", xlab = "Total canker count")
+dev.off()
+```
+
+GLM
+
+```{r canker GLM}
+# Effect of site, cultivar, and planting season on canker count
+
+canker_model <- glm(update(FULL_DESIGN, total_cankers ~ .), data = cankers, family = "poisson")
+Anova(canker_model, type = "II", test = "F")
+
+canker_model <- glm(update(DESIGN, total_cankers ~ .), data = cankers, family = "poisson")
+Anova(canker_model, type = "II", test = "F")
+```
+
+```{r plotwise canker data, eval = FALSE}
 all_canker_data <- fread("all_canker_data.csv")
 
 # Remove spaces from column names and convert to lowercase
@@ -852,7 +906,7 @@ nrow(otu_anova_results_adjusted[otu_anova_results_adjusted$site_p < 0.05, ])
 nrow(otu_anova_results_adjusted[otu_anova_results_adjusted$cultivar_p < 0.05, ])
 ```
 
-# Correlations
+# Canker counts
 
 ## Correlation of abundance of top `r DIFFOTU` ASVs with canker count
 
