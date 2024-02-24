@@ -341,14 +341,14 @@ cankers <- canker_data %>%
 # Add total canker count to colData for both FUN and BAC
 ubiome_FUN$colData <- merge(
   ubiome_FUN$colData, 
-  cankers, 
+  cankers["total_cankers"], 
   by = 0,
   all.x = T
 ) %>% column_to_rownames("Row.names")
 
 ubiome_BAC$colData <- merge(
   ubiome_BAC$colData, 
-  cankers, 
+  cankers["total_cankers"], 
   by = 0,
   all.x = T
 ) %>% column_to_rownames("Row.names")
@@ -464,7 +464,6 @@ Values are centred around the mean of the copy number.
 
 ubiome_FUN$dds$sizeFactor <- ubiome_FUN$dds$copy_number / mean(ubiome_FUN$dds$copy_number)
 ubiome_BAC$dds$sizeFactor <- ubiome_BAC$dds$copy_number / mean(ubiome_BAC$dds$copy_number)
-
 ```
 
 <!-- #=============================================================================== -->
@@ -592,7 +591,7 @@ ggsave(
 abundance_plot
 
 # Formula for ANOVA
-formula <- update(DESIGN, log_copy_number ~ .)
+formula <- update(FULL_DESIGN, log_copy_number ~ .)
 
 abundance_anova <- aov(formula, data = as.data.frame(colData(dds)))
 summary(abundance_anova)
@@ -860,6 +859,15 @@ top_taxa <- taxData[rownames(top_otus), ]
 
 # Log transform normalised counts
 top_otus <- log10(top_otus + 1)
+
+top_otu_data <- data.frame(t(top_otus))
+top_otu_ids <- rownames(top_otus)
+
+# Check that sample names match
+identical(rownames(top_otu_data), rownames(colData))
+
+# Add sample metadata to top OTU data
+top_otu_data <- merge(top_otu_data, colData, by = 0) %>% column_to_rownames("Row.names")
 ```
 
 ## Effect of design factors on abundance of top ASVs
@@ -867,12 +875,7 @@ top_otus <- log10(top_otus + 1)
 Effect of site, cultivar, and planting season on abundance of top `r DIFFOTU` ASVs
 
 ```{r ASV anova}
-top_otu_data <- data.frame(t(top_otus))
-top_otu_ids <- rownames(top_otus)
-identical(rownames(top_otu_data), rownames(colData))
-
-top_otu_data <- merge(top_otu_data, colData, by = 0) %>% column_to_rownames("Row.names")
-
+# ANOVA of top ASVs
 otu_anova <- function(otu, formula, data) {
   a = data.frame(unclass(summary(aov(update(formula, paste(otu, "~ .")), data = data))))
   d = data.frame(
@@ -904,9 +907,41 @@ otu_anova_results_adjusted
 
 nrow(otu_anova_results_adjusted[otu_anova_results_adjusted$site_p < 0.05, ])
 nrow(otu_anova_results_adjusted[otu_anova_results_adjusted$cultivar_p < 0.05, ])
+nrow(otu_anova_results_adjusted[otu_anova_results_adjusted$season_p < 0.05, ])
 ```
 
 # Canker counts
+
+## Effect of ASV abundance on canker count
+
+```{r}
+# Filter out samples with missing canker count
+top_otu_data <- top_otu_data[complete.cases(top_otu_data$total_cankers), ]
+
+# ANOVA of top ASVs with canker count
+asv_canker_anova <- function(otu, data) {
+  f = paste0("total_cankers ~ site + cultivar + planting_season + ", otu)
+  m = Anova(glm(f, data = data, family = "poisson"), type = "II", test = "F")
+  a = data.frame(m)
+  d = data.frame(
+    OTU = otu,
+    Taxonomy = taxData[otu, "rank"],
+    var = a[otu, 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
+    p = a[otu, 'Pr..F.']
+  )
+  return(d)
+}
+
+# Effect of ASV abundance on canker count for all ASVs
+asv_canker_results <- data.table(t(sapply(top_otu_ids, function(x) asv_canker_anova(x, top_otu_data))))
+
+# Adjust p-values for multiple testing
+asv_canker_results$p_adjusted <- p.adjust(asv_canker_results$p, method = "BH")
+
+# Summary of ASVs with statistically significant (*P* < 0.05) adjusted p-values
+nrow(asv_canker_results[asv_canker_results$p_adjusted < 0.05, ])
+asv_canker_results[asv_canker_results$p_adjusted < 0.05, ]
+```
 
 ## Correlation of abundance of top `r DIFFOTU` ASVs with canker count
 
@@ -1407,6 +1442,12 @@ top_taxa <- taxData[rownames(top_otus), ]
 
 # Log transform normalised counts
 top_otus <- log10(top_otus + 1)
+
+top_otu_data <- data.frame(t(top_otus))
+top_otu_ids <- rownames(top_otus)
+identical(rownames(top_otu_data), rownames(colData))
+
+top_otu_data <- merge(top_otu_data, colData, by = 0) %>% column_to_rownames("Row.names")
 ```
 
 ## Effect of design factors on top ASVs
@@ -1414,12 +1455,6 @@ top_otus <- log10(top_otus + 1)
 Effect of site, cultivar, and planting season on abundance of top `r DIFFOTU` ASVs
 
 ```{r Bac ASV anova}
-top_otu_data <- data.frame(t(top_otus))
-top_otu_ids <- rownames(top_otus)
-identical(rownames(top_otu_data), rownames(colData))
-
-top_otu_data <- merge(top_otu_data, colData, by = 0) %>% column_to_rownames("Row.names")
-
 otu_anova <- function(otu, formula, data) {
   a = data.frame(unclass(summary(aov(update(formula, paste(otu, "~ .")), data = data))))
   d = data.frame(
@@ -1451,6 +1486,40 @@ otu_anova_results_adjusted
 
 nrow(otu_anova_results_adjusted[otu_anova_results_adjusted$site_p < 0.05, ])
 nrow(otu_anova_results_adjusted[otu_anova_results_adjusted$cultivar_p < 0.05, ])
+nrow(otu_anova_results_adjusted[otu_anova_results_adjusted$season_p < 0.05, ])
 
 otu_anova_results_adjusted[otu_anova_results_adjusted$cultivar_p < 0.05, ]
+```
+
+# Canker counts
+
+## Effect of ASV abundance on canker count
+
+```{r}
+# Filter out samples with missing canker count
+top_otu_data <- top_otu_data[complete.cases(top_otu_data$total_cankers), ]
+
+# ANOVA of top ASVs with canker count
+asv_canker_anova <- function(otu, data) {
+  f = paste0("total_cankers ~ site + cultivar + planting_season + ", otu)
+  m = Anova(glm(f, data = data, family = "poisson"), type = "II", test = "F")
+  a = data.frame(m)
+  d = data.frame(
+    OTU = otu,
+    Taxonomy = taxData[otu, "rank"],
+    var = a[otu, 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
+    p = a[otu, 'Pr..F.']
+  )
+  return(d)
+}
+
+# Effect of ASV abundance on canker count for all ASVs
+asv_canker_results <- data.table(t(sapply(top_otu_ids, function(x) asv_canker_anova(x, top_otu_data))))
+
+# Adjust p-values for multiple testing
+asv_canker_results$p_adjusted <- p.adjust(asv_canker_results$p, method = "BH")
+
+# Summary of ASVs with statistically significant (*P* < 0.05) adjusted p-values
+nrow(asv_canker_results[asv_canker_results$p_adjusted < 0.05, ])
+asv_canker_results[asv_canker_results$p_adjusted < 0.05, ]
 ```
