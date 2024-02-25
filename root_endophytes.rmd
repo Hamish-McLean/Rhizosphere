@@ -30,6 +30,10 @@ library(gridExtra)
 library(cowplot)
 library(iNEXT)
 library(car)
+library(pscl)
+library(DHARMa)
+library(MASS)
+library(rcompanion)
 
 # library(devtools)
 # install_github("eastmallingresearch/Metabarcoding_pipeline/scripts")
@@ -69,9 +73,9 @@ cbPalette <- c(
   "#F0E442", "#0072B2", "#D55E00", "#CC79A7"
 )
 
-source("functions/rarefaction.R")
 source("functions/metabarcoding.R")
 source("functions/loadme.R")
+source("functions/rarefaction.R")
 ```
 
 # Load data
@@ -357,9 +361,34 @@ ubiome_BAC$colData <- merge(
 Summary stats
 
 ```{r}
-png("figures/hist.png", width = 800, height = 600)
-hist(cankers$total_cankers, breaks = 20, main = "Total canker count", xlab = "Total canker count")
-dev.off()
+# png("figures/hist.png", width = 800, height = 600)
+# hist(cankers$total_cankers, breaks = 20, main = "Total canker count", xlab = "Total canker count")
+# dev.off()
+
+cankers_hist <- ggplot(cankers, aes(x = total_cankers)) + 
+  geom_histogram(bins = 20) + 
+  facet_grid(site ~ .) +
+  labs(title = "Total canker count", x = "Total canker count")
+
+cankers_hist
+
+ggsave(filename = "cankers_hist.png", plot = cankers_hist, path = "figures/")
+
+cankers_scatter <- ggplot(cankers, aes(x = site, y = total_cankers, colour = cultivar)) + 
+  geom_jitter() +
+  labs(title = "Total canker count", x = "Site", y = "Total canker count")
+
+cankers_scatter
+
+ggsave(filename = "cankers_scatter.png", plot = cankers_scatter, path = "figures/")
+
+cankers_box <- ggplot(cankers, aes(x = site, y = total_cankers, fill = planting_season)) + 
+  geom_boxplot() +
+  labs(title = "Total canker count", x = "Site", y = "Total canker count")
+
+cankers_box
+
+ggsave(filename = "cankers_box.png", plot = cankers_box, path = "figures/")
 ```
 
 GLM
@@ -367,11 +396,47 @@ GLM
 ```{r canker GLM}
 # Effect of site, cultivar, and planting season on canker count
 
-canker_model <- glm(update(FULL_DESIGN, total_cankers ~ .), data = cankers, family = "poisson")
-Anova(canker_model, type = "II", test = "F")
+# Log-linear model
+canker_model <- lm(update(FULL_DESIGN, log(total_cankers + 1) ~ .), data = cankers)
 
-canker_model <- glm(update(DESIGN, total_cankers ~ .), data = cankers, family = "poisson")
-Anova(canker_model, type = "II", test = "F")
+# Residual checking
+res <- resid(canker_model, type = "pearson")
+
+plot(fitted(canker_model), res) 
+abline(0,0, col="red")
+
+qqnorm(res)
+abline(0,1, col="red")
+
+# Residuals not normally distributed
+
+# Poisson model
+canker_model <- glm(update(FULL_DESIGN, total_cankers ~ .), data = cankers, family = "poisson")
+
+plot(simulateResiduals(canker_model))
+
+# Model overdispersed
+
+# Negative binomial model
+canker_model <- glm.nb(update(FULL_DESIGN, total_cankers ~ .), data = cankers)
+
+sim <- simulateResiduals(canker_model)
+plot(sim)
+png("figures/canker_residuals.png", width = 800, height = 600)
+plot(sim)
+dev.off()
+
+testZeroInflation(sim)
+
+nagelkerke(canker_model)
+
+# Model good fit
+
+Anova(canker_model, type = "II", test = "LR")
+
+# Type II ANOVA shows significant interactions, but type III ANOVA does not work
+# with the FULL_DESIGN model
+
 ```
 
 ```{r plotwise canker data, eval = FALSE}
