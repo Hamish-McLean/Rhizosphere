@@ -715,7 +715,7 @@ all_alpha_ord <- all_alpha_ord[
   on = "Samples"
 ]
 
-formula <- DESIGN # x ~ site * planting_date * cultivar + site / site.block
+formula <- FULL_DESIGN # x ~ site * planting_date * cultivar + site / site.block
 ```
 
 ### Chao1
@@ -754,7 +754,7 @@ mypca <- des_to_pca(dds)
 # To get pca plot axis into the same scale create a dataframe of PC scores multiplied by their variance
 d <- t(data.frame(t(mypca$x) * mypca$percentVar))
 
-formula = DESIGN
+formula = FULL_DESIGN
 ```
 
 ### Percent variation in first 4 PCs 
@@ -844,9 +844,13 @@ round(colSums(perVar) / sum(colSums(perVar)) * 100, 3)
 ## ADONIS
 
 ```{r}
+# Calculate Bray-Curtis distance matrix
 vg <- vegdist(t(counts(dds, normalize = T)), method = "bray")
+
+formula <- update(FULL_DESIGN, vg ~ .)
+
 set.seed(sum(utf8ToInt("Hamish McLean")))
-adonis2(update(formula, vg ~ .), colData(dds), permutations = 1000)
+adonis2(formula, colData(dds), permutations = 1000)
 ```
 
 ## NMDS ordination
@@ -957,7 +961,7 @@ otu_anova <- function(otu, formula, data) {
   return(d)
 }
 
-formula <- DESIGN
+formula <- FULL_DESIGN
 
 otu_anova_results <- data.table(t(sapply(top_otu_ids, function(x) otu_anova(x, formula, top_otu_data))))
 
@@ -1185,7 +1189,7 @@ ggsave(
 abundance_plot
 
 # Formula for ANOVA
-formula <- update(DESIGN, log_copy_number ~ .)
+formula <- update(FULL_DESIGN, log_copy_number ~ .)
 
 abundance_anova <- aov(formula, data = as.data.frame(colData(dds)))
 summary(abundance_anova)
@@ -1232,7 +1236,7 @@ all_alpha_ord <- all_alpha_ord[
   as.data.table(colData(dds), keep.rownames = "Samples"), on = "Samples"
 ]
 
-formula <- DESIGN
+formula <- FULL_DESIGN
 ```
 
 ### Chao1
@@ -1270,7 +1274,7 @@ mypca <- des_to_pca(dds)
 # to get pca plot axis into the same scale create a dataframe of PC scores multiplied by their variance
 d <- t(data.frame(t(mypca$x) * mypca$percentVar))
 
-formula = DESIGN
+formula = FULL_DESIGN
 ```
 
 ### Percent variation in first 4 PCs 
@@ -1355,9 +1359,13 @@ round(colSums(perVar) / sum(colSums(perVar)) * 100, 3)
 ## ADONIS
 
 ```{r}
+# Calculate Bray-Curtis distance matrix
 vg <- vegdist(t(counts(dds, normalize = T)), method = "bray")
+
+formula <- update(FULL_DESIGN, vg ~ .)
+
 set.seed(sum(utf8ToInt("Hamish McLean")))
-adonis2(update(formula, vg ~ .), colData(dds), permutations = 1000)
+adonis2(formula, colData(dds), permutations = 1000)
 ```
 
 ## NMDS ordination
@@ -1445,7 +1453,7 @@ otu_anova <- function(otu, formula, data) {
   return(d)
 }
 
-formula <- DESIGN
+formula <- FULL_DESIGN
 
 otu_anova_results <- data.table(t(sapply(top_otu_ids, function(x) otu_anova(x, formula, top_otu_data))))
 
