@@ -34,6 +34,7 @@ library(pscl)
 library(DHARMa)
 library(MASS)
 library(rcompanion)
+library(ggpubr)
 
 # library(devtools)
 # install_github("eastmallingresearch/Metabarcoding_pipeline/scripts")
@@ -365,26 +366,21 @@ Summary stats
 # hist(cankers$total_cankers, breaks = 20, main = "Total canker count", xlab = "Total canker count")
 # dev.off()
 
-cankers_hist <- ggplot(cankers, aes(x = total_cankers)) + 
-  geom_histogram(bins = 20) + 
-  facet_grid(site ~ .) +
-  labs(title = "Total canker count", x = "Total canker count")
+cankers_hist <- ggdensity(
+  cankers, x = "total_cankers", fill = "site", facet.by = "site", ncol = 1,
+  add = "mean", rug = T, palette = cbPalette,
+  title = "Total canker count", xlab = "Total canker count"
+)
 
 cankers_hist
 
 ggsave(filename = "cankers_hist.png", plot = cankers_hist, path = "figures/")
 
-cankers_scatter <- ggplot(cankers, aes(x = site, y = total_cankers, colour = cultivar)) + 
-  geom_jitter() +
-  labs(title = "Total canker count", x = "Site", y = "Total canker count")
-
-cankers_scatter
-
-ggsave(filename = "cankers_scatter.png", plot = cankers_scatter, path = "figures/")
-
-cankers_box <- ggplot(cankers, aes(x = site, y = total_cankers, fill = planting_season)) + 
-  geom_boxplot() +
-  labs(title = "Total canker count", x = "Site", y = "Total canker count")
+cankers_box <- ggboxplot(
+  cankers, x = "site", y = "total_cankers", palette = cbPalette,
+  color = "cultivar", add = "jitter", legend = "top", 
+  title = "Total canker count", xlab = "Site", ylab = "Total canker count"
+)
 
 cankers_box
 
