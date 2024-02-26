@@ -512,12 +512,6 @@ if(identical(colnames(ubiome_BAC$countData), rownames(ubiome_BAC$colData))) {
 }
 ```
 
-
-# Create DESeq objects
-ubiome_FUN$dds <- ubiom_to_des(ubiome_FUN)
-ubiome_BAC$dds <- ubiom_to_des(ubiome_BAC)
-```
-
 # Abundance normalisation
 
 Absolute abundance normalisation using DESeq2 size factors.
@@ -648,6 +642,12 @@ abundance_plot <- ggplot(
 ) + geom_jitter() + 
   scale_colour_manual(values = cbPalette)
 
+abundance_plot <- ggboxplot(
+  data = as.data.frame(colData(dds)), x = "site", y = "log_copy_number", 
+  color = "cultivar", add = "jitter", legend = "top", 
+  title = "Fungal abundance", xlab = "Site", ylab = "log10 copy number"
+)
+
 ggsave(
   filename = "fun_abundance.png", plot = abundance_plot, path = "figures/", 
   height = 20, width = 20, units = "cm"
@@ -661,15 +661,16 @@ formula <- update(FULL_DESIGN, log_copy_number ~ .)
 abundance_anova <- aov(formula, data = as.data.frame(colData(dds)))
 summary(abundance_anova)
 
-# abundance_resid <- data.frame(residuals = residuals(abundance_anova))
+abundance_resid <- data.frame(residuals = residuals(abundance_anova))
 
-# norm <- ggplot(abundance_resid, aes(sample = residuals)) + stat_qq() + stat_qq_line()
-# ggsave(
-#   filename = "fun_abundance_norm.png", plot = norm, path = "figures/", 
-#   height = 20, width = 20, units = "cm"
-# )
+norm <- ggplot(abundance_resid, aes(sample = residuals)) + stat_qq() + stat_qq_line()
 
-# norm
+ggsave(
+  filename = "fun_abundance_norm.png", plot = norm, path = "figures/", 
+  height = 20, width = 20, units = "cm"
+)
+
+norm
 ```
 
 # Alpha diversity analysis
@@ -1240,6 +1241,12 @@ bac_alpha_plot <- plot_alpha(
   ggtitle("Bacterial α-diversity") + 
   labs(colour = "Site")
   # facet_wrap(~planting_season)
+
+abundance_plot <- ggboxplot(
+  data = as.data.frame(colData(dds)), x = "site", y = "log_copy_number", 
+  color = "cultivar", add = "jitter", legend = "top", 
+  title = "Fungal abundance", xlab = "Site", ylab = "log10 copy number"
+)
 
 ggsave(
   filename = "bac_alpha.png", plot = bac_alpha_plot, path = "figures/", 
