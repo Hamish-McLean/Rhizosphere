@@ -1004,6 +1004,8 @@ otu_anova_results_adjusted
 nrow(otu_anova_results_adjusted[otu_anova_results_adjusted$site_p < 0.05, ])
 nrow(otu_anova_results_adjusted[otu_anova_results_adjusted$cultivar_p < 0.05, ])
 nrow(otu_anova_results_adjusted[otu_anova_results_adjusted$season_p < 0.05, ])
+
+otu_anova_results_adjusted[otu_anova_results_adjusted$cultivar_p < 0.05, ]
 ```
 
 # Canker counts
@@ -1016,14 +1018,15 @@ top_otu_data <- top_otu_data[complete.cases(top_otu_data$total_cankers), ]
 
 # ANOVA of top ASVs with canker count
 asv_canker_anova <- function(otu, data) {
-  f = paste0("total_cankers ~ site + cultivar + planting_season + ", otu)
-  m = Anova(glm(f, data = data, family = "poisson"), type = "II", test = "F")
-  a = data.frame(m)
+  f = paste0("total_cankers ~ site * cultivar * planting_season + ", otu)
+  m = glm.nb(f, data = data)
+  a = anova(m, test = "Chisq") %>% data.frame()
+  total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
   d = data.frame(
     OTU = otu,
     Taxonomy = taxData[otu, "rank"],
-    var = a[otu, 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
-    p = a[otu, 'Pr..F.']
+    var = a[otu, 'Deviance'] / total_deviance * 100,
+    p = a[otu, 'Pr..Chi.']
   )
   return(d)
 }
@@ -1048,13 +1051,14 @@ measures <- c("shannon", "simpson")
 
 # ANOVA of α-diversity with canker count
 alpha_canker_anova <- function(measure, data) {
-  f = paste0("total_cankers ~ site + cultivar + planting_season + ", measure)
-  m = Anova(glm(f, data = data, family = "poisson"), type = "II", test = "F")
-  a = data.frame(m)
+  f = paste0("total_cankers ~ site * cultivar * planting_season + ", measure)
+  m = glm.nb(f, data = data)
+  a = anova(m, test = "Chisq") %>% data.frame()
+  total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
   d = data.frame(
     measure = measure,
-    var = a[measure, 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
-    p = a[measure, 'Pr..F.']
+    var = a[measure, 'Deviance'] / total_deviance * 100,
+    p = a[measure, 'Pr..Chi.']
   )
   return(d)
 }
@@ -1076,14 +1080,16 @@ pc_scores <- merge(colData, data.frame(mypca$x[, 1:no_pcs]), by = "row.names") %
 
 pcs <- tail(colnames(pc_scores), no_pcs)
 
+# ANOVA of β-diversity with canker count
 beta_canker_anova <- function(pc, data) {
-  f = paste0("total_cankers ~ site + cultivar + planting_season + ", pc)
-  m = Anova(glm(f, data = data, family = "poisson"), type = "II", test = "F")
-  a = data.frame(m)
+  f = paste0("total_cankers ~ site * cultivar * planting_season + ", pc)
+  m = glm.nb(f, data = data)
+  a = anova(m, test = "Chisq") %>% data.frame()
+  total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
   d = data.frame(
     PC = pc,
-    var = a[pc, 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
-    p = a[pc, 'Pr..F.']
+    var = a[pc, 'Deviance'] / total_deviance * 100,
+    p = a[pc, 'Pr..Chi.']
   )
   return(d)
 }
@@ -1470,6 +1476,7 @@ top_otu_data <- merge(top_otu_data, colData, by = 0) %>% column_to_rownames("Row
 Effect of site, cultivar, and planting season on abundance of top `r DIFFOTU` ASVs
 
 ```{r Bac ASV anova}
+# ANOVA of top ASVs
 otu_anova <- function(otu, formula, data) {
   a = data.frame(unclass(summary(aov(update(formula, paste(otu, "~ .")), data = data))))
   d = data.frame(
@@ -1482,6 +1489,25 @@ otu_anova <- function(otu, formula, data) {
     season_var = a['planting_season', 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
     season_p = a['planting_season', 'Pr..F.'],
     residuals_var = a['Residuals', 'Sum.Sq'] / sum(a$Sum.Sq) * 100
+  )
+  return(d)
+}
+
+# Negative binomial regression model
+otu_anova <- function(otu, formula, data) {
+  f = update(formula, paste0(otu, " ~ ."))
+  m = glm.nb(f, data = data)
+  a = anova(m, test = "Chisq") %>% data.frame()
+  total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
+  d = data.frame(
+    OTU = otu,
+    Taxonomy = taxData[otu, "rank"],
+    site_var = a['site', 'Deviance'] / total_deviance * 100,
+    site_p = a['site', 'Pr..Chi.'],
+    cultivar_var = a['cultivar', 'Deviance'] / total_deviance * 100,
+    cultivar_p = a['cultivar', 'Pr..Chi.'],
+    season_var = a['planting_season', 'Deviance'] / total_deviance * 100,
+    season_p = a['planting_season', 'Pr..Chi.']
   )
   return(d)
 }
@@ -1516,14 +1542,15 @@ top_otu_data <- top_otu_data[complete.cases(top_otu_data$total_cankers), ]
 
 # ANOVA of top ASVs with canker count
 asv_canker_anova <- function(otu, data) {
-  f = paste0("total_cankers ~ site + cultivar + planting_season + ", otu)
-  m = Anova(glm(f, data = data, family = "poisson"), type = "II", test = "F")
-  a = data.frame(m)
+  f = paste0("total_cankers ~ site * cultivar * planting_season + ", otu)
+  m = glm.nb(f, data = data)
+  a = anova(m, test = "Chisq") %>% data.frame()
+  total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
   d = data.frame(
     OTU = otu,
     Taxonomy = taxData[otu, "rank"],
-    var = a[otu, 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
-    p = a[otu, 'Pr..F.']
+    var = a[otu, 'Deviance'] / total_deviance * 100,
+    p = a[otu, 'Pr..Chi.']
   )
   return(d)
 }
@@ -1548,13 +1575,14 @@ measures <- c("shannon", "simpson")
 
 # ANOVA of α-diversity with canker count
 alpha_canker_anova <- function(measure, data) {
-  f = paste0("total_cankers ~ site + cultivar + planting_season + ", measure)
-  m = Anova(glm(f, data = data, family = "poisson"), type = "II", test = "F")
-  a = data.frame(m)
+  f = paste0("total_cankers ~ site * cultivar * planting_season + ", measure)
+  m = glm.nb(f, data = data)
+  a = anova(m, test = "Chisq") %>% data.frame()
+  total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
   d = data.frame(
     measure = measure,
-    var = a[measure, 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
-    p = a[measure, 'Pr..F.']
+    var = a[measure, 'Deviance'] / total_deviance * 100,
+    p = a[measure, 'Pr..Chi.']
   )
   return(d)
 }
@@ -1576,14 +1604,16 @@ pc_scores <- merge(colData, data.frame(mypca$x[, 1:no_pcs]), by = "row.names") %
 
 pcs <- tail(colnames(pc_scores), no_pcs)
 
+# ANOVA of β-diversity with canker count
 beta_canker_anova <- function(pc, data) {
-  f = paste0("total_cankers ~ site + cultivar + planting_season + ", pc)
-  m = Anova(glm(f, data = data, family = "poisson"), type = "II", test = "F")
-  a = data.frame(m)
+  f = paste0("total_cankers ~ site * cultivar * planting_season + ", pc)
+  m = glm.nb(f, data = data)
+  a = anova(m, test = "Chisq") %>% data.frame()
+  total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
   d = data.frame(
     PC = pc,
-    var = a[pc, 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
-    p = a[pc, 'Pr..F.']
+    var = a[pc, 'Deviance'] / total_deviance * 100,
+    p = a[pc, 'Pr..Chi.']
   )
   return(d)
 }
