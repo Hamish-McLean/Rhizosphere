@@ -414,7 +414,9 @@ plot(simulateResiduals(canker_model))
 # Model overdispersed
 
 # Negative binomial model
-canker_model <- glm.nb(update(FULL_DESIGN, total_cankers ~ .), data = cankers)
+formula <- update(FULL_DESIGN, total_cankers ~ .)
+formula <- total_cankers ~ site + planting_season + cultivar + site:planting_season + site:cultivar + planting_season:cultivar
+canker_model <- glm.nb(formula, data = cankers)
 
 sim <- simulateResiduals(canker_model)
 plot(sim)
@@ -428,7 +430,9 @@ nagelkerke(canker_model)
 
 # Model good fit
 
-Anova(canker_model, type = "II", test = "LR")
+canker_anova <- anova(canker_model, test = "Chisq") %>% data.frame()
+total_deviance <- sum(canker_anova$Deviance, na.rm = T) + tail(canker_anova$Resid..Dev, 1)
+canker_anova$Perc..Dev <- canker_anova$Deviance / total_deviance * 100
 
 # Type II ANOVA shows significant interactions, but type III ANOVA does not work
 # with the FULL_DESIGN model
@@ -911,7 +915,7 @@ fun_nmds_plot
 
 ```{r top ASVs}
 # Extract normalised counts from DESeq object
-nc <- counts(dds, normalize = T) %>% as.data.frame()
+nc <- round(counts(dds, normalize = T), 0) %>% as.data.frame()
 
 # Filter the top x abundant OTUs by the sum of their normalised counts
 top_otus <- nc[order(rowSums(nc), decreasing = T)[1:DIFFOTU], ]
@@ -923,7 +927,7 @@ identical(names(top_otus), rownames(colData))
 top_taxa <- taxData[rownames(top_otus), ]
 
 # Log transform normalised counts
-top_otus <- log10(top_otus + 1)
+# top_otus <- log10(top_otus + 1)
 
 top_otu_data <- data.frame(t(top_otus))
 top_otu_ids <- rownames(top_otus)
@@ -957,7 +961,33 @@ otu_anova <- function(otu, formula, data) {
   return(d)
 }
 
+# Negative binomial regression model
+otu_anova <- function(otu, formula, data) {
+  f = update(formula, paste0(otu, " ~ ."))
+  m = glm.nb(f, data = data)
+  a = anova(m, test = "Chisq") %>% data.frame()
+  total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
+  d = data.frame(
+    OTU = otu,
+    Taxonomy = taxData[otu, "rank"],
+    site_var = a['site', 'Deviance'] / total_deviance * 100,
+    site_p = a['site', 'Pr..Chi.'],
+    cultivar_var = a['cultivar', 'Deviance'] / total_deviance * 100,
+    cultivar_p = a['cultivar', 'Pr..Chi.'],
+    season_var = a['planting_season', 'Deviance'] / total_deviance * 100,
+    season_p = a['planting_season', 'Pr..Chi.']
+  )
+  return(d)
+}
+
 formula <- FULL_DESIGN
+
+# Full design model does not converge
+formula <- y ~ site + cultivar + planting_season + site:cultivar + site:planting_season
+
+formula <- DESIGN
+
+otu_anova(top_otu_ids[1], formula, top_otu_data)
 
 otu_anova_results <- data.table(t(sapply(top_otu_ids, function(x) otu_anova(x, formula, top_otu_data))))
 
