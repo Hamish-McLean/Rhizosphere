@@ -410,15 +410,15 @@ res <- resid(canker_lm, type = "pearson")
 # qqnorm(res)
 # abline(0,1, col="red")
 
-lm_res <- ggplot(data.frame(fitted(canker_model), res), aes(x = fitted.canker_model., y = res)) + 
-  geom_point() + 
-  geom_hline(yintercept = 0)
+# lm_res <- ggplot(data.frame(fitted(canker_model), res), aes(x = fitted.canker_model., y = res)) + 
+#   geom_point() + 
+#   geom_hline(yintercept = 0)
 
-lm_qq <- ggplot(data.frame(res), aes(sample = res)) + 
-  stat_qq() + 
-  stat_qq_line()
+# lm_qq <- ggplot(data.frame(res), aes(sample = res)) + 
+#   stat_qq() + 
+#   stat_qq_line()
 
-ggarrange(lm_res, lm_qq, ncol = 1)
+# ggarrange(lm_res, lm_qq, ncol = 1)
 
 # Residuals not normally distributed
 
@@ -966,24 +966,26 @@ Effect of site, cultivar, and planting season on abundance of top `r DIFFOTU` AS
 
 ```{r ASV anova}
 # ANOVA of top ASVs
-otu_anova <- function(otu, formula, data) {
-  a = data.frame(unclass(summary(aov(update(formula, paste(otu, "~ .")), data = data))))
+otu_lm_anova <- function(otu, formula, data) {
+  f = update(formula, paste0("log(", otu, " + 1) ~ ."))
+  a = aov(f, data = data) %>% summary() %>% unclass() %>% data.frame()
+  total_var = sum(a$Sum.Sq)
   d = data.frame(
     OTU = otu,
     Taxonomy = taxData[otu, "rank"],
-    site_var = a['site', 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
-    site_p = a['site', 'Pr..F.'],
-    cultivar_var = a['cultivar', 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
+    site_var = a['site ', 'Sum.Sq'] / total_var * 100,
+    site_p = a['site ', 'Pr..F.'],
+    cultivar_var = a['cultivar', 'Sum.Sq'] / total_var * 100,
     cultivar_p = a['cultivar', 'Pr..F.'],
-    season_var = a['planting_season', 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
-    season_p = a['planting_season', 'Pr..F.'],
-    residuals_var = a['Residuals', 'Sum.Sq'] / sum(a$Sum.Sq) * 100
+    season_var = a['planting_season ', 'Sum.Sq'] / total_var * 100,
+    season_p = a['planting_season ', 'Pr..F.'],
+    residuals_var = a['Residuals', 'Sum.Sq'] / total_var * 100
   )
   return(d)
 }
 
 # Negative binomial regression model
-otu_anova <- function(otu, formula, data) {
+otu_negbin_anova <- function(otu, formula, data) {
   f = update(formula, paste0(otu, " ~ ."))
   m = glm.nb(f, data = data)
   a = anova(m, test = "Chisq") %>% data.frame()
@@ -1004,13 +1006,15 @@ otu_anova <- function(otu, formula, data) {
 formula <- FULL_DESIGN
 
 # Full design model does not converge
-formula <- y ~ site + cultivar + planting_season + site:cultivar + site:planting_season
+# formula <- y ~ site + cultivar + planting_season + site:cultivar + site:planting_season
 
-formula <- DESIGN
+# formula <- DESIGN
 
-otu_anova(top_otu_ids[1], formula, top_otu_data)
+otu_lm_anova(top_otu_ids[1], formula, top_otu_data)
 
-otu_anova_results <- data.table(t(sapply(top_otu_ids, function(x) otu_anova(x, formula, top_otu_data))))
+otu_anova_results <- sapply(
+  top_otu_ids, function(x) otu_lm_anova(x, formula, top_otu_data)
+) %>% t() %>% data.table()
 
 otu_anova_results_adjusted <- otu_anova_results %>% 
   mutate(
@@ -1497,24 +1501,26 @@ Effect of site, cultivar, and planting season on abundance of top `r DIFFOTU` AS
 
 ```{r Bac ASV anova}
 # ANOVA of top ASVs
-otu_anova <- function(otu, formula, data) {
-  a = data.frame(unclass(summary(aov(update(formula, paste(otu, "~ .")), data = data))))
+otu_lm_anova <- function(otu, formula, data) {
+  f = update(formula, paste0("log(", otu, " + 1) ~ ."))
+  a = aov(f, data = data) %>% summary() %>% unclass() %>% data.frame()
+  total_var = sum(a$Sum.Sq)
   d = data.frame(
     OTU = otu,
     Taxonomy = taxData[otu, "rank"],
-    site_var = a['site', 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
-    site_p = a['site', 'Pr..F.'],
-    cultivar_var = a['cultivar', 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
+    site_var = a['site ', 'Sum.Sq'] / total_var * 100,
+    site_p = a['site ', 'Pr..F.'],
+    cultivar_var = a['cultivar', 'Sum.Sq'] / total_var * 100,
     cultivar_p = a['cultivar', 'Pr..F.'],
-    season_var = a['planting_season', 'Sum.Sq'] / sum(a$Sum.Sq) * 100,
-    season_p = a['planting_season', 'Pr..F.'],
-    residuals_var = a['Residuals', 'Sum.Sq'] / sum(a$Sum.Sq) * 100
+    season_var = a['planting_season ', 'Sum.Sq'] / total_var * 100,
+    season_p = a['planting_season ', 'Pr..F.'],
+    residuals_var = a['Residuals', 'Sum.Sq'] / total_var * 100
   )
   return(d)
 }
 
 # Negative binomial regression model
-otu_anova <- function(otu, formula, data) {
+otu_negbin_anova <- function(otu, formula, data) {
   f = update(formula, paste0(otu, " ~ ."))
   m = glm.nb(f, data = data)
   a = anova(m, test = "Chisq") %>% data.frame()
@@ -1534,7 +1540,9 @@ otu_anova <- function(otu, formula, data) {
 
 formula <- FULL_DESIGN
 
-otu_anova_results <- data.table(t(sapply(top_otu_ids, function(x) otu_anova(x, formula, top_otu_data))))
+otu_anova_results <- sapply(
+  top_otu_ids, function(x) otu_lm_anova(x, formula, top_otu_data)
+) %>% t() %>% data.table()
 
 otu_anova_results_adjusted <- otu_anova_results %>% 
   mutate(
