@@ -392,37 +392,57 @@ GLM
 ```{r canker GLM}
 # Effect of site, cultivar, and planting season on canker count
 
+# Formula
+formula <- update(FULL_DESIGN, total_cankers ~ .)
+# formula <- total_cankers ~ site + planting_season + cultivar + site:planting_season + site:cultivar + planting_season:cultivar
+
 # Log-linear model
-canker_model <- lm(update(FULL_DESIGN, log(total_cankers + 1) ~ .), data = cankers)
+canker_lm <- lm(update(FULL_DESIGN, log(total_cankers + 1) ~ .), data = cankers)
+
+plot(canker_lm)
 
 # Residual checking
-res <- resid(canker_model, type = "pearson")
+res <- resid(canker_lm, type = "pearson")
 
-plot(fitted(canker_model), res) 
-abline(0,0, col="red")
+# plot(fitted(canker_lm), res)
+# abline(0,0, col="red")
 
-qqnorm(res)
-abline(0,1, col="red")
+# qqnorm(res)
+# abline(0,1, col="red")
+
+lm_res <- ggplot(data.frame(fitted(canker_model), res), aes(x = fitted.canker_model., y = res)) + 
+  geom_point() + 
+  geom_hline(yintercept = 0)
+
+lm_qq <- ggplot(data.frame(res), aes(sample = res)) + 
+  stat_qq() + 
+  stat_qq_line()
+
+ggarrange(lm_res, lm_qq, ncol = 1)
 
 # Residuals not normally distributed
 
 # Poisson model
-canker_model <- glm(update(FULL_DESIGN, total_cankers ~ .), data = cankers, family = "poisson")
+canker_poisson <- glm(formula, data = cankers, family = "poisson")
 
-plot(simulateResiduals(canker_model))
+poisson_plot <- plot(simulateResiduals(canker_poisson), title = "Poisson model")
 
 # Model overdispersed
 
 # Negative binomial model
-formula <- update(FULL_DESIGN, total_cankers ~ .)
-formula <- total_cankers ~ site + planting_season + cultivar + site:planting_season + site:cultivar + planting_season:cultivar
-canker_model <- glm.nb(formula, data = cankers)
+canker_negbin <- glm.nb(formula, data = cankers)
 
-sim <- simulateResiduals(canker_model)
-plot(sim)
-png("figures/canker_residuals.png", width = 800, height = 600)
-plot(sim)
-dev.off()
+sim <- simulateResiduals(canker_negbin)
+
+plot(sim, title = "Negative binomial model")
+
+# canker_model_plots <- ggarrange(lm_plot, poisson_plot, negbin_plot, ncol = 3)
+
+# ggsave(filename = "canker_model_plots.png", plot = canker_model_plots, path = "figures/")
+
+# png("figures/canker_residuals.png", width = 800, height = 600)
+# plot(sim)
+# dev.off()
 
 testZeroInflation(sim)
 
