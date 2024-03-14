@@ -385,6 +385,16 @@ cankers_box <- ggboxplot(
 cankers_box
 
 ggsave(filename = "cankers_box.png", plot = cankers_box, path = "figures/")
+
+cankers_bar <- ggbarplot(
+  cankers, x = "site", y = "total_cankers", fill = "cultivar", 
+  palette = cbPalette, add = "mean_se", position = position_dodge(0.8),
+  title = "Total canker count", xlab = "Site", ylab = "Total canker count"
+)
+
+cankers_bar
+
+ggsave(filename = "cankers_bar.png", plot = cankers_bar, path = "figures/")
 ```
 
 GLM
@@ -637,24 +647,38 @@ Plot copy number for each sample grouped by site, cultivar, and planting season.
 Test the effect of site, cultivar, and planting season on copy number using ANOVA.
 
 ```{r}
-abundance_plot <- ggplot(
-  data = as.data.frame(colData(dds)), 
-  aes(x = site, y = log_copy_number, colour = cultivar, shape = planting_season)
-) + geom_jitter() + 
-  scale_colour_manual(values = cbPalette)
+# abundance_plot <- ggplot(
+#   data = as.data.frame(colData(dds)), 
+#   aes(x = site, y = log_copy_number, colour = cultivar, shape = planting_season)
+# ) + geom_jitter() + 
+#   scale_colour_manual(values = cbPalette)
 
-abundance_plot <- ggboxplot(
+fun_abundance_box <- ggboxplot(
   data = as.data.frame(colData(dds)), x = "site", y = "log_copy_number", 
   color = "cultivar", add = "jitter", legend = "top", 
   title = "Fungal abundance", xlab = "Site", ylab = "log10 copy number"
 )
 
 ggsave(
-  filename = "fun_abundance.png", plot = abundance_plot, path = "figures/", 
+  filename = "fun_abundance.png", plot = fun_abundance_box, path = "figures/", 
   height = 20, width = 20, units = "cm"
 )
 
-abundance_plot
+fun_abundance_box
+
+fun_abundance_bar <- ggbarplot(
+  data = as.data.frame(colData(dds)), x = "planting_season", y = "log_copy_number", 
+  fill = "site", add = "mean_se", 
+  palette = cbPalette, position = position_dodge(0.8),
+  title = "(a) Fungal abundance", xlab = "Planting Season", ylab = "Mean copy number (log10)"
+) + guides(fill = guide_legend(title = "Site"))
+
+ggsave(
+  filename = "fun_abundance_bar.png", plot = fun_abundance_bar, path = "figures/", 
+  height = 20, width = 20, units = "cm"
+)
+
+fun_abundance_bar
 
 # Formula for ANOVA
 formula <- update(FULL_DESIGN, log_copy_number ~ .)
@@ -691,7 +715,7 @@ fun_alpha_plot <- plot_alpha(
   counts(dds, normalize = F), colData(dds),
   design = "cultivar", colour = "site",
   measures = c("Shannon", "Simpson"),
-  type = "box"
+  type = "bar"
 ) + scale_colour_manual(values = cbPalette) + 
   theme(axis.title.x = element_blank()) +
   ggtitle("Fungal α-diversity")
@@ -719,6 +743,8 @@ all_alpha_ord <- all_alpha_ord[
   as.data.table(colData(dds), keep.rownames = "Samples"), 
   on = "Samples"
 ]
+
+fun_alpha <- all_alpha_ord
 
 formula <- FULL_DESIGN # x ~ site * planting_date * cultivar + site / site.block
 ```
@@ -1253,7 +1279,7 @@ plot(abundance_anova)
 dev.off()
 
 # Results
-abundance_anova
+summary(abundance_anova)
 abundance_results <- abundance_anova %>% summary() %>% unclass() %>% data.frame()
 total_variance <- sum(abundance_results$Sum.Sq)
 abundance_results$Perc.Var <- abundance_results$Sum.Sq / total_variance * 100
@@ -1305,6 +1331,8 @@ all_alpha_ord <- plot_alpha(
 all_alpha_ord <- all_alpha_ord[
   as.data.table(colData(dds), keep.rownames = "Samples"), on = "Samples"
 ]
+
+bac_alpha <- all_alpha_ord
 
 formula <- FULL_DESIGN
 ```
@@ -1674,4 +1702,52 @@ beta_canker_anova <- function(pc, data) {
 beta_canker_results <- data.table(t(sapply(pcs, function(x) beta_canker_anova(x, pc_scores))))
 
 beta_canker_results
+```
+
+## Figures
+
+### Abundance
+
+```{r}
+abundance_combined <- rbind(
+  as.data.frame(colData(ubiome_FUN$dds)), as.data.frame(colData(ubiome_BAC$dds))
+) %>% mutate(kingdom = ifelse(Target == "ITS", "Fungi", "Bacteria"))
+
+abundance_bar <- ggbarplot(
+  data = abundance_combined, x = "planting_season", y = "log_copy_number", 
+  fill = "site", add = "mean_se", facet.by = "kingdom",
+  palette = cbPalette, position = position_dodge(0.8),
+  ylab = "Mean copy number (log10)", xlab = F, legend = "right"
+) + guides(fill = guide_legend(title = "Site"))
+
+ggsave(
+  filename = "abundance_bar.png", plot = abundance_bar, path = "figures/", 
+  height = 12, width = 24, units = "cm"
+)
+
+abundance_bar
+```
+
+### Alpha diversity
+
+```{r}
+alpha_combined <- rbind(fun_alpha, bac_alpha) %>% 
+  mutate(kingdom = ifelse(Target == "ITS", "Fungi", "Bacteria")) %>%
+  pivot_longer(
+    cols = c("shannon", "simpson"), names_to = "measure", values_to = "value"
+  )
+
+alpha_bar <- ggbarplot(
+  data = alpha_combined, x = "planting_season", y = "value", 
+  fill = "site", add = "mean_se", facet.by = c("measure", "kingdom"), 
+  palette = cbPalette, position = position_dodge(0.8), scales = "free_y",
+  ylab = "Mean diversity index", xlab = F, legend = "right"
+) + guides(fill = guide_legend(title = "Site"))
+
+ggsave(
+  filename = "alpha_bar.png", plot = alpha_bar, path = "figures/", 
+  height = 12, width = 24, units = "cm"
+)
+
+alpha_bar
 ```
