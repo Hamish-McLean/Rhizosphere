@@ -32,7 +32,7 @@ library(iNEXT)
 # library(car)
 library(pscl)
 library(DHARMa)
-# library(MASS)
+library(MASS)
 # library(rcompanion)
 library(ggpubr)
 
@@ -62,9 +62,10 @@ HEIGHT =     9
 
 # Model design
 Factor1 = "Site"
-Factor2 = "cultivar"
-DESIGN = y ~ Site + planting_season + cultivar
-FULL_DESIGN = y ~ Site * planting_season * cultivar
+Factor2 = "Scion"
+DESIGN = y ~ Site + Season + Scion
+FULL_DESIGN = y ~ Site * Season * Scion
+canker_design = "Cankers ~ Site * Season * Scion + "
 ```
 
 ```{r functions}
@@ -367,11 +368,11 @@ Summary stats
 
 ```{r}
 # png("figures/hist.png", width = 800, height = 600)
-# hist(cankers$total_cankers, breaks = 20, main = "Total canker count", xlab = "Total canker count")
+# hist(cankers$Cankers, breaks = 20, main = "Total canker count", xlab = "Total canker count")
 # dev.off()
 
 cankers_hist <- ggdensity(
-  cankers, x = "total_cankers", fill = "Site", facet.by = "Site", ncol = 1,
+  cankers, x = "Cankers", fill = "Site", facet.by = "Site", ncol = 1,
   add = "mean", rug = T, palette = cbPalette,
   title = "Total canker count", xlab = "Total canker count"
 )
@@ -381,8 +382,8 @@ cankers_hist
 ggsave(filename = "cankers_hist.png", plot = cankers_hist, path = "figures/")
 
 cankers_box <- ggboxplot(
-  cankers, x = "Site", y = "total_cankers", palette = cbPalette,
-  color = "cultivar", add = "jitter", legend = "top", 
+  cankers, x = "Site", y = "Cankers", palette = cbPalette,
+  color = "Scion", add = "jitter", legend = "top", 
   title = "Total canker count", xlab = "Site", ylab = "Total canker count"
 )
 
@@ -391,7 +392,7 @@ cankers_box
 ggsave(filename = "cankers_box.png", plot = cankers_box, path = "figures/")
 
 cankers_bar <- ggbarplot(
-  cankers, x = "Site", y = "total_cankers", fill = "cultivar", 
+  cankers, x = "Site", y = "Cankers", fill = "Scion", 
   palette = cbPalette, add = "mean_se", position = position_dodge(0.8),
   title = "Total canker count", xlab = "Site", ylab = "Total canker count"
 )
@@ -404,11 +405,11 @@ ggsave(filename = "cankers_bar.png", plot = cankers_bar, path = "figures/")
 GLM
 
 ```{r canker GLM}
-# Effect of site, cultivar, and planting season on canker count
+# Effect of Site, Scion, and Season on canker count
 
 # Formula
 formula <- update(FULL_DESIGN, Cankers ~ .)
-# formula <- total_cankers ~ site + planting_season + cultivar + site:planting_season + site:cultivar + planting_season:cultivar
+# formula <- Cankers ~ Site + Season + Scion + site:Season + site:Scion + Season:Scion
 
 # Log-linear model
 canker_lm <- lm(update(FULL_DESIGN, log(Cankers + 1) ~ .), data = cankers)
@@ -595,19 +596,19 @@ data.table(
 
 ## Abundance
 
-Plot copy number for each sample grouped by site, cultivar, and planting season.
-Test the effect of site, cultivar, and planting season on copy number using ANOVA.
+Plot copy number for each sample grouped by site, Scion, and Season.
+Test the effect of site, Scion, and Season on copy number using ANOVA.
 
 ```{r}
 # abundance_plot <- ggplot(
 #   data = as.data.frame(colData(dds)), 
-#   aes(x = site, y = log_copy_number, colour = cultivar, shape = planting_season)
+#   aes(x = site, y = log_copy_number, colour = Scion, shape = Season)
 # ) + geom_jitter() + 
 #   scale_colour_manual(values = cbPalette)
 
 fun_abundance_box <- ggboxplot(
-  data = as.data.frame(colData(dds)), x = "site", y = "log_copy_number", 
-  color = "cultivar", add = "jitter", legend = "top", 
+  data = as.data.frame(colData(dds)), x = "Site", y = "log_copy_number", 
+  color = "Scion", add = "jitter", legend = "top", 
   title = "Fungal abundance", xlab = "Site", ylab = "log10 copy number"
 )
 
@@ -619,8 +620,8 @@ ggsave(
 fun_abundance_box
 
 fun_abundance_bar <- ggbarplot(
-  data = as.data.frame(colData(dds)), x = "planting_season", y = "log_copy_number", 
-  fill = "site", add = "mean_se", 
+  data = as.data.frame(colData(dds)), x = "Season", y = "log_copy_number", 
+  fill = "Site", add = "mean_se", 
   palette = cbPalette, position = position_dodge(0.8),
   title = "(a) Fungal abundance", xlab = "Planting Season", ylab = "Mean copy number (log10)"
 ) + guides(fill = guide_legend(title = "Site"))
@@ -665,7 +666,7 @@ abundance_results
 
 fun_alpha_plot <- plot_alpha(
   counts(dds, normalize = F), colData(dds),
-  design = "cultivar", colour = "site",
+  design = "Scion", colour = "Site",
   measures = c("Shannon", "Simpson"),
   type = "bar"
 ) + scale_colour_manual(values = cbPalette) + 
@@ -698,7 +699,7 @@ all_alpha_ord <- all_alpha_ord[
 
 fun_alpha <- all_alpha_ord
 
-formula <- FULL_DESIGN # x ~ site * planting_date * cultivar + site / site.block
+formula <- FULL_DESIGN # x ~ Site * Season * Scion + Site / Site.block
 ```
 
 ### Chao1
@@ -791,16 +792,16 @@ pcas <- list(
 pca_factors <- data.table(
   PCs = names(pcas),
   total_var = pca_var$perc_var,
-  site_var = sapply(pcas, function(x) (x['site ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
-  site_p = sapply(pcas, function(x) x['site ', 'Pr..F.']),
-  cultivar_var = sapply(pcas, function(x) (x['cultivar', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
-  cultivar_p = sapply(pcas, function(x) x['cultivar', 'Pr..F.']),
-  season_var = sapply(pcas, function(x) (x['planting_season ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
-  season_p = sapply(pcas, function(x) x['planting_season ', 'Pr..F.']),
-  site_cultivar_var = sapply(pcas, function(x) (x['site:cultivar', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
-  site_cultivar_p = sapply(pcas, function(x) x['site:cultivar', 'Pr..F.']),
-  site_season_var = sapply(pcas, function(x) (x['site:planting_season ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
-  site_season_p = sapply(pcas, function(x) x['site:planting_season ', 'Pr..F.']),
+  site_var = sapply(pcas, function(x) (x['Site ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
+  site_p = sapply(pcas, function(x) x['Site ', 'Pr..F.']),
+  cultivar_var = sapply(pcas, function(x) (x['Scion', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
+  cultivar_p = sapply(pcas, function(x) x['Scion', 'Pr..F.']),
+  season_var = sapply(pcas, function(x) (x['Season ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
+  season_p = sapply(pcas, function(x) x['Season ', 'Pr..F.']),
+  site_cultivar_var = sapply(pcas, function(x) (x['Site:Scion', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
+  site_cultivar_p = sapply(pcas, function(x) x['Site:Scion', 'Pr..F.']),
+  site_season_var = sapply(pcas, function(x) (x['Site:Season ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
+  site_season_p = sapply(pcas, function(x) x['Site:Season ', 'Pr..F.']),
   residuals_var = sapply(pcas, function(x) (x['Residuals', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100))
 )
 
@@ -813,8 +814,8 @@ pca_factors
 fun_pca_plot <- plotOrd(
   fun_pca,
   colData(dds),
-  design = "site",
-  shapes = "planting_season",
+  design = "Site",
+  shapes = "Season",
   axes = c(1, 2),
   cbPalette = T,
   alpha = 0.75,
@@ -867,8 +868,8 @@ fun_nmds <- scores(ord)
 
 fun_nmds_plot <- plotOrd(
   fun_nmds, colData(dds), 
-  design = "site", 
-  shape = "planting_season", 
+  design = "Site", 
+  shape = "Season", 
   alpha = 0.75, cbPalette = T
 ) #+ theme(text = element_text(size = 14))
 
@@ -909,7 +910,7 @@ top_otu_data <- merge(top_otu_data, colData, by = 0) %>% column_to_rownames("Row
 
 ## Effect of design factors on abundance of top ASVs
 
-Effect of site, cultivar, and planting season on abundance of top `r DIFFOTU` ASVs
+Effect of Site, Scion, and planting season on abundance of top `r DIFFOTU` ASVs
 
 ```{r ASV anova}
 # ANOVA of top ASVs
@@ -920,16 +921,16 @@ otu_lm_anova <- function(otu, formula, data) {
   d = data.frame(
     OTU = otu,
     Taxonomy = taxData[otu, "rank"],
-    site_var = a['site ', 'Sum.Sq'] / total_var * 100,
-    site_p = a['site ', 'Pr..F.'],
-    cultivar_var = a['cultivar', 'Sum.Sq'] / total_var * 100,
-    cultivar_p = a['cultivar', 'Pr..F.'],
-    season_var = a['planting_season ', 'Sum.Sq'] / total_var * 100,
-    season_p = a['planting_season ', 'Pr..F.'],
-    site_cultivar_var = a['site:cultivar', 'Sum.Sq'] / total_var * 100,
-    site_cultivar_p = a['site:cultivar', 'Pr..F.'],
-    site_season_var = a['site:planting_season ', 'Sum.Sq'] / total_var * 100,
-    site_season_p = a['site:planting_season ', 'Pr..F.'],
+    site_var = a['Site ', 'Sum.Sq'] / total_var * 100,
+    site_p = a['Site ', 'Pr..F.'],
+    cultivar_var = a['Scion', 'Sum.Sq'] / total_var * 100,
+    cultivar_p = a['Scion', 'Pr..F.'],
+    season_var = a['Season ', 'Sum.Sq'] / total_var * 100,
+    season_p = a['Season ', 'Pr..F.'],
+    site_cultivar_var = a['Site:Scion', 'Sum.Sq'] / total_var * 100,
+    site_cultivar_p = a['Site:Scion', 'Pr..F.'],
+    site_season_var = a['Site:Season ', 'Sum.Sq'] / total_var * 100,
+    site_season_p = a['Site:Season ', 'Pr..F.'],
     residuals_var = a['Residuals', 'Sum.Sq'] / total_var * 100
   )
   return(d)
@@ -944,12 +945,12 @@ otu_negbin_anova <- function(otu, formula, data) {
   d = data.frame(
     OTU = otu,
     Taxonomy = taxData[otu, "rank"],
-    site_var = a['site', 'Deviance'] / total_deviance * 100,
-    site_p = a['site', 'Pr..Chi.'],
-    cultivar_var = a['cultivar', 'Deviance'] / total_deviance * 100,
-    cultivar_p = a['cultivar', 'Pr..Chi.'],
-    season_var = a['planting_season', 'Deviance'] / total_deviance * 100,
-    season_p = a['planting_season', 'Pr..Chi.']
+    site_var = a['Site', 'Deviance'] / total_deviance * 100,
+    site_p = a['Site', 'Pr..Chi.'],
+    cultivar_var = a['Scion', 'Deviance'] / total_deviance * 100,
+    cultivar_p = a['Scion', 'Pr..Chi.'],
+    season_var = a['Season', 'Deviance'] / total_deviance * 100,
+    season_p = a['Season', 'Pr..Chi.']
   )
   return(d)
 }
@@ -957,7 +958,7 @@ otu_negbin_anova <- function(otu, formula, data) {
 formula <- FULL_DESIGN
 
 # Full design model does not converge
-# formula <- y ~ site + cultivar + planting_season + site:cultivar + site:planting_season
+# formula <- y ~ site + Scion + Season + site:Scion + site:Season
 
 # formula <- DESIGN
 
@@ -981,9 +982,9 @@ otu_anova_results_adjusted
 cat(
   "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
   "Site:", nrow(otu_anova_results_adjusted[site_p < 0.05, ]), "\n",
-  "Cultivar:", nrow(otu_anova_results_adjusted[cultivar_p < 0.05, ]), "\n",
+  "Scion:", nrow(otu_anova_results_adjusted[cultivar_p < 0.05, ]), "\n",
   "Season:", nrow(otu_anova_results_adjusted[season_p < 0.05, ]), "\n",
-  "Site:Cultivar:", nrow(otu_anova_results_adjusted[site_cultivar_p < 0.05, ]), "\n",
+  "Site:Scion:", nrow(otu_anova_results_adjusted[site_cultivar_p < 0.05, ]), "\n",
   "Site:Season:", nrow(otu_anova_results_adjusted[site_season_p < 0.05, ]), "\n\n"
 )
 
@@ -996,11 +997,11 @@ otu_anova_results_adjusted[cultivar_p < 0.05, ]
 
 ```{r}
 # Filter out samples with missing canker count
-top_otu_data <- top_otu_data[complete.cases(top_otu_data$total_cankers), ]
+top_otu_data <- top_otu_data[complete.cases(top_otu_data$Cankers), ]
 
 # ANOVA of top ASVs with canker count
 asv_canker_anova <- function(otu, data) {
-  f = paste0("total_cankers ~ site * cultivar * planting_season + ", otu)
+  f = paste0(canker_design, otu)
   m = glm.nb(f, data = data)
   a = anova(m, test = "Chisq") %>% data.frame()
   total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
@@ -1039,7 +1040,7 @@ measures <- c("shannon", "simpson")
 
 # ANOVA of α-diversity with canker count
 alpha_canker_anova <- function(measure, data) {
-  f = paste0("total_cankers ~ site * cultivar * planting_season + ", measure)
+  f = paste0(canker_design, measure)
   m = glm.nb(f, data = data)
   a = anova(m, test = "Chisq") %>% data.frame()
   total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
@@ -1071,7 +1072,7 @@ pcs <- tail(colnames(pc_scores), no_pcs)
 
 # ANOVA of β-diversity with canker count
 beta_canker_anova <- function(pc, data) {
-  f = paste0("total_cankers ~ site * cultivar * planting_season + ", pc)
+  f = paste0(canker_design, pc)
   m = glm.nb(f, data = data)
   a = anova(m, test = "Chisq") %>% data.frame()
   total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
@@ -1200,13 +1201,13 @@ data.table(
 ```{r}
 abundance_plot <- ggplot(
   data = as.data.frame(colData(dds)), 
-  aes(x = site, y = log_copy_number, colour = cultivar, shape = planting_season)
+  aes(x = Site, y = log_copy_number, colour = Scion, shape = Season)
 ) + geom_jitter() + 
   scale_colour_manual(values = cbPalette)
 
 abundance_plot <- ggboxplot(
-  data = as.data.frame(colData(dds)), x = "site", y = "log_copy_number", 
-  color = "cultivar", add = "jitter", legend = "top", 
+  data = as.data.frame(colData(dds)), x = "Site", y = "log_copy_number", 
+  color = "Scion", add = "jitter", legend = "top", 
   title = "Bacterial abundance", xlab = "Site", ylab = "log10 copy number"
 )
 
@@ -1250,7 +1251,7 @@ abundance_results
 
 bac_alpha_plot <- plot_alpha(
   counts(dds,normalize = F), colData(dds),
-  design = "cultivar", colour = "site",
+  design = "Scion", colour = "Site",
   measures = c("Shannon", "Simpson"),
   type="box"
 ) + 
@@ -1259,8 +1260,8 @@ bac_alpha_plot <- plot_alpha(
   ggtitle("Bacterial α-diversity")
 
 abundance_plot <- ggboxplot(
-  data = as.data.frame(colData(dds)), x = "site", y = "log_copy_number", 
-  color = "cultivar", add = "jitter", legend = "top", 
+  data = as.data.frame(colData(dds)), x = "Site", y = "log_copy_number", 
+  color = "Scion", add = "jitter", legend = "top", 
   title = "Fungal abundance", xlab = "Site", ylab = "log10 copy number"
 )
 
@@ -1277,7 +1278,7 @@ bac_alpha_plot
 ```{r}
 # get the diversity index data
 all_alpha_ord <- plot_alpha(
-  counts(dds, normalize = F), colData(dds), design = "site", returnData = T
+  counts(dds, normalize = F), colData(dds), design = "Site", returnData = T
 )
 
 # join diversity indices and metadata
@@ -1377,16 +1378,16 @@ pcas <- list(
 pca_factors <- data.table(
   PCs = names(pcas),
   total_var = pca_var$perc_var,
-  site_var = sapply(pcas, function(x) (x['site ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
-  site_p = sapply(pcas, function(x) x['site ', 'Pr..F.']),
-  cultivar_var = sapply(pcas, function(x) (x['cultivar', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
-  cultivar_p = sapply(pcas, function(x) x['cultivar', 'Pr..F.']),
-  season_var = sapply(pcas, function(x) (x['planting_season ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
-  season_p = sapply(pcas, function(x) x['planting_season ', 'Pr..F.']),
-  site_cultivar_var = sapply(pcas, function(x) (x['site:cultivar', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
-  site_cultivar_p = sapply(pcas, function(x) x['site:cultivar', 'Pr..F.']),
-  site_season_var = sapply(pcas, function(x) (x['site:planting_season ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
-  site_season_p = sapply(pcas, function(x) x['site:planting_season ', 'Pr..F.']),
+  site_var = sapply(pcas, function(x) (x['Site ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
+  site_p = sapply(pcas, function(x) x['Site ', 'Pr..F.']),
+  cultivar_var = sapply(pcas, function(x) (x['Scion', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
+  cultivar_p = sapply(pcas, function(x) x['Scion', 'Pr..F.']),
+  season_var = sapply(pcas, function(x) (x['Season ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
+  season_p = sapply(pcas, function(x) x['Season ', 'Pr..F.']),
+  site_cultivar_var = sapply(pcas, function(x) (x['Site:Scion', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
+  site_cultivar_p = sapply(pcas, function(x) x['Site:Scion', 'Pr..F.']),
+  site_season_var = sapply(pcas, function(x) (x['Site:Season ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
+  site_season_p = sapply(pcas, function(x) x['Site:Season ', 'Pr..F.']),
   residuals_var = sapply(pcas, function(x) (x['Residuals', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100))
 )
 
@@ -1399,10 +1400,10 @@ pca_factors
 bac_pca_plot <- plotOrd(
   bac_pca,
   colData(dds),
-  design = "site",
-  shape = "planting_season",
+  design = "Site",
+  shape = "Season",
   axes = c(1, 2),
-  # facet = "planting_season", 
+  # facet = "Season", 
   cbPalette = T,
   alpha = 0.75,
 ) #+ facet_wrap(~facet)
@@ -1452,10 +1453,10 @@ bac_nmds <- scores(ord)
 
 bac_nmds_plot <- plotOrd(
   bac_nmds, colData(dds), 
-  design = "site", 
-  shape = "planting_season", 
+  design = "Site", 
+  shape = "Season", 
   alpha = 0.75, cbPalette = T
-) + theme(text = element_text(size = 14))
+) #+ theme(text = element_text(size = 14))
 
 ggsave(filename = "fun_nmds_plot.png", plot = bac_nmds_plot, path = "figures/")
 
@@ -1491,7 +1492,7 @@ top_otu_data <- merge(top_otu_data, colData, by = 0) %>% column_to_rownames("Row
 
 ## Effect of design factors on top ASVs
 
-Effect of site, cultivar, and planting season on abundance of top `r DIFFOTU` ASVs
+Effect of Site, Scion, and planting season on abundance of top `r DIFFOTU` ASVs
 
 ```{r Bac ASV anova}
 # ANOVA of top ASVs
@@ -1502,16 +1503,16 @@ otu_lm_anova <- function(otu, formula, data) {
   d = data.frame(
     OTU = otu,
     Taxonomy = taxData[otu, "rank"],
-    site_var = a['site ', 'Sum.Sq'] / total_var * 100,
-    site_p = a['site ', 'Pr..F.'],
-    cultivar_var = a['cultivar', 'Sum.Sq'] / total_var * 100,
-    cultivar_p = a['cultivar', 'Pr..F.'],
-    season_var = a['planting_season ', 'Sum.Sq'] / total_var * 100,
-    season_p = a['planting_season ', 'Pr..F.'],
-    site_cultivar_var = a['site:cultivar', 'Sum.Sq'] / total_var * 100,
-    site_cultivar_p = a['site:cultivar', 'Pr..F.'],
-    site_season_var = a['site:planting_season ', 'Sum.Sq'] / total_var * 100,
-    site_season_p = a['site:planting_season ', 'Pr..F.'],
+    site_var = a['Site ', 'Sum.Sq'] / total_var * 100,
+    site_p = a['Site ', 'Pr..F.'],
+    cultivar_var = a['Scion', 'Sum.Sq'] / total_var * 100,
+    cultivar_p = a['Scion', 'Pr..F.'],
+    season_var = a['Season ', 'Sum.Sq'] / total_var * 100,
+    season_p = a['Season ', 'Pr..F.'],
+    site_cultivar_var = a['Site:Scion', 'Sum.Sq'] / total_var * 100,
+    site_cultivar_p = a['Site:Scion', 'Pr..F.'],
+    site_season_var = a['Site:Season ', 'Sum.Sq'] / total_var * 100,
+    site_season_p = a['Site:Season ', 'Pr..F.'],
     residuals_var = a['Residuals', 'Sum.Sq'] / total_var * 100
   )
   return(d)
@@ -1526,12 +1527,12 @@ otu_negbin_anova <- function(otu, formula, data) {
   d = data.frame(
     OTU = otu,
     Taxonomy = taxData[otu, "rank"],
-    site_var = a['site', 'Deviance'] / total_deviance * 100,
-    site_p = a['site', 'Pr..Chi.'],
-    cultivar_var = a['cultivar', 'Deviance'] / total_deviance * 100,
-    cultivar_p = a['cultivar', 'Pr..Chi.'],
-    season_var = a['planting_season', 'Deviance'] / total_deviance * 100,
-    season_p = a['planting_season', 'Pr..Chi.']
+    site_var = a['Site', 'Deviance'] / total_deviance * 100,
+    site_p = a['Site', 'Pr..Chi.'],
+    cultivar_var = a['Scion', 'Deviance'] / total_deviance * 100,
+    cultivar_p = a['Scion', 'Pr..Chi.'],
+    season_var = a['Season', 'Deviance'] / total_deviance * 100,
+    season_p = a['Season', 'Pr..Chi.']
   )
   return(d)
 }
@@ -1554,9 +1555,9 @@ otu_anova_results_adjusted
 cat(
   "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
   "Site:", nrow(otu_anova_results_adjusted[site_p < 0.05, ]), "\n",
-  "Cultivar:", nrow(otu_anova_results_adjusted[cultivar_p < 0.05, ]), "\n",
+  "Scion:", nrow(otu_anova_results_adjusted[cultivar_p < 0.05, ]), "\n",
   "Season:", nrow(otu_anova_results_adjusted[season_p < 0.05, ]), "\n",
-  "Site:Cultivar:", nrow(otu_anova_results_adjusted[site_cultivar_p < 0.05, ]), "\n",
+  "Site:Scion:", nrow(otu_anova_results_adjusted[site_cultivar_p < 0.05, ]), "\n",
   "Site:Season:", nrow(otu_anova_results_adjusted[site_season_p < 0.05, ]), "\n\n"
 )
 
@@ -1569,11 +1570,11 @@ otu_anova_results_adjusted[cultivar_p < 0.05, ]
 
 ```{r}
 # Filter out samples with missing canker count
-top_otu_data <- top_otu_data[complete.cases(top_otu_data$total_cankers), ]
+top_otu_data <- top_otu_data[complete.cases(top_otu_data$Cankers), ]
 
 # ANOVA of top ASVs with canker count
 asv_canker_anova <- function(otu, data) {
-  f = paste0("total_cankers ~ site * cultivar * planting_season + ", otu)
+  f = paste0(canker_design, otu)
   m = glm.nb(f, data = data)
   a = anova(m, test = "Chisq") %>% data.frame()
   total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
@@ -1607,7 +1608,7 @@ measures <- c("shannon", "simpson")
 
 # ANOVA of α-diversity with canker count
 alpha_canker_anova <- function(measure, data) {
-  f = paste0("total_cankers ~ site * cultivar * planting_season + ", measure)
+  f = paste0(canker_design, measure)
   m = glm.nb(f, data = data)
   a = anova(m, test = "Chisq") %>% data.frame()
   total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
@@ -1639,7 +1640,7 @@ pcs <- tail(colnames(pc_scores), no_pcs)
 
 # ANOVA of β-diversity with canker count
 beta_canker_anova <- function(pc, data) {
-  f = paste0("total_cankers ~ site * cultivar * planting_season + ", pc)
+  f = paste0(canker_design, pc)
   m = glm.nb(f, data = data)
   a = anova(m, test = "Chisq") %>% data.frame()
   total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
@@ -1668,8 +1669,8 @@ abundance_combined <- rbind(
 ) %>% mutate(kingdom = ifelse(Target == "ITS", "Fungi", "Bacteria"))
 
 abundance_bar <- ggbarplot(
-  data = abundance_combined, x = "planting_season", y = "log_copy_number", 
-  fill = "site", add = "mean_se", facet.by = "kingdom",
+  data = abundance_combined, x = "Season", y = "log_copy_number", 
+  fill = "Site", add = "mean_se", facet.by = "kingdom",
   palette = cbPalette, position = position_dodge(0.8),
   ylab = "Mean copy number (log10)", xlab = F, legend = "right"
 ) + guides(fill = guide_legend(title = "Site"))
@@ -1692,8 +1693,8 @@ alpha_combined <- rbind(fun_alpha, bac_alpha) %>%
   )
 
 alpha_bar <- ggbarplot(
-  data = alpha_combined, x = "planting_season", y = "value", 
-  fill = "site", add = "mean_se", facet.by = c("measure", "kingdom"), 
+  data = alpha_combined, x = "Season", y = "value", 
+  fill = "Site", add = "mean_se", facet.by = c("measure", "kingdom"), 
   palette = cbPalette, position = position_dodge(0.8), scales = "free_y",
   ylab = "Mean diversity index", xlab = F, legend = "right"
 ) + guides(fill = guide_legend(title = "Site"))
@@ -1720,6 +1721,8 @@ ggsave(
   height = 18, width = 25, units = "cm"
 )
 
+pca_combo_plot
+
 nmds_combo_plot <- ggarrange(
   fun_nmds_plot, bac_nmds_plot,
   ncol = 2, nrow = 1, labels = c("A", "B"),
@@ -1730,6 +1733,8 @@ ggsave(
   filename = "nmds_combo_plot.png", plot = nmds_combo_plot, path = "figures/", 
   height = 18, width = 25, units = "cm"
 )
+
+nmds_combo_plot
 
 mega_combo_plot <- ggarrange(
   fun_pca_plot, bac_pca_plot,
@@ -1742,4 +1747,6 @@ ggsave(
   filename = "mega_combo_plot.png", plot = mega_combo_plot, path = "figures/", 
   height = 25, width = 30, units = "cm"
 )
+
+mega_combo_plot
 ```
