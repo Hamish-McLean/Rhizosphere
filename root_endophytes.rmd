@@ -61,10 +61,10 @@ WIDTH =      9
 HEIGHT =     9
 
 # Model design
-Factor1 = "site"
+Factor1 = "Site"
 Factor2 = "cultivar"
-DESIGN = y ~ site + planting_season + cultivar
-FULL_DESIGN = y ~ site * planting_season * cultivar
+DESIGN = y ~ Site + planting_season + cultivar
+FULL_DESIGN = y ~ Site * planting_season * cultivar
 ```
 
 ```{r functions}
@@ -92,21 +92,25 @@ metadata <- "sample_metadata.txt"
 ubiome_BAC <- loadData("data/BAC.zotu_table.txt",metadata,"data/zBAC.sintax.taxa",RHB="BAC")
 ubiome_FUN <- loadData("data/FUN.zotu_table.txt",metadata,"data/zFUN.sintax.taxa",RHB="FUN")
 
+# Rename site to Site and cultivar to Scion
+ubiome_BAC$colData <- ubiome_BAC$colData %>% rename(Site = site, Scion = cultivar)
+ubiome_FUN$colData <- ubiome_FUN$colData %>% rename(Site = site, Scion = cultivar)
+
 # Correct for planting date month variability.
 # March and April are replaced by spring, December by winter.
 ubiome_BAC$colData <- ubiome_BAC$colData %>%
   mutate(
-    planting_season = case_when(
-      planting_date %in% c("march", "april") ~ "spring",
-      planting_date %in% c("dec") ~ "winter"
+    Season = case_when(
+      planting_date %in% c("march", "april") ~ "Spring",
+      planting_date %in% c("dec") ~ "Winter"
     )
   )
 
 ubiome_FUN$colData <- ubiome_FUN$colData %>%
   mutate(
-    planting_season = case_when(
-      planting_date %in% c("march", "april") ~ "spring",
-      planting_date %in% c("dec") ~ "winter"
+    Season = case_when(
+      planting_date %in% c("march", "april") ~ "Spring",
+      planting_date %in% c("dec") ~ "Winter"
     )
   )
 ```
@@ -313,9 +317,9 @@ colnames(canker_data) <- tolower(gsub(" ", "_", colnames(canker_data)))
 # Add planting season to canker data and total canker count for timepoint 4
 canker_data <- mutate(
   canker_data,
-  planting_season = case_when(
-    planting_date %in% c("March", "April") ~ "spring",
-    planting_date %in% c("Dec") ~ "winter"
+  Season = case_when(
+    planting_date %in% c("March", "April") ~ "Spring",
+    planting_date %in% c("Dec") ~ "Winter"
   ),
   total_cankers = a4 + b4 + c4 + d4 + e4
 )
@@ -336,24 +340,24 @@ canker_data %>% group_by(code) %>% summarise(n = n()) %>% filter(n != 2)
 cankers <- canker_data %>% 
   group_by(code) %>% 
   summarise(
-    site = first(site),
-    planting_season = first(planting_season),
-    cultivar = first(cultivar),
-    total_cankers = sum(total_cankers)
+    Site = first(site),
+    Season = first(Season),
+    Scion = first(cultivar),
+    Cankers = sum(total_cankers)
   ) %>% 
   column_to_rownames("code")
 
 # Add total canker count to colData for both FUN and BAC
 ubiome_FUN$colData <- merge(
   ubiome_FUN$colData, 
-  cankers["total_cankers"], 
+  cankers["Cankers"], 
   by = 0,
   all.x = T
 ) %>% column_to_rownames("Row.names")
 
 ubiome_BAC$colData <- merge(
   ubiome_BAC$colData, 
-  cankers["total_cankers"], 
+  cankers["Cankers"], 
   by = 0,
   all.x = T
 ) %>% column_to_rownames("Row.names")
@@ -367,7 +371,7 @@ Summary stats
 # dev.off()
 
 cankers_hist <- ggdensity(
-  cankers, x = "total_cankers", fill = "site", facet.by = "site", ncol = 1,
+  cankers, x = "total_cankers", fill = "Site", facet.by = "Site", ncol = 1,
   add = "mean", rug = T, palette = cbPalette,
   title = "Total canker count", xlab = "Total canker count"
 )
@@ -377,7 +381,7 @@ cankers_hist
 ggsave(filename = "cankers_hist.png", plot = cankers_hist, path = "figures/")
 
 cankers_box <- ggboxplot(
-  cankers, x = "site", y = "total_cankers", palette = cbPalette,
+  cankers, x = "Site", y = "total_cankers", palette = cbPalette,
   color = "cultivar", add = "jitter", legend = "top", 
   title = "Total canker count", xlab = "Site", ylab = "Total canker count"
 )
@@ -387,7 +391,7 @@ cankers_box
 ggsave(filename = "cankers_box.png", plot = cankers_box, path = "figures/")
 
 cankers_bar <- ggbarplot(
-  cankers, x = "site", y = "total_cankers", fill = "cultivar", 
+  cankers, x = "Site", y = "total_cankers", fill = "cultivar", 
   palette = cbPalette, add = "mean_se", position = position_dodge(0.8),
   title = "Total canker count", xlab = "Site", ylab = "Total canker count"
 )
@@ -403,11 +407,11 @@ GLM
 # Effect of site, cultivar, and planting season on canker count
 
 # Formula
-formula <- update(FULL_DESIGN, total_cankers ~ .)
+formula <- update(FULL_DESIGN, Cankers ~ .)
 # formula <- total_cankers ~ site + planting_season + cultivar + site:planting_season + site:cultivar + planting_season:cultivar
 
 # Log-linear model
-canker_lm <- lm(update(FULL_DESIGN, log(total_cankers + 1) ~ .), data = cankers)
+canker_lm <- lm(update(FULL_DESIGN, log(Cankers + 1) ~ .), data = cankers)
 
 par(mfrow = c(2, 2))
 plot(canker_lm)
@@ -797,7 +801,7 @@ df
 mypca <- des_to_pca(dds)
 
 # To get pca plot axis into the same scale create a dataframe of PC scores multiplied by their variance
-d <- t(data.frame(t(mypca$x) * mypca$percentVar))
+fun_pca <- t(data.frame(t(mypca$x) * mypca$percentVar))
 
 formula = FULL_DESIGN
 ```
@@ -858,22 +862,21 @@ pca_factors
 ### PCA plot
 
 ```{r, fig.width = 8, fig.height = 5}
-pca_plot <- plotOrd(
-  d,
+fun_pca_plot <- plotOrd(
+  fun_pca,
   colData(dds),
-  design = "cultivar",
-  shape = "site",
+  design = "site",
+  shapes = "planting_season",
   axes = c(1, 2),
-  facet = "planting_season", 
   cbPalette = T,
   alpha = 0.75,
 ) # + facet_wrap(~facet) 
 #   geom_line(aes(group=facet),alpha=0.25,linetype=3,colour="#000000") + 
 #   theme(text = element_text(size=14))
 
-ggsave(filename = "fun_pca_plot.png", plot = pca_plot, path = "figures/")
+ggsave(filename = "fun_pca_plot.png", plot = fun_pca_plot, path = "figures/")
 
-pca_plot
+fun_pca_plot
 ```
 
 ### PCA sum of squares (% var)
@@ -912,16 +915,18 @@ set.seed(sum(utf8ToInt("Hamish McLean")))
 ord <- metaMDS(vg,trace=0) 
 #sratmax=20000,maxit=20000,try = 177, trymax = 177
 
-nmds <- scores(ord)
+fun_nmds <- scores(ord)
 
-nmds_plot <- plotOrd(
-  nmds, colData(dds), design = Factor2, 
-  shape = Factor1, alpha = 0.75, cbPalette = T
-) + theme(text = element_text(size = 14))
+fun_nmds_plot <- plotOrd(
+  fun_nmds, colData(dds), 
+  design = "site", 
+  shape = "planting_season", 
+  alpha = 0.75, cbPalette = T
+) #+ theme(text = element_text(size = 14))
 
-ggsave(filename = "fun_nmds_plot.png", plot = nmds_plot, path = "figures/")
+ggsave(filename = "fun_nmds_plot.png", plot = fun_nmds_plot, path = "figures/")
 
-nmds_plot
+fun_nmds_plot
 ```
 
 # ASV abundance
@@ -1380,12 +1385,11 @@ df
 
 ## PCA 
 ```{r}
-
 # perform PC decomposition of DES object
 mypca <- des_to_pca(dds)
 
 # to get pca plot axis into the same scale create a dataframe of PC scores multiplied by their variance
-d <- t(data.frame(t(mypca$x) * mypca$percentVar))
+bac_pca <- t(data.frame(t(mypca$x) * mypca$percentVar))
 
 formula = FULL_DESIGN
 ```
@@ -1445,15 +1449,15 @@ pca_factors
 ```{r, fig.width=8,fig.height=5}
 
 bac_pca_plot <- plotOrd(
-  d,
+  bac_pca,
   colData(dds),
-  design = "cultivar",
-  shape = "site",
+  design = "site",
+  shape = "planting_season",
   axes = c(1, 2),
-  facet = "planting_season", 
+  # facet = "planting_season", 
   cbPalette = T,
   alpha = 0.75,
-) #+ facet_wrap(~facet) 
+) #+ facet_wrap(~facet)
 
 ggsave(filename = "bac_pca_plot.png", plot = bac_pca_plot, path = "figures/")
 
@@ -1496,11 +1500,13 @@ set.seed(sum(utf8ToInt("Hamish McLean")))
 ord <- metaMDS(vg,trace=0) 
 #sratmax=20000,maxit=20000,try = 177, trymax = 177
 
-nmds <- scores(ord)
+bac_nmds <- scores(ord)
 
 bac_nmds_plot <- plotOrd(
-  nmds, colData(dds), design = Factor2, 
-  shape = Factor1, alpha = 0.75, cbPalette = T
+  bac_nmds, colData(dds), 
+  design = "site", 
+  shape = "planting_season", 
+  alpha = 0.75, cbPalette = T
 ) + theme(text = element_text(size = 14))
 
 ggsave(filename = "fun_nmds_plot.png", plot = bac_nmds_plot, path = "figures/")
@@ -1750,4 +1756,42 @@ ggsave(
 )
 
 alpha_bar
+```
+
+### PCA
+  
+```{r}
+pca_combo_plot <- ggarrange(
+  fun_pca_plot, bac_pca_plot,
+  ncol = 2, nrow = 1, labels = c("A", "B"),
+  common.legend = T, legend = "right"
+)
+
+ggsave(
+  filename = "pca_combo_plot.png", plot = pca_combo_plot, path = "figures/", 
+  height = 18, width = 25, units = "cm"
+)
+
+nmds_combo_plot <- ggarrange(
+  fun_nmds_plot, bac_nmds_plot,
+  ncol = 2, nrow = 1, labels = c("A", "B"),
+  common.legend = T, legend = "right"
+)
+
+ggsave(
+  filename = "nmds_combo_plot.png", plot = nmds_combo_plot, path = "figures/", 
+  height = 18, width = 25, units = "cm"
+)
+
+mega_combo_plot <- ggarrange(
+  fun_pca_plot, bac_pca_plot,
+  fun_nmds_plot, bac_nmds_plot,
+  ncol = 2, nrow = 2, labels = c("A", "B", "C", "D"),
+  common.legend = T, legend = "bottom"
+) + labs(shape = "Planting season")
+
+ggsave(
+  filename = "mega_combo_plot.png", plot = mega_combo_plot, path = "figures/", 
+  height = 25, width = 30, units = "cm"
+)
 ```
