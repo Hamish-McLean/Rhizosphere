@@ -454,58 +454,6 @@ canker_anova$Perc..Dev <- canker_anova$Deviance / total_deviance * 100
 canker_anova
 ```
 
-```{r plotwise canker data, eval = FALSE}
-all_canker_data <- fread("all_canker_data.csv")
-
-# Remove spaces from column names and convert to lowercase
-colnames(all_canker_data) <- tolower(gsub(" ", "_", colnames(all_canker_data)))
-
-# Add planting season to canker data and set tree_id and id columns
-all_canker_data <- mutate(
-  all_canker_data,
-  planting_season = case_when(
-    planting_date %in% c("March", "April") ~ "spring",
-    planting_date %in% c("Dec") ~ "winter"
-  ),
-  tree_id = id,
-  id = substr(tree_id, 1, 4)
-)
-
-# Filter canker data to match both id and planting season from colData
-all_canker_data <- all_canker_data %>% 
-  semi_join(ubiome_BAC$colData, by = c("id", "planting_season"))
-
-# Filter out replacement "7 (GD)" trees
-all_canker_data <- all_canker_data[all_canker_data$cultivar_number != "7 (GD)", ]
-
-# Sum mainstem and peripheral canker counts
-all_canker_data$mainstem_cankers <- all_canker_data$a4 + all_canker_data$b4
-all_canker_data$peripheral_cankers <- all_canker_data$c4 + all_canker_data$d4 + all_canker_data$e4
-all_canker_data$total_cankers <- all_canker_data$mainstem_cankers + all_canker_data$peripheral_cankers
-
-# Average mainstem and peripheral canker counts per subplot
-canker_data <- all_canker_data %>%
-  group_by(id, planting_season, cultivar_number, cultivar) %>%
-  summarise(
-    mainstem_cankers = mean(mainstem_cankers, na.rm = T),
-    peripheral_cankers = mean(peripheral_cankers, na.rm = T),
-    total_cankers = mean(total_cankers, na.rm = T)
-  )
-
-# Add canker data to colData for both FUN and BAC
-ubiome_FUN$colData <- merge(
-  rownames_to_column(ubiome_FUN$colData, var = "Row.names"), 
-  canker_data[, c("id", "mainstem_cankers", "peripheral_cankers", "total_cankers")], 
-  by = "id"
-) %>% column_to_rownames("Row.names")
-
-ubiome_BAC$colData <- merge(
-  rownames_to_column(ubiome_BAC$colData, var = "Row.names"), 
-  canker_data[, c("id", "mainstem_cankers", "peripheral_cankers", "total_cankers")], 
-  by = "id"
-) %>% column_to_rownames("Row.names")
-```
-
 # Create DESeq objects
 
 ```{r DESeq}
