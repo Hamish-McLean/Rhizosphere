@@ -1008,6 +1008,7 @@ cat(
 )
 
 otu_anova_results_adjusted[cultivar_p < 0.05, ]
+otu_anova_results_adjusted[season_p < 0.05, ]
 ```
 
 # Canker counts
@@ -1581,6 +1582,7 @@ cat(
 )
 
 otu_anova_results_adjusted[cultivar_p < 0.05, ]
+otu_anova_results_adjusted[season_p < 0.05, ]
 ```
 
 # Canker counts
