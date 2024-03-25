@@ -94,26 +94,40 @@ ubiome_BAC <- loadData("data/BAC.zotu_table.txt",metadata,"data/zBAC.sintax.taxa
 ubiome_FUN <- loadData("data/FUN.zotu_table.txt",metadata,"data/zFUN.sintax.taxa",RHB="FUN")
 
 # Rename site to Site and cultivar to Scion
-ubiome_BAC$colData <- ubiome_BAC$colData %>% rename(Site = site, Scion = cultivar)
-ubiome_FUN$colData <- ubiome_FUN$colData %>% rename(Site = site, Scion = cultivar)
+ubiome_BAC$colData <- ubiome_BAC$colData %>% rename(location = site, Scion = cultivar)
+ubiome_FUN$colData <- ubiome_FUN$colData %>% rename(location = site, Scion = cultivar)
 
 # Correct for planting date month variability.
 # March and April are replaced by spring, December by winter.
-ubiome_BAC$colData <- ubiome_BAC$colData %>%
-  mutate(
-    Season = case_when(
-      planting_date %in% c("march", "april") ~ "Spring",
-      planting_date %in% c("dec") ~ "Winter"
+mutate_season <- function(data){
+  data <- data %>%
+    mutate(
+      Season = case_when(
+        planting_date %in% c("march", "april") ~ "Spring",
+        planting_date %in% c("dec") ~ "Winter"
+      )
     )
-  )
+  return(data)
+}
 
-ubiome_FUN$colData <- ubiome_FUN$colData %>%
-  mutate(
-    Season = case_when(
-      planting_date %in% c("march", "april") ~ "Spring",
-      planting_date %in% c("dec") ~ "Winter"
+ubiome_BAC$colData <- mutate_season(ubiome_BAC$colData)
+ubiome_FUN$colData <- mutate_season(ubiome_FUN$colData)
+
+# Change sites Avalon -> A, Scripps -> B, and WWF -> C
+mutate_site <- function(data){
+  data <- data %>%
+    mutate(
+      Site = case_when(
+        location == "Avalon" ~ "A",
+        location == "Scripps" ~ "B",
+        location == "WWF" ~ "C"
+      )
     )
-  )
+  return(data)
+}
+
+ubiome_BAC$colData <- mutate_site(ubiome_BAC$colData)
+ubiome_FUN$colData <- mutate_site(ubiome_FUN$colData)
 ```
 
 ## Global removals
@@ -315,9 +329,14 @@ canker_data <- fread("canker_data.csv", select = c(1:5, 7:34))
 # Remove spaces from column names and convert to lowercase
 colnames(canker_data) <- tolower(gsub(" ", "_", colnames(canker_data)))
 
-# Add planting season to canker data and total canker count for timepoint 4
+# Codify site names, add planting season and total canker count for timepoint 4
 canker_data <- mutate(
   canker_data,
+  Site = case_when(
+    site == "Avalon" ~ "A",
+    site == "Scripps" ~ "B",
+    site == "WWF" ~ "C"
+  )
   Season = case_when(
     planting_date %in% c("March", "April") ~ "Spring",
     planting_date %in% c("Dec") ~ "Winter"
@@ -341,7 +360,7 @@ canker_data %>% group_by(code) %>% summarise(n = n()) %>% filter(n != 2)
 cankers <- canker_data %>% 
   group_by(code) %>% 
   summarise(
-    Site = first(site),
+    Site = first(Site),
     Season = first(Season),
     Scion = first(cultivar),
     Cankers = sum(total_cankers)
