@@ -1708,6 +1708,7 @@ abundance_bar
 
 ```{r}
 alpha_combined <- rbind(fun_alpha, bac_alpha) %>% 
+  subset(select = c("Site", "Season", "Scion", "Target", "shannon", "simpson")) %>%
   mutate(kingdom = ifelse(Target == "ITS", "Fungi", "Bacteria")) %>%
   pivot_longer(
     cols = c("shannon", "simpson"), names_to = "measure", values_to = "value"
