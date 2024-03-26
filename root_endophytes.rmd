@@ -336,7 +336,7 @@ canker_data <- mutate(
     site == "Avalon" ~ "A",
     site == "Scripps" ~ "B",
     site == "WWF" ~ "C"
-  )
+  ),
   Season = case_when(
     planting_date %in% c("March", "April") ~ "Spring",
     planting_date %in% c("Dec") ~ "Winter"
@@ -1047,8 +1047,6 @@ otu_anova_results_adjusted <- otu_anova_results %>%
     site_season_p = p.adjust(site_season_p, method = "BH")
   )
 
-otu_anova_results_adjusted
-
 cat(
   "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
   "Site:", nrow(otu_anova_results_adjusted[site_p < 0.05, ]), "\n",
@@ -1674,8 +1672,6 @@ otu_anova_results_adjusted <- otu_anova_results %>%
     cultivar_p = p.adjust(cultivar_p, method = "BH"),
     season_p = p.adjust(season_p, method = "BH")
   )
-
-otu_anova_results_adjusted
 
 cat(
   "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
