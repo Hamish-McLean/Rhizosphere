@@ -905,6 +905,44 @@ fun_nmds_plot
 # Extract normalised counts from DESeq object
 nc <- round(counts(dds, normalize = T), 0) %>% as.data.frame()
 
+# Sum ASV counts across samples
+total_asv_counts <- rowSums(nc)
+
+# Sort ASVs by abundance
+total_asv_counts <- total_asv_counts[order(total_asv_counts, decreasing = T)]
+
+# Caculate cumulative percentage
+cumulative <- data.frame(
+  cumulative = cumsum(total_asv_counts) / sum(total_asv_counts) * 100,
+  no = seq_along(total_asv_counts)
+)
+
+# Find the number of ASVs that account for 50%, 80%, and 99% of total reads
+cat(
+  "Number of ASVs that account for 50%, 80%, and 99% of total reads", "\n\n",
+  "50%:", sum(cumulative <= 50), "\n",
+  "80%:", sum(cumulative <= 80), "\n",
+  "99%:", sum(cumulative <= 99), "\n"
+)
+
+# Find the cumulative percentage accounted for by top x ASVs
+cat(
+  "Percentage of total reads accounted for by the top 100, 200,and 500 ASVs:", "\n\n",
+  "100:", round(cumulative[cumulative$no == 100, "cumulative"], 1) , "\n",
+  "200:", round(cumulative[cumulative$no == 200, "cumulative"], 1) , "\n",
+  "500:", round(cumulative[cumulative$no == 500, "cumulative"], 1) , "\n"
+)
+
+# Plot cumulative percentage of ASVs
+bac_cum_asv <- ggline(
+  data = cumulative, x = "no", y = "cumulative", 
+  plot_type = "l", palette = cbPalette,
+  title = "Cumulative percentage of fungal ASVs", xlab = "Number of ASVs", 
+  ylab = "Cumulative percentage of reads"
+)
+ggsave(filename = "fun_cum_asv.png", plot = fun_cum_asv, path = "figures/")
+fun_cum_asv
+
 # Filter the top x abundant OTUs by the sum of their normalised counts
 top_otus <- nc[order(rowSums(nc), decreasing = T)[1:DIFFOTU], ]
 
@@ -1490,6 +1528,47 @@ bac_nmds_plot
 ```{r Bac top ASVs}
 # Extract normalised counts from DESeq object
 nc <- counts(dds, normalize = T) %>% as.data.frame()
+
+# Sum ASV counts across samples
+total_asv_counts <- rowSums(nc)
+
+# Sort ASVs by abundance
+total_asv_counts <- total_asv_counts[order(total_asv_counts, decreasing = T)]
+
+# Caculate cumulative percentage
+cumulative <- data.frame(
+  cumulative = cumsum(total_asv_counts) / sum(total_asv_counts) * 100,
+  no = seq_along(total_asv_counts)
+)
+
+# Find the number of ASVs that account for 50%, 80%, and 99% of total reads
+cat(
+  "Number of ASVs that account for 50%, 80%, and 99% of total reads", "\n\n",
+  "50%:", sum(cumulative <= 50), "\n",
+  "80%:", sum(cumulative <= 80), "\n",
+  "99%:", sum(cumulative <= 99), "\n"
+)
+
+# Find the cumulative percentage accounted for by top x ASVs
+cat(
+  "Percentage of total reads accounted for by the top 100, 200,and 500 ASVs:", "\n\n",
+  "100:", round(cumulative[cumulative$no == 100, "cumulative"], 1) , "\n",
+  "200:", round(cumulative[cumulative$no == 200, "cumulative"], 1) , "\n",
+  "500:", round(cumulative[cumulative$no == 500, "cumulative"], 1) , "\n"
+)
+
+# Plot cumulative percentage of ASVs
+bac_cum_asv <- ggline(
+  data = cumulative, x = "no", y = "cumulative", 
+  plot_type = "l", palette = cbPalette,
+  title = "Cumulative percentage of bacterial ASVs", xlab = "Number of ASVs", 
+  ylab = "Cumulative percentage of reads"
+)
+ggsave(filename = "bac_cum_asv.png", plot = bac_cum_asv, path = "figures/")
+bac_cum_asv
+
+# Plot the first 1000 ASVs
+
 
 # Filter the top x abundant OTUs by the sum of their normalised counts
 top_otus <- nc[order(rowSums(nc), decreasing = T)[1:DIFFOTU], ]
