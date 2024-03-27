@@ -14,9 +14,9 @@ knitr::opts_chunk$set(fig.width = 9, fig.height = 9)
 knitr::opts_chunk$set(error = TRUE)
 ```
 
-# Setup
+## Setup
 
-## Libraries
+### Libraries
 
 ```{r libraries}
 library(DESeq2)
@@ -41,7 +41,7 @@ library(ggpubr)
 library(metafuncs)
 ```
 
-## Functions and constants
+### Functions and constants
 
 ```{r constants}
 ALPHA =      0.1   # DESeq2 alpha value
@@ -80,7 +80,7 @@ source("functions/loadme.R")
 source("functions/rarefaction.R")
 ```
 
-# Load data
+## Load data
 
 Bacterial and fungal ASV (ZOTU) tables, sample metadata, and taxonomy files are
 loaded into named lists using the `loadData` function from Greg's `metafuncs` 
@@ -130,7 +130,7 @@ ubiome_BAC$colData <- mutate_site(ubiome_BAC$colData)
 ubiome_FUN$colData <- mutate_site(ubiome_FUN$colData)
 ```
 
-## Global removals
+### Global removals
 
 ```{r}
 # Sample "A2-7" removed due to missampling.
@@ -140,9 +140,9 @@ ubiome_FUN$colData <- ubiome_FUN$colData[!rownames(ubiome_FUN$colData) %in% "HMA
 ubiome_FUN$countData <- ubiome_FUN$countData[, !colnames(ubiome_FUN$countData) %in% "HMA27"]
 ```
 
-# Filter samples and OTUs
+## Filter samples and OTUs
 
-## Filtering taxa
+### Filtering taxa
 
 Plantae taxa are filtered from fungal `taxData`.
 Chloroplast and Eukaryote  taxa are filtered from bacterial `taxData`.
@@ -176,7 +176,7 @@ ubiome_BAC$taxData <- ubiome_BAC$taxData[!rownames(ubiome_BAC$taxData) %in% filt
 ubiome_BAC$countData <- ubiome_BAC$countData[!rownames(ubiome_BAC$countData) %in% filt, ]
 ```
 
-## Filtering samples
+### Filtering samples
 
 Plot rarefaction curves.
 
@@ -211,9 +211,9 @@ filt <- !colSums(ubiome_BAC$countData) > med * READFILTER
 cat("Bacteria: ",sum(filt),"sample(s) removed\n")
 ```
 
-## Filter ASVs
+### Filter ASVs
 
-### ASV read count
+#### ASV read count
 
 Number of ASVs which account for 50 %, 80 %, and 99 % of total reads.
 
@@ -237,7 +237,7 @@ top_asvs <- data.table(
 top_asvs
 ```
 
-### Filter ASVs
+#### Filter ASVs
 
 Remove ASVs with read count below `r OTUFILTER * 100` % of total reads.
 
@@ -257,12 +257,12 @@ ubiome_BAC$taxData <- ubiome_BAC$taxData[rownames(ubiome_BAC$taxData) %in% keep,
 ubiome_BAC$countData <- ubiome_BAC$countData[rownames(ubiome_BAC$countData) %in% keep,]
 ```
 
-# Absolute abundance normalisation
+## Absolute abundance normalisation
 
 OTU normalisation is performed using qPCR theoretical copy number data.
 Copy number is calculated per mg of root sample from the qPCR data.
 
-## Prepare qPCR abundance data
+### Prepare qPCR abundance data
 
 ```{r abundance}
 abundance <- fread("mean_abundance.csv")
@@ -292,7 +292,7 @@ ubiome_BAC$colData <- merge(
 ) %>% column_to_rownames(var = "Row.names")
 ```
 
-### Remove outliers
+#### Remove outliers
 
 ```{r}
 # Detect outliers with std > threshold from the median
@@ -317,7 +317,7 @@ cat("Fungi: removing", length(outliers), "outlier(s)\n")
 
 Sample A1-3 is removed from the fungal data due to abnormally high copy number.
 
-# Canker count data
+## Canker count data
 
 Canker count data for sampled trees only.
 
@@ -474,7 +474,7 @@ canker_anova$Perc..Dev <- canker_anova$Deviance / total_deviance * 100
 canker_anova
 ```
 
-# Create DESeq objects
+## Create DESeq objects
 
 ```{r DESeq}
 # Make sure countData and colData still match, if they do, create DESeq objects, if not throw error
@@ -495,7 +495,7 @@ if(identical(colnames(ubiome_BAC$countData), rownames(ubiome_BAC$colData))) {
 }
 ```
 
-# Abundance normalisation
+## Abundance normalisation
 
 Absolute abundance normalisation using DESeq2 size factors.
 
@@ -675,9 +675,9 @@ abundance_results$Perc.Var <- abundance_results$Sum.Sq / total_variance * 100
 abundance_results
 ```
 
-# Alpha diversity analysis
+## Alpha diversity analysis
 
-## Alpha diversity plot
+### Alpha diversity plot
 
 ```{r fun_alpha_diversity}
 
@@ -700,7 +700,7 @@ ggsave(
 fun_alpha_plot
 ```
 
-## Permutation based anova on diversity index ranks
+### Permutation based anova on diversity index ranks
 
 ```{r}
 # get the diversity index data
@@ -721,7 +721,7 @@ fun_alpha <- all_alpha_ord
 formula <- FULL_DESIGN # x ~ Site * Season * Scion + Site / Site.block
 ```
 
-### Chao1
+#### Chao1
 
 ```{r}
 setkey(all_alpha_ord, S.chao1)
@@ -734,7 +734,7 @@ df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
 df
 ```
 
-### Shannon
+#### Shannon
 
 ```{r}
 setkey(all_alpha_ord, shannon)
@@ -747,7 +747,7 @@ df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
 df
 ```
 
-### Simpson
+#### Simpson
 
 ```{r}
 setkey(all_alpha_ord, simpson)
@@ -760,9 +760,9 @@ df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
 df
 ```
 
-# Beta diversity PCA/NMDS
+## Beta diversity PCA/NMDS
 
-## PCA
+### PCA
 
 ```{r}
 # Perform PC decomposition of DES object
@@ -774,7 +774,7 @@ fun_pca <- t(data.frame(t(mypca$x) * mypca$percentVar))
 formula = FULL_DESIGN
 ```
 
-### Percent variation in first 10 PCs 
+#### Percent variation in first 10 PCs 
 
 ```{r}
 # Cumulative percentage of variance explained
@@ -803,7 +803,7 @@ pca_var <- data.frame(
 pca_var
 ```
 
-### ANOVA of first 10 PCs
+#### ANOVA of first 10 PCs
 
 ```{r} 
 pca_summary <- apply(
@@ -816,7 +816,7 @@ pca_summary <- apply(
 pca_summary
 ```
 
-### Percent variation in first 10 PCs for each factor
+#### Percent variation in first 10 PCs for each factor
 
 ```{r}
 pcas <- lapply(pca_summary, function(i) data.frame(unclass(i)))
@@ -840,7 +840,7 @@ pca_factors <- data.table(
 pca_factors
 ```
 
-### PCA plot
+#### PCA plot
 
 ```{r, fig.width = 8, fig.height = 5}
 fun_pca_plot <- plotOrd(
@@ -860,7 +860,7 @@ ggsave(filename = "fun_pca_plot.png", plot = fun_pca_plot, path = "figures/")
 fun_pca_plot
 ```
 
-### PCA sum of squares (% var)
+#### PCA sum of squares (% var)
 
 ```{r}
 sum_squares <- apply(mypca$x, 2 ,function(x) 
@@ -873,7 +873,7 @@ perVar <- x * mypca$percentVar
 round(colSums(perVar) / sum(colSums(perVar)) * 100, 3)
 ```
 
-## ADONIS
+### ADONIS
 
 ```{r}
 # Calculate Bray-Curtis distance matrix
@@ -889,7 +889,7 @@ df$Perc.Var <- df$SumOfSqs / df["Total", "SumOfSqs"] * 100
 df
 ```
 
-## NMDS ordination
+### NMDS ordination
 
 ```{r}
 set.seed(sum(utf8ToInt("Hamish McLean")))
@@ -910,9 +910,9 @@ ggsave(filename = "fun_nmds_plot.png", plot = fun_nmds_plot, path = "figures/")
 fun_nmds_plot
 ```
 
-# ASV abundance
+## ASV abundance
 
-## Filter top ASVs
+### Filter top ASVs
 
 ```{r top ASVs}
 # Extract normalised counts from DESeq object
@@ -978,7 +978,9 @@ identical(rownames(top_otu_data), rownames(colData))
 top_otu_data <- merge(top_otu_data, colData, by = 0) %>% column_to_rownames("Row.names")
 ```
 
-## Effect of design factors on abundance of top ASVs
+### Filter top ASVs by read count
+
+### Effect of design factors on abundance of top ASVs
 
 Effect of Site, Scion, and planting season on abundance of top `r DIFFOTU` ASVs
 
@@ -1060,9 +1062,9 @@ otu_anova_results_adjusted[cultivar_p < 0.05, ]
 otu_anova_results_adjusted[season_p < 0.05, ]
 ```
 
-# Canker counts
+## Canker counts
 
-## Effect of ASV abundance on canker count
+### Effect of ASV abundance on canker count
 
 ```{r}
 # Filter out samples with missing canker count
@@ -1100,7 +1102,7 @@ cat(
 asv_canker_results[p_adjusted < 0.05, ]
 ```
 
-## Effect of α-diversity on canker count
+### Effect of α-diversity on canker count
 
 ```{r}
 # ANOVA of α-diversity with canker count
@@ -1128,7 +1130,7 @@ alpha_canker_results <- data.table(t(sapply(measures, function(x) alpha_canker_a
 alpha_canker_results
 ```
 
-## Effect of β-diversity on canker count
+### Effect of β-diversity on canker count
 
 ```{r}
 no_pcs <- 4
@@ -1310,9 +1312,9 @@ abundance_results$Perc.Var <- abundance_results$Sum.Sq / total_variance * 100
 abundance_results
 ```
 
-# Alpha diversity analysis
+## Alpha diversity analysis
 
-## Alpha diversity plot
+### Alpha diversity plot
 
 ```{r}
 
@@ -1342,7 +1344,7 @@ ggsave(
 bac_alpha_plot
 ```
 
-## Permutation based anova on diversity index ranks
+### Permutation based anova on diversity index ranks
 
 ```{r}
 # get the diversity index data
@@ -1360,7 +1362,7 @@ bac_alpha <- all_alpha_ord
 formula <- FULL_DESIGN
 ```
 
-### Chao1
+#### Chao1
 
 ```{r}
 setkey(all_alpha_ord, S.chao1)
@@ -1373,7 +1375,7 @@ df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
 df
 ```
 
-### Shannon
+#### Shannon
 
 ```{r}
 setkey(all_alpha_ord, shannon)
@@ -1386,7 +1388,7 @@ df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
 df
 ```
 
-### Simpson
+#### Simpson
 
 ```{r}
 setkey(all_alpha_ord, simpson)
@@ -1399,9 +1401,9 @@ df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
 df
 ```
 
-# Beta diversity PCA/NMDS
+## Beta diversity PCA/NMDS
 
-## PCA 
+### PCA 
 ```{r}
 # perform PC decomposition of DES object
 mypca <- des_to_pca(dds)
@@ -1412,7 +1414,7 @@ bac_pca <- t(data.frame(t(mypca$x) * mypca$percentVar))
 formula = FULL_DESIGN
 ```
 
-### Percent variation in first 10 PCs 
+#### Percent variation in first 10 PCs 
 ```{r}
 # Cumulative percentage of variance explained
 pca_cum_var <- data.frame(
@@ -1440,7 +1442,7 @@ pca_var <- data.frame(
 pca_var
 ```
 
-### ANOVA of first 10 PCs
+#### ANOVA of first 10 PCs
 ```{r} 
 pca_summary <- apply(
   mypca$x[, 1:n], 2, 
@@ -1452,7 +1454,7 @@ pca_summary <- apply(
 pca_summary
 ```
 
-### Percent variation in first 10 PCs for each factor
+#### Percent variation in first 10 PCs for each factor
 
 ```{r}
 pcas <- lapply(pca_summary, function(i) data.frame(unclass(i)))
@@ -1476,7 +1478,7 @@ pca_factors <- data.table(
 pca_factors
 ```
 
-### PCA plot
+#### PCA plot
 ```{r, fig.width=8,fig.height=5}
 
 bac_pca_plot <- plotOrd(
@@ -1495,7 +1497,7 @@ ggsave(filename = "bac_pca_plot.png", plot = bac_pca_plot, path = "figures/")
 bac_pca_plot
 ```
 
-### PCA sum of squares (% var)
+#### PCA sum of squares (% var)
 
 ```{r}
 sum_squares <- apply(mypca$x, 2 ,function(x) 
@@ -1508,7 +1510,7 @@ perVar <- x * mypca$percentVar
 round(colSums(perVar) / sum(colSums(perVar)) * 100, 3)
 ```
 
-## ADONIS
+### ADONIS
 
 ```{r}
 # Calculate Bray-Curtis distance matrix
@@ -1524,7 +1526,7 @@ df$Perc.Var <- df$SumOfSqs / df["Total", "SumOfSqs"] * 100
 df
 ```
 
-## NMDS ordination
+### NMDS ordination
 
 ```{r}
 set.seed(sum(utf8ToInt("Hamish McLean")))
@@ -1545,9 +1547,9 @@ ggsave(filename = "fun_nmds_plot.png", plot = bac_nmds_plot, path = "figures/")
 bac_nmds_plot
 ```
 
-# ASV abundance
+## ASV abundance
 
-## Filter top ASVs
+### Filter top ASVs
 
 ```{r Bac top ASVs}
 # Extract normalised counts from DESeq object
@@ -1613,7 +1615,7 @@ identical(rownames(top_otu_data), rownames(colData))
 top_otu_data <- merge(top_otu_data, colData, by = 0) %>% column_to_rownames("Row.names")
 ```
 
-## Effect of design factors on top ASVs
+### Effect of design factors on top ASVs
 
 Effect of Site, Scion, and planting season on abundance of top `r DIFFOTU` ASVs
 
@@ -1686,9 +1688,9 @@ otu_anova_results_adjusted[cultivar_p < 0.05, ]
 otu_anova_results_adjusted[season_p < 0.05, ]
 ```
 
-# Canker counts
+## Canker counts
 
-## Effect of ASV abundance on canker count
+### Effect of ASV abundance on canker count
 
 ```{r}
 # Filter out samples with missing canker count
@@ -1721,7 +1723,7 @@ nrow(asv_canker_results[asv_canker_results$p_adjusted < 0.05, ])
 asv_canker_results[asv_canker_results$p_adjusted < 0.05, ]
 ```
 
-## Effect of α-diversity on canker count
+### Effect of α-diversity on canker count
 
 ```{r}
 # ANOVA of α-diversity with canker count
@@ -1749,7 +1751,7 @@ alpha_canker_results <- data.table(t(sapply(measures, function(x) alpha_canker_a
 alpha_canker_results
 ```
 
-## Effect of β-diversity on canker count
+### Effect of β-diversity on canker count
 
 ```{r}
 no_pcs <- 4
@@ -1781,9 +1783,9 @@ beta_canker_results <- data.table(t(sapply(pcs, function(x) beta_canker_anova(x,
 beta_canker_results
 ```
 
-## Figures
+# Extra figures
 
-### Abundance
+## Abundance
 
 ```{r}
 abundance_combined <- rbind(
@@ -1805,7 +1807,7 @@ ggsave(
 abundance_bar
 ```
 
-### Alpha diversity
+## Alpha diversity
 
 ```{r}
 alpha_combined <- rbind(fun_alpha, bac_alpha) %>% 
@@ -1830,7 +1832,7 @@ ggsave(
 alpha_bar
 ```
 
-### PCA
+## PCA
   
 ```{r}
 pca_combo_plot <- ggarrange(
