@@ -52,8 +52,6 @@ TAXCONF =    0.80  # Sets the taxonomy confidence level to get "rank" in taxonom
 TOPOTU =     10    # Number of Top OTUs for summary information
 DIFFOTU =    200    # Number of Top OTUs for correlation analysis
 
-DNORM =      T     # Boolean for DeSeq2 normalisation
-
 # graphics
 DEVICE =     "png"
 DPI =        1200
@@ -540,7 +538,7 @@ cat("Normalised reads", "\n\n",
   "Min normalised reads per sample:\t", min(colSums(nct)), "\n",
   "Max normalised reads per sample:\t", max(colSums(nct)), "\n\n"
 )
-#round(colSums(counts(dds,normalize = DNORM)),0)
+#round(colSums(counts(dds,normalize = T)),0)
 ```
 
 ### OTU summary 
@@ -601,7 +599,7 @@ data.table(
 ```{r}
 
 tx <-taxData[rownames(dds),]
-nc <- counts(dds, normalize = DNORM)
+nc <- counts(dds, normalize = T)
 ac <- sum(nc)
 
 data.table(
@@ -1218,7 +1216,7 @@ cat("Normalised reads", "\n\n",
   "Min normalised reads per sample:\t", min(colSums(nct)), "\n",
   "Max normalised reads per sample:\t", max(colSums(nct)), "\n\n"
 )
-#round(colSums(counts(dds,normalize = DNORM)),0)
+#round(colSums(counts(dds,normalize = T)),0)
 ```
 
 ### OTU summary 
@@ -1279,7 +1277,7 @@ data.table(
 ```{r}
 
 tx <-taxData[rownames(dds),]
-nc <- counts(dds, normalize = DNORM)
+nc <- counts(dds, normalize = T)
 ac <- sum(nc)
 
 data.table(
