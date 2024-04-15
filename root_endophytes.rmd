@@ -98,41 +98,29 @@ metadata <- "sample_metadata.txt"
 ubiome_BAC <- loadData("data/BAC.zotu_table.txt",metadata,"data/zBAC.sintax.taxa",RHB="BAC")
 ubiome_FUN <- loadData("data/FUN.zotu_table.txt",metadata,"data/zFUN.sintax.taxa",RHB="FUN")
 
-# Rename site to Site and cultivar to Scion
-ubiome_BAC$colData <- ubiome_BAC$colData %>% rename(location = site, Scion = cultivar)
-ubiome_FUN$colData <- ubiome_FUN$colData %>% rename(location = site, Scion = cultivar)
-
+# Change sites Avalon -> 1, Scripps -> 2, and WWF -> 3.
 # Correct for planting date month variability.
 # March and April are replaced by spring, December by winter.
-mutate_season <- function(data){
+mutate_factors <- function(data){
   data <- data %>%
-    mutate(
-      Season = case_when(
-        planting_date %in% c("march", "april") ~ "Spring",
-        planting_date %in% c("dec") ~ "Winter"
-      )
-    )
-  return(data)
-}
-
-ubiome_BAC$colData <- mutate_season(ubiome_BAC$colData)
-ubiome_FUN$colData <- mutate_season(ubiome_FUN$colData)
-
-# Change sites Avalon -> A, Scripps -> B, and WWF -> C
-mutate_site <- function(data){
-  data <- data %>%
+    rename(location = site, Scion = cultivar) %>%
     mutate(
       Site = case_when(
         location == "Avalon" ~ 1,
         location == "Scripps" ~ 2,
         location == "WWF" ~ 3
-      )
+      ) %>% as.factor(),
+      Season = case_when(
+        planting_date %in% c("march", "april") ~ "Spring",
+        planting_date %in% c("dec") ~ "Winter"
+      ) %>% as.factor(),
+      Scion = as.factor(Scion)
     )
   return(data)
 }
 
-ubiome_BAC$colData <- mutate_site(ubiome_BAC$colData)
-ubiome_FUN$colData <- mutate_site(ubiome_FUN$colData)
+ubiome_BAC$colData <- mutate_factors(ubiome_BAC$colData)
+ubiome_FUN$colData <- mutate_factors(ubiome_FUN$colData)
 ```
 
 ### Global removals
@@ -338,14 +326,15 @@ colnames(canker_data) <- tolower(gsub(" ", "_", colnames(canker_data)))
 canker_data <- mutate(
   canker_data,
   Site = case_when(
-    site == "Avalon" ~ "A",
-    site == "Scripps" ~ "B",
-    site == "WWF" ~ "C"
-  ),
+    site == "Avalon" ~ 1,
+    site == "Scripps" ~ 2,
+    site == "WWF" ~ 3
+  ) %>% as.factor(),
   Season = case_when(
     planting_date %in% c("March", "April") ~ "Spring",
     planting_date %in% c("Dec") ~ "Winter"
   ),
+  Scion = as.factor(cultivar),
   total_cankers = a4 + b4 + c4 + d4 + e4
 )
 
@@ -367,7 +356,7 @@ cankers <- canker_data %>%
   summarise(
     Site = first(Site),
     Season = first(Season),
-    Scion = first(cultivar),
+    Scion = first(Scion),
     Cankers = sum(total_cankers)
   ) %>% 
   column_to_rownames("code")
@@ -1108,13 +1097,17 @@ canker_model <- glm.nb(canker_design, data = cankers)
 ```{r}
 # Filter out samples with missing canker count
 top_asv_data <- top_asv_data[complete.cases(top_asv_data$Cankers), ]
+all.equal(top_asv_data[c("Site", "Season", "Scion", "Cankers")],cankers)
+
+# Canker model with ASV abundance data
+canker_asv_model <- glm.nb(canker_design, data = top_asv_data)
 
 # ANOVA of top ASVs with canker count
 asv_canker_anova <- function(otu, data) {
   log_otu = paste0("log(", otu, " + 1)")
   f = paste(canker_design, "+", log_otu)
   m = glm.nb(f, data = data)
-  a = anova(canker_model, m) %>% data.frame()
+  a = anova(canker_asv_model, m) %>% data.frame()
   b = anova(m) %>% data.frame()
   total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
   d = data.frame(
@@ -1774,12 +1767,14 @@ canker_model <- glm.nb(canker_design, data = cankers)
 # Filter out samples with missing canker count
 top_asv_data <- top_asv_data[complete.cases(top_asv_data$Cankers), ]
 
+canker_asv_model <- glm.nb(canker_design, data = top_asv_data)
+
 # ANOVA of top ASVs with canker count
 asv_canker_anova <- function(otu, data) {
   log_otu = paste0("log(", otu, " + 1)")
   f = paste(canker_design, "+", log_otu)
   m = glm.nb(f, data = data)
-  a = anova(canker_model, m) %>% data.frame()
+  a = anova(canker_asv_model, m) %>% data.frame()
   b = anova(m) %>% data.frame()
   total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
   d = data.frame(
