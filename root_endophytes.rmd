@@ -19,22 +19,23 @@ knitr::opts_chunk$set(error = TRUE)
 ### Libraries
 
 ```{r libraries}
-library(DESeq2)
-library(tidyverse)
+# library(car)
+library(cowplot)
 library(data.table)
-library(vegan)
-library(lmPerm)
-library(viridis)
+library(DESeq2)
+library(DHARMa)
+library(ggpubr)
 library(grid)
 library(gridExtra)
-library(cowplot)
 library(iNEXT)
-# library(car)
-library(pscl)
-library(DHARMa)
+library(knitr)
+library(lmPerm)
 library(MASS)
+library(pscl)
 # library(rcompanion)
-library(ggpubr)
+library(tidyverse)
+library(vegan)
+library(viridis)
 
 # library(devtools)
 # install_github("eastmallingresearch/Metabarcoding_pipeline/scripts")
@@ -63,7 +64,7 @@ Factor1 = "Site"
 Factor2 = "Scion"
 DESIGN = y ~ Site + Season + Scion
 FULL_DESIGN = y ~ Site * Season * Scion
-canker_design = "Cankers ~ Site * Season * Scion + "
+canker_design = "Cankers ~ Site * Season * Scion"
 ```
 
 ```{r functions}
@@ -1086,6 +1087,16 @@ otu_anova_results_adjusted[season_p < 0.05, ]
 
 ## Canker counts
 
+Testing the effects of of ASV abundance, α-diversity, and β-diversity on canker counts.
+
+This uses a nested negative binomial regression model.
+
+The base model for canker counts uses the formula: `r canker_design`.
+
+```{r fun canker model}
+canker_model <- glm.nb(canker_design, data = cankers)
+```
+
 ### Effect of ASV abundance on canker count
 
 ```{r}
@@ -1094,21 +1105,23 @@ top_asv_data <- top_asv_data[complete.cases(top_asv_data$Cankers), ]
 
 # ANOVA of top ASVs with canker count
 asv_canker_anova <- function(otu, data) {
-  f = paste0(canker_design, otu)
+  log_otu = paste0("log(", otu, " + 1)")
+  f = paste(canker_design, "+", log_otu)
   m = glm.nb(f, data = data)
-  a = anova(m, test = "Chisq") %>% data.frame()
-  total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
+  a = anova(canker_model, m) %>% data.frame()
+  b = anova(m) %>% data.frame()
+  total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
   d = data.frame(
     OTU = otu,
     Taxonomy = taxData[otu, "rank"],
-    coef = m$coefficients[otu],
-    var = a[otu, 'Deviance'] / total_deviance * 100,
-    p = a[otu, 'Pr..Chi.']
+    coef = m$coefficients[log_otu],
+    var = b[log_otu, 'Deviance'] / total_deviance * 100,
+    p = a[2, 'Pr.Chi.']
   )
   return(d)
 }
 
-# asv_canker_anova(top_asv_ids[1], top_asv_data)
+# kable(asv_canker_anova(top_asv_ids[1], top_asv_data))
 
 # Effect of ASV abundance on canker count for top ASVs
 asv_canker_results <- data.table(t(sapply(top_asv_ids, function(x) asv_canker_anova(x, top_asv_data))))
@@ -1133,18 +1146,21 @@ measures <- c("shannon", "simpson")
 
 # ANOVA of α-diversity with canker count
 alpha_canker_anova <- function(measure, data) {
-  f = paste0(canker_design, measure)
+  f = paste(canker_design, "+", measure)
   m = glm.nb(f, data = data)
-  a = anova(m, test = "Chisq") %>% data.frame()
-  total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
+  a = anova(canker_model, m) %>% data.frame()
+  b = anova(m) %>% data.frame()
+  total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
   d = data.frame(
     measure = measure,
     coef = m$coefficients[measure],
-    var = a[measure, 'Deviance'] / total_deviance * 100,
-    p = a[measure, 'Pr..Chi.']
+    var = b[measure, 'Deviance'] / total_deviance * 100,
+    p = a[2, 'Pr.Chi.']
   )
   return(d)
 }
+
+alpha_canker_anova("shannon", all_alpha_ord)
 
 # Effect of α-diversity on canker count for each measure
 alpha_canker_results <- data.table(t(sapply(measures, function(x) alpha_canker_anova(x, all_alpha_ord))))
@@ -1165,15 +1181,16 @@ pcs <- tail(colnames(pc_scores), no_pcs)
 
 # ANOVA of β-diversity with canker count
 beta_canker_anova <- function(pc, data) {
-  f = paste0(canker_design, pc)
+  f = paste0(canker_design, "+", pc)
   m = glm.nb(f, data = data)
-  a = anova(m, test = "Chisq") %>% data.frame()
-  total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
+  a = anova(canker_model, m) %>% data.frame()
+  b = anova(m) %>% data.frame()
+  total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
   d = data.frame(
     PC = pc,
     coef = m$coefficients[pc],
-    var = a[pc, 'Deviance'] / total_deviance * 100,
-    p = a[pc, 'Pr..Chi.']
+    var = b[pc, 'Deviance'] / total_deviance * 100,
+    p = a[2, 'Pr.Chi.']
   )
   return(d)
 }
@@ -1735,6 +1752,16 @@ otu_anova_results_adjusted[season_p < 0.05, ]
 
 ## Canker counts
 
+Testing the effects of of ASV abundance, α-diversity, and β-diversity on canker counts.
+
+This uses a nested negative binomial regression model.
+
+The base model for canker counts uses the formula: `r canker_design`.
+
+```{r bac canker model}
+canker_model <- glm.nb(canker_design, data = cankers)
+```
+
 ### Effect of ASV abundance on canker count
 
 ```{r}
@@ -1743,16 +1770,18 @@ top_asv_data <- top_asv_data[complete.cases(top_asv_data$Cankers), ]
 
 # ANOVA of top ASVs with canker count
 asv_canker_anova <- function(otu, data) {
-  f = paste0(canker_design, otu)
+  log_otu = paste0("log(", otu, " + 1)")
+  f = paste(canker_design, "+", log_otu)
   m = glm.nb(f, data = data)
-  a = anova(m, test = "Chisq") %>% data.frame()
-  total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
+  a = anova(canker_model, m) %>% data.frame()
+  b = anova(m) %>% data.frame()
+  total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
   d = data.frame(
     OTU = otu,
     Taxonomy = taxData[otu, "rank"],
-    coef = m$coefficients[otu],
-    var = a[otu, 'Deviance'] / total_deviance * 100,
-    p = a[otu, 'Pr..Chi.']
+    coef = m$coefficients[log_otu],
+    var = b[log_otu, 'Deviance'] / total_deviance * 100,
+    p = a[2, 'Pr.Chi.']
   )
   return(d)
 }
@@ -1764,8 +1793,11 @@ asv_canker_results <- data.table(t(sapply(top_asv_ids, function(x) asv_canker_an
 asv_canker_results$p_adjusted <- p.adjust(asv_canker_results$p, method = "BH")
 
 # Summary of ASVs with statistically significant (*P* < 0.05) adjusted p-values
-nrow(asv_canker_results[asv_canker_results$p_adjusted < 0.05, ])
-asv_canker_results[asv_canker_results$p_adjusted < 0.05, ]
+cat(
+  nrow(asv_canker_results[p_adjusted < 0.05, ]), 
+  "ASVs have statistically significant (*P* < 0.05) adjusted p-values"
+)
+asv_canker_results[p_adjusted < 0.05, ]
 ```
 
 ### Effect of α-diversity on canker count
@@ -1777,15 +1809,16 @@ measures <- c("shannon", "simpson")
 
 # ANOVA of α-diversity with canker count
 alpha_canker_anova <- function(measure, data) {
-  f = paste0(canker_design, measure)
+  f = paste(canker_design, "+", measure)
   m = glm.nb(f, data = data)
-  a = anova(m, test = "Chisq") %>% data.frame()
-  total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
+  a = anova(canker_model, m) %>% data.frame()
+  b = anova(m) %>% data.frame()
+  total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
   d = data.frame(
     measure = measure,
     coef = m$coefficients[measure],
-    var = a[measure, 'Deviance'] / total_deviance * 100,
-    p = a[measure, 'Pr..Chi.']
+    var = b[measure, 'Deviance'] / total_deviance * 100,
+    p = a[2, 'Pr.Chi.']
   )
   return(d)
 }
@@ -1809,15 +1842,16 @@ pcs <- tail(colnames(pc_scores), no_pcs)
 
 # ANOVA of β-diversity with canker count
 beta_canker_anova <- function(pc, data) {
-  f = paste0(canker_design, pc)
+  f = paste0(canker_design, "+", pc)
   m = glm.nb(f, data = data)
-  a = anova(m, test = "Chisq") %>% data.frame()
-  total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
+  a = anova(canker_model, m) %>% data.frame()
+  b = anova(m) %>% data.frame()
+  total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
   d = data.frame(
     PC = pc,
     coef = m$coefficients[pc],
-    var = a[pc, 'Deviance'] / total_deviance * 100,
-    p = a[pc, 'Pr..Chi.']
+    var = b[pc, 'Deviance'] / total_deviance * 100,
+    p = a[2, 'Pr.Chi.']
   )
   return(d)
 }
