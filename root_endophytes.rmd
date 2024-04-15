@@ -1097,17 +1097,17 @@ canker_model <- glm.nb(canker_design, data = cankers)
 ```{r}
 # Filter out samples with missing canker count
 top_asv_data <- top_asv_data[complete.cases(top_asv_data$Cankers), ]
-all.equal(top_asv_data[c("Site", "Season", "Scion", "Cankers")],cankers)
+# all.equal(top_asv_data[c("Site", "Season", "Scion", "Cankers")],cankers)
 
-# Canker model with ASV abundance data
-canker_asv_model <- glm.nb(canker_design, data = top_asv_data)
+# Base model with ASV abundance data
+base_model <- glm.nb(canker_design, data = top_asv_data)
 
 # ANOVA of top ASVs with canker count
 asv_canker_anova <- function(otu, data) {
   log_otu = paste0("log(", otu, " + 1)")
   f = paste(canker_design, "+", log_otu)
   m = glm.nb(f, data = data)
-  a = anova(canker_asv_model, m) %>% data.frame()
+  a = anova(base_model, m) %>% data.frame()
   b = anova(m) %>% data.frame()
   total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
   d = data.frame(
@@ -1141,13 +1141,16 @@ asv_canker_results[p_adjusted < 0.05, ]
 ```{r}
 # ANOVA of α-diversity with canker count
 
-measures <- c("shannon", "simpson")
+# Base model with α-diversity data
+base_model <- glm.nb(canker_design, data = all_alpha_ord)
+
+measures <- c("S.chao1", "shannon", "simpson")
 
 # ANOVA of α-diversity with canker count
 alpha_canker_anova <- function(measure, data) {
   f = paste(canker_design, "+", measure)
   m = glm.nb(f, data = data)
-  a = anova(canker_model, m) %>% data.frame()
+  a = anova(base_model, m) %>% data.frame()
   b = anova(m) %>% data.frame()
   total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
   d = data.frame(
@@ -1159,7 +1162,7 @@ alpha_canker_anova <- function(measure, data) {
   return(d)
 }
 
-alpha_canker_anova("shannon", all_alpha_ord)
+# alpha_canker_anova("shannon", all_alpha_ord)
 
 # Effect of α-diversity on canker count for each measure
 alpha_canker_results <- data.table(t(sapply(measures, function(x) alpha_canker_anova(x, all_alpha_ord))))
@@ -1178,11 +1181,14 @@ pc_scores <- merge(colData, data.frame(mypca$x[, 1:no_pcs]), by = "row.names") %
 
 pcs <- tail(colnames(pc_scores), no_pcs)
 
+# Base model with β-diversity data
+base_model <- glm.nb(canker_design, data = pc_scores)
+
 # ANOVA of β-diversity with canker count
 beta_canker_anova <- function(pc, data) {
   f = paste0(canker_design, "+", pc)
   m = glm.nb(f, data = data)
-  a = anova(canker_model, m) %>% data.frame()
+  a = anova(base_model, m) %>% data.frame()
   b = anova(m) %>% data.frame()
   total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
   d = data.frame(
@@ -1767,14 +1773,15 @@ canker_model <- glm.nb(canker_design, data = cankers)
 # Filter out samples with missing canker count
 top_asv_data <- top_asv_data[complete.cases(top_asv_data$Cankers), ]
 
-canker_asv_model <- glm.nb(canker_design, data = top_asv_data)
+# Base model with ASV abundance data
+base_model <- glm.nb(canker_design, data = top_asv_data)
 
 # ANOVA of top ASVs with canker count
 asv_canker_anova <- function(otu, data) {
   log_otu = paste0("log(", otu, " + 1)")
   f = paste(canker_design, "+", log_otu)
   m = glm.nb(f, data = data)
-  a = anova(canker_asv_model, m) %>% data.frame()
+  a = anova(base_model, m) %>% data.frame()
   b = anova(m) %>% data.frame()
   total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
   d = data.frame(
@@ -1806,13 +1813,16 @@ asv_canker_results[p_adjusted < 0.05, ]
 ```{r}
 # ANOVA of α-diversity with canker count
 
-measures <- c("shannon", "simpson")
+# Base model with α-diversity data
+base_model <- glm.nb(canker_design, data = all_alpha_ord)
+
+measures <- c("S.chao1", "shannon", "simpson")
 
 # ANOVA of α-diversity with canker count
 alpha_canker_anova <- function(measure, data) {
   f = paste(canker_design, "+", measure)
   m = glm.nb(f, data = data)
-  a = anova(canker_model, m) %>% data.frame()
+  a = anova(base_model, m) %>% data.frame()
   b = anova(m) %>% data.frame()
   total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
   d = data.frame(
@@ -1841,11 +1851,14 @@ pc_scores <- merge(colData, data.frame(mypca$x[, 1:no_pcs]), by = "row.names") %
 
 pcs <- tail(colnames(pc_scores), no_pcs)
 
+# Base model with β-diversity data
+base_model <- glm.nb(canker_design, data = pc_scores)
+
 # ANOVA of β-diversity with canker count
 beta_canker_anova <- function(pc, data) {
   f = paste0(canker_design, "+", pc)
   m = glm.nb(f, data = data)
-  a = anova(canker_model, m) %>% data.frame()
+  a = anova(base_model, m) %>% data.frame()
   b = anova(m) %>% data.frame()
   total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
   d = data.frame(
