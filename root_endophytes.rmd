@@ -85,6 +85,12 @@ Bacterial and fungal ASV (ZOTU) tables, sample metadata, and taxonomy files are
 loaded into named lists using the `loadData` function from Greg's `metafuncs` 
 package.
 
+Site names are encoded as follows according to previous work:
+
+- Avalon (East Sutton) -> 1
+- Scripps (Brenchley) -> 2
+- WWF (Pluckley) -> 3
+
 ```{r data}
 metadata <- "sample_metadata.txt"
 
@@ -117,9 +123,9 @@ mutate_site <- function(data){
   data <- data %>%
     mutate(
       Site = case_when(
-        location == "Avalon" ~ "A",
-        location == "Scripps" ~ "B",
-        location == "WWF" ~ "C"
+        location == "Avalon" ~ 1,
+        location == "Scripps" ~ 2,
+        location == "WWF" ~ 3
       )
     )
   return(data)
@@ -1883,7 +1889,20 @@ ggsave(
   height = 12, width = 24, units = "cm"
 )
 
-abundance_bar
+# abundance_bar
+
+abundance_box <- ggboxplot(
+  data = abundance_combined, x = "Site", y = "log_copy_number", 
+  color = "Season", add = "jitter", facet.by = "kingdom",
+  palette = cbPalette, ylab = "Mean copy number (log10)", xlab = "Site"
+) + guides(color = guide_legend(position = "right"))
+
+ggsave(
+  filename = "abundance_box.png", plot = abundance_box, path = "figures/", 
+  height = 12, width = 24, units = "cm"
+)
+
+abundance_box
 ```
 
 ## Alpha diversity
@@ -1909,6 +1928,20 @@ ggsave(
 )
 
 alpha_bar
+
+alpha_box <- ggboxplot(
+  data = alpha_combined, x = "Site", y = "value", 
+  color = "Season", add = "jitter", facet.by = c("measure", "kingdom"),
+  palette = cbPalette, scales = "free_y",
+  ylab = "Mean diversity index", xlab = "Site"
+) + guides(color = guide_legend(position = "right"))
+
+ggsave(
+  filename = "alpha_box.png", plot = alpha_box, path = "figures/", 
+  height = 12, width = 24, units = "cm"
+)
+
+alpha_box
 ```
 
 ## PCA
