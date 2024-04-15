@@ -910,7 +910,7 @@ fun_nmds_plot
 
 ```{r top ASVs}
 # Extract normalised counts from DESeq object
-asv_counts <- round(counts(dds, normalize = T), 0) %>% as.data.frame()
+asv_counts <- counts(dds, normalize = T) %>% as.data.frame()
 
 # Sum ASV counts across samples
 total_asv_counts <- rowSums(asv_counts)
@@ -1013,14 +1013,16 @@ otu_lm_anova <- function(otu, formula, data) {
     Taxonomy = taxData[otu, "rank"],
     site_var = a['Site ', 'Sum.Sq'] / total_var * 100,
     site_p = a['Site ', 'Pr..F.'],
-    cultivar_var = a['Scion', 'Sum.Sq'] / total_var * 100,
-    cultivar_p = a['Scion', 'Pr..F.'],
+    scion_var = a['Scion', 'Sum.Sq'] / total_var * 100,
+    scion_p = a['Scion', 'Pr..F.'],
     season_var = a['Season ', 'Sum.Sq'] / total_var * 100,
     season_p = a['Season ', 'Pr..F.'],
-    site_cultivar_var = a['Site:Scion', 'Sum.Sq'] / total_var * 100,
-    site_cultivar_p = a['Site:Scion', 'Pr..F.'],
+    site_scion_var = a['Site:Scion', 'Sum.Sq'] / total_var * 100,
+    site_scion_p = a['Site:Scion', 'Pr..F.'],
     site_season_var = a['Site:Season ', 'Sum.Sq'] / total_var * 100,
     site_season_p = a['Site:Season ', 'Pr..F.'],
+    season_scion_var = a['Season:Scion', 'Sum.Sq'] / total_var * 100,
+    season_scion_p = a['Season:Scion', 'Pr..F.'],
     residuals_var = a['Residuals', 'Sum.Sq'] / total_var * 100
   )
   return(d)
@@ -1061,23 +1063,26 @@ otu_anova_results <- sapply(
 otu_anova_results_adjusted <- otu_anova_results %>% 
   mutate(
     site_p = p.adjust(site_p, method = "BH"),
-    cultivar_p = p.adjust(cultivar_p, method = "BH"),
+    scion_p = p.adjust(scion_p, method = "BH"),
     season_p = p.adjust(season_p, method = "BH"),
-    site_cultivar_p = p.adjust(site_cultivar_p, method = "BH"),
-    site_season_p = p.adjust(site_season_p, method = "BH")
+    site_scion_p = p.adjust(site_scion_p, method = "BH"),
+    site_season_p = p.adjust(site_season_p, method = "BH"),
+    season_scion_p = p.adjust(season_scion_p, method = "BH")
   )
 
 cat(
   "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
   "Site:", nrow(otu_anova_results_adjusted[site_p < 0.05, ]), "\n",
-  "Scion:", nrow(otu_anova_results_adjusted[cultivar_p < 0.05, ]), "\n",
+  "Scion:", nrow(otu_anova_results_adjusted[scion_p < 0.05, ]), "\n",
   "Season:", nrow(otu_anova_results_adjusted[season_p < 0.05, ]), "\n",
-  "Site:Scion:", nrow(otu_anova_results_adjusted[site_cultivar_p < 0.05, ]), "\n",
-  "Site:Season:", nrow(otu_anova_results_adjusted[site_season_p < 0.05, ]), "\n\n"
+  "Site:Scion:", nrow(otu_anova_results_adjusted[site_scion_p < 0.05, ]), "\n",
+  "Site:Season:", nrow(otu_anova_results_adjusted[site_season_p < 0.05, ]), "\n",
+  "Season:Scion:", nrow(otu_anova_results_adjusted[season_scion_p < 0.05, ]), "\n\n"
 )
 
-otu_anova_results_adjusted[cultivar_p < 0.05, ]
-otu_anova_results_adjusted[season_p < 0.05, ]
+otu_anova_results_adjusted[scion_p < 0.05, ]
+otu_anova_results_adjusted[site_scion_p < 0.05, ]
+otu_anova_results_adjusted[season_scion_p < 0.05, ]
 ```
 
 ## Canker counts
@@ -1096,19 +1101,22 @@ canker_model <- glm.nb(canker_design, data = cankers)
 
 ```{r}
 # Filter out samples with missing canker count
-top_asv_data <- top_asv_data[complete.cases(top_asv_data$Cankers), ]
+canker_top_asv_data <- top_asv_data[complete.cases(top_asv_data$Cankers), ]
 # all.equal(top_asv_data[c("Site", "Season", "Scion", "Cankers")],cankers)
 
+# Base model design
+canker_design = "Cankers ~ Site * Season * Scion"
+
 # Base model with ASV abundance data
-base_model <- glm.nb(canker_design, data = top_asv_data)
+base_model <- glm.nb(canker_design, data = canker_top_asv_data)
 
 # ANOVA of top ASVs with canker count
 asv_canker_anova <- function(otu, data) {
   log_otu = paste0("log(", otu, " + 1)")
-  f = paste(canker_design, "+", log_otu)
+  f = paste(canker_design, "+", log_otu)#, "+", log_otu, ":Site")
   m = glm.nb(f, data = data)
   a = anova(base_model, m) %>% data.frame()
-  b = anova(m) %>% data.frame()
+  b = suppressWarnings(anova(m)) %>% data.frame()
   total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
   d = data.frame(
     OTU = otu,
@@ -1120,20 +1128,22 @@ asv_canker_anova <- function(otu, data) {
   return(d)
 }
 
-# kable(asv_canker_anova(top_asv_ids[1], top_asv_data))
+# kable(asv_canker_anova(top_asv_ids[1], canker_top_asv_data))
 
 # Effect of ASV abundance on canker count for top ASVs
-asv_canker_results <- data.table(t(sapply(top_asv_ids, function(x) asv_canker_anova(x, top_asv_data))))
+asv_canker_results <- data.table(t(sapply(top_asv_ids, function(x) asv_canker_anova(x, canker_top_asv_data))))
 
 # Adjust p-values for multiple testing
 asv_canker_results$p_adjusted <- p.adjust(asv_canker_results$p, method = "BH")
 
 # Summary of ASVs with statistically significant (*P* < 0.05) adjusted p-values
 cat(
-  nrow(asv_canker_results[p_adjusted < 0.05, ]), 
-  "ASVs have statistically significant (*P* < 0.05) adjusted p-values"
+  nrow(asv_canker_results[p_adjusted < 0.05, ]), "of", nrow(asv_canker_results),
+  "ASVs have statistically significant (*P* < 0.05) adjusted p-values\n\n"
 )
-asv_canker_results[p_adjusted < 0.05, ]
+if(nrow(asv_canker_results[p_adjusted < 0.05, ]) > 0) {
+  asv_canker_results[p_adjusted < 0.05, ]
+}
 ```
 
 ### Effect of α-diversity on canker count
@@ -1673,7 +1683,7 @@ identical(names(top_asvs), rownames(colData))
 top_taxa <- taxData[rownames(top_asvs), ]
 
 # Log transform normalised counts
-top_asvs <- log10(top_asvs + 1)
+# top_asvs <- log10(top_asvs + 1) # Log transform in models instead
 
 top_asv_data <- data.frame(t(top_asvs))
 top_asv_ids <- rownames(top_asvs)
@@ -1697,14 +1707,16 @@ otu_lm_anova <- function(otu, formula, data) {
     Taxonomy = taxData[otu, "rank"],
     site_var = a['Site ', 'Sum.Sq'] / total_var * 100,
     site_p = a['Site ', 'Pr..F.'],
-    cultivar_var = a['Scion', 'Sum.Sq'] / total_var * 100,
-    cultivar_p = a['Scion', 'Pr..F.'],
+    scion_var = a['Scion', 'Sum.Sq'] / total_var * 100,
+    scion_p = a['Scion', 'Pr..F.'],
     season_var = a['Season ', 'Sum.Sq'] / total_var * 100,
     season_p = a['Season ', 'Pr..F.'],
-    site_cultivar_var = a['Site:Scion', 'Sum.Sq'] / total_var * 100,
-    site_cultivar_p = a['Site:Scion', 'Pr..F.'],
+    site_scion_var = a['Site:Scion', 'Sum.Sq'] / total_var * 100,
+    site_scion_p = a['Site:Scion', 'Pr..F.'],
     site_season_var = a['Site:Season ', 'Sum.Sq'] / total_var * 100,
     site_season_p = a['Site:Season ', 'Pr..F.'],
+    season_scion_var = a['Season:Scion', 'Sum.Sq'] / total_var * 100,
+    season_scion_p = a['Season:Scion', 'Pr..F.'],
     residuals_var = a['Residuals', 'Sum.Sq'] / total_var * 100
   )
   return(d)
@@ -1721,8 +1733,8 @@ otu_negbin_anova <- function(otu, formula, data) {
     Taxonomy = taxData[otu, "rank"],
     site_var = a['Site', 'Deviance'] / total_deviance * 100,
     site_p = a['Site', 'Pr..Chi.'],
-    cultivar_var = a['Scion', 'Deviance'] / total_deviance * 100,
-    cultivar_p = a['Scion', 'Pr..Chi.'],
+    scion_var = a['Scion', 'Deviance'] / total_deviance * 100,
+    scion_p = a['Scion', 'Pr..Chi.'],
     season_var = a['Season', 'Deviance'] / total_deviance * 100,
     season_p = a['Season', 'Pr..Chi.']
   )
@@ -1738,21 +1750,23 @@ otu_anova_results <- sapply(
 otu_anova_results_adjusted <- otu_anova_results %>% 
   mutate(
     site_p = p.adjust(site_p, method = "BH"),
-    cultivar_p = p.adjust(cultivar_p, method = "BH"),
+    scion_p = p.adjust(scion_p, method = "BH"),
     season_p = p.adjust(season_p, method = "BH")
   )
 
 cat(
   "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
   "Site:", nrow(otu_anova_results_adjusted[site_p < 0.05, ]), "\n",
-  "Scion:", nrow(otu_anova_results_adjusted[cultivar_p < 0.05, ]), "\n",
+  "Scion:", nrow(otu_anova_results_adjusted[scion_p < 0.05, ]), "\n",
   "Season:", nrow(otu_anova_results_adjusted[season_p < 0.05, ]), "\n",
-  "Site:Scion:", nrow(otu_anova_results_adjusted[site_cultivar_p < 0.05, ]), "\n",
-  "Site:Season:", nrow(otu_anova_results_adjusted[site_season_p < 0.05, ]), "\n\n"
+  "Site:Scion:", nrow(otu_anova_results_adjusted[site_scion_p < 0.05, ]), "\n",
+  "Site:Season:", nrow(otu_anova_results_adjusted[site_season_p < 0.05, ]), "\n",
+  "Season:Scion:", nrow(otu_anova_results_adjusted[season_scion_p < 0.05, ]), "\n\n"
 )
 
-otu_anova_results_adjusted[cultivar_p < 0.05, ]
-otu_anova_results_adjusted[season_p < 0.05, ]
+otu_anova_results_adjusted[scion_p < 0.05, ]
+otu_anova_results_adjusted[site_scion_p < 0.05, ]
+otu_anova_results_adjusted[season_scion_p < 0.05, ]
 ```
 
 ## Canker counts
