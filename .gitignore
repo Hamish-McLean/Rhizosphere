@@ -5,4 +5,5 @@ lauren_analysis/
 my_analysis_files/
 .RData
 .Rhistory
+.micromamba
 data

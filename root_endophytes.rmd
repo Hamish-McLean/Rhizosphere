@@ -60,8 +60,6 @@ WIDTH =      9
 HEIGHT =     9
 
 # Model design
-Factor1 = "Site"
-Factor2 = "Scion"
 DESIGN = y ~ Site + Season + Scion
 FULL_DESIGN = y ~ Site * Season * Scion
 canker_design = "Cankers ~ Site * Season * Scion"
@@ -502,6 +500,11 @@ ubiome_FUN$dds$sizeFactor <- ubiome_FUN$dds$copy_number / mean(ubiome_FUN$dds$co
 ubiome_BAC$dds$sizeFactor <- ubiome_BAC$dds$copy_number / mean(ubiome_BAC$dds$copy_number)
 ```
 
+```{r}
+# Save environment
+save.image("data_loaded.RData")
+```
+
 <!-- #=============================================================================== -->
 # **Fungi**
 <!-- #=============================================================================== -->
@@ -759,6 +762,9 @@ df
 ### PCA
 
 ```{r}
+# Number of PCs to include
+n_pcs <- 20
+
 # Perform PC decomposition of DES object
 mypca <- des_to_pca(dds)
 
@@ -768,7 +774,7 @@ fun_pca <- t(data.frame(t(mypca$x) * mypca$percentVar))
 formula = FULL_DESIGN
 ```
 
-#### Percent variation in first 10 PCs 
+#### Percent variation in first `r n_pcs` PCs 
 
 ```{r}
 # Cumulative percentage of variance explained
@@ -786,22 +792,19 @@ fun_cum_pca <- ggline(
 ggsave(filename = "fun_cum_pca.png", plot = fun_cum_pca, path = "figures/",)
 fun_cum_pca
 
-# Number of PCs to include
-n <- 10
-
 pca_var <- data.frame(
-  row.names = paste0("PC", 1:n),
-  perc_var = round(mypca$percentVar[1:n] * 100, 1)
+  row.names = paste0("PC", 1:n_pcs),
+  perc_var = round(mypca$percentVar[1:n_pcs] * 100, 1)
 )
 
 pca_var
 ```
 
-#### ANOVA of first 10 PCs
+#### ANOVA of first `r n_pcs` PCs
 
 ```{r} 
 pca_summary <- apply(
-  mypca$x[, 1:n], 2, 
+  mypca$x[, 1:n_pcs], 2, 
   function(x){
     summary(aov(update(formula, x ~ .), data = as.data.frame(cbind(x, colData(dds)))))
   }
@@ -810,28 +813,30 @@ pca_summary <- apply(
 pca_summary
 ```
 
-#### Percent variation in first 10 PCs for each factor
+#### Percent variation in first `r n_pcs` PCs for each factor
 
 ```{r}
 pcas <- lapply(pca_summary, function(i) data.frame(unclass(i)))
 
 pca_factors <- data.table(
   PCs = names(pcas),
-  total_var = pca_var$perc_var,
-  site_var = sapply(pcas, function(x) (x['Site ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
-  site_p = sapply(pcas, function(x) x['Site ', 'Pr..F.']),
-  cultivar_var = sapply(pcas, function(x) (x['Scion', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
-  cultivar_p = sapply(pcas, function(x) x['Scion', 'Pr..F.']),
-  season_var = sapply(pcas, function(x) (x['Season ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
-  season_p = sapply(pcas, function(x) x['Season ', 'Pr..F.']),
-  site_cultivar_var = sapply(pcas, function(x) (x['Site:Scion', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
-  site_cultivar_p = sapply(pcas, function(x) x['Site:Scion', 'Pr..F.']),
-  site_season_var = sapply(pcas, function(x) (x['Site:Season ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
-  site_season_p = sapply(pcas, function(x) x['Site:Season ', 'Pr..F.']),
-  residuals_var = sapply(pcas, function(x) (x['Residuals', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100))
+  "Total_%" = round(pca_var$perc_var, 2),
+  "Site_%" = round(sapply(pcas, function(x) (x['Site ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
+  "Site_*p*" = round(sapply(pcas, function(x) x['Site ', 'Pr..F.']), 4),
+  "Scion_%" = round(sapply(pcas, function(x) (x['Scion', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
+  "Scion_*p*" = round(sapply(pcas, function(x) x['Scion', 'Pr..F.']), 4),
+  "Season_%" = round(sapply(pcas, function(x) (x['Season ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
+  "Season_*p*" = round(sapply(pcas, function(x) x['Season ', 'Pr..F.']), 4),
+  "Site:Scion_%" = round(sapply(pcas, function(x) (x['Site:Scion', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
+  "Site:Scion_*p*" = round(sapply(pcas, function(x) x['Site:Scion', 'Pr..F.']), 4),
+  "Site:Season_%" = round(sapply(pcas, function(x) (x['Site:Season ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
+  "Site:Season_*p*" = round(sapply(pcas, function(x) x['Site:Season ', 'Pr..F.']), 4),
+  "Season:Scion_%" = round(sapply(pcas, function(x) (x['Season:Scion', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
+  "Season:Scion_*p*" = round(sapply(pcas, function(x) x['Season:Scion', 'Pr..F.']), 4),
+  "Residuals_%" = round(sapply(pcas, function(x) (x['Residuals', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2)
 )
 
-pca_factors
+kable(pca_factors)
 ```
 
 #### PCA plot
@@ -1087,14 +1092,26 @@ otu_anova_results_adjusted[season_scion_p < 0.05, ]
 
 ## Canker counts
 
-Testing the effects of of ASV abundance, α-diversity, and β-diversity on canker counts.
+Testing the effects of of total abundance, ASV abundance, α-diversity, and β-diversity on canker counts.
 
 This uses a nested negative binomial regression model.
 
 The base model for canker counts uses the formula: `r canker_design`.
 
 ```{r fun canker model}
-canker_model <- glm.nb(canker_design, data = cankers)
+# Filter out samples with missing canker count
+canker_abundance_data <- colData[complete.cases(colData$Cankers), ]
+
+# Base model
+canker_design = "Cankers ~ Site * Season * Scion"
+base_model <- glm.nb(canker_design, data = canker_abundance_data)
+
+# Abundance model
+abundance_design = paste(canker_design, "+ log(copy_number)")
+abundance_model <- glm.nb(abundance_design, data = canker_abundance_data)
+
+# ANOVA of abundance with canker count
+kable(anova(base_model, abundance_model))
 ```
 
 ### Effect of ASV abundance on canker count
@@ -1111,9 +1128,9 @@ canker_design = "Cankers ~ Site * Season * Scion"
 base_model <- glm.nb(canker_design, data = canker_top_asv_data)
 
 # ANOVA of top ASVs with canker count
-asv_canker_anova <- function(otu, data) {
+asv_canker_anova <- function(otu, design, base_model, data) {
   log_otu = paste0("log(", otu, " + 1)")
-  f = paste(canker_design, "+", log_otu)#, "+", log_otu, ":Site")
+  f = paste(design, "+", log_otu)#, "+", log_otu, ":Site")
   m = glm.nb(f, data = data)
   a = anova(base_model, m) %>% data.frame()
   b = suppressWarnings(anova(m)) %>% data.frame()
@@ -1128,10 +1145,13 @@ asv_canker_anova <- function(otu, data) {
   return(d)
 }
 
-# kable(asv_canker_anova(top_asv_ids[1], canker_top_asv_data))
+kable(asv_canker_anova(top_asv_ids[1], canker_design, base_model, canker_top_asv_data))
 
 # Effect of ASV abundance on canker count for top ASVs
-asv_canker_results <- data.table(t(sapply(top_asv_ids, function(x) asv_canker_anova(x, canker_top_asv_data))))
+asv_canker_results <- sapply(
+  top_asv_ids, 
+  function(x) asv_canker_anova(x, canker_design, base_model, canker_top_asv_data)
+) %>% t() %>% data.table()
 
 # Adjust p-values for multiple testing
 asv_canker_results$p_adjusted <- p.adjust(asv_canker_results$p, method = "BH")
@@ -1144,6 +1164,38 @@ cat(
 if(nrow(asv_canker_results[p_adjusted < 0.05, ]) > 0) {
   asv_canker_results[p_adjusted < 0.05, ]
 }
+```
+
+#### Effect of ASV abundance on canker count per site
+
+```{r}
+site <- 3
+
+canker_site_design <- "Cankers ~ Season * Scion"
+
+# Base model with ASV abundance data
+base_model_1 <- glm.nb(canker_site_design, data = canker_top_asv_data[canker_top_asv_data$Site == site,])
+
+# Effect of ASV abundance on canker count for top ASVs
+asv_canker_results_1 <- sapply(
+  top_asv_ids, function(x) asv_canker_anova(
+    x, canker_site_design, base_model_1, 
+    canker_top_asv_data[canker_top_asv_data$Site == site, ]
+  )
+) %>% t() %>% data.table()
+
+# Adjust p-values for multiple testing
+asv_canker_results_1$p_adjusted <- p.adjust(asv_canker_results$p, method = "BH")
+
+# Summary of ASVs with statistically significant (*P* < 0.05) adjusted p-values
+cat(
+  nrow(asv_canker_results_1[p_adjusted < 0.05, ]), "of", nrow(asv_canker_results_1),
+  "ASVs have statistically significant (*P* < 0.05) adjusted p-values\n\n"
+)
+if(nrow(asv_canker_results_1[p_adjusted < 0.05, ]) > 0) {
+  asv_canker_results_1[p_adjusted < 0.05, ]
+}
+
 ```
 
 ### Effect of α-diversity on canker count
@@ -1214,6 +1266,11 @@ beta_canker_anova <- function(pc, data) {
 beta_canker_results <- data.table(t(sapply(pcs, function(x) beta_canker_anova(x, pc_scores))))
 
 beta_canker_results
+```
+
+```{r}
+# Save environment
+save.image("FUN.RData")
 ```
 
 <!-- #=============================================================================== -->
@@ -1459,6 +1516,9 @@ df
 
 ### PCA 
 ```{r}
+# Number of PCs to include
+n_pcs <- 20
+
 # perform PC decomposition of DES object
 mypca <- des_to_pca(dds)
 
@@ -1468,7 +1528,7 @@ bac_pca <- t(data.frame(t(mypca$x) * mypca$percentVar))
 formula = FULL_DESIGN
 ```
 
-#### Percent variation in first 10 PCs 
+#### Percent variation in first `r n_pcs` PCs 
 ```{r}
 # Cumulative percentage of variance explained
 pca_cum_var <- data.frame(
@@ -1485,21 +1545,18 @@ bac_cum_pca <- ggline(
 ggsave(filename = "bac_cum_pca.png", plot = bac_cum_pca, path = "figures/",)
 bac_cum_pca
 
-# Number of PCs to include
-n <- 10
-
 pca_var <- data.frame(
-  row.names = paste0("PC", 1:n),
-  perc_var = round(mypca$percentVar[1:n] * 100, 1)
+  row.names = paste0("PC", 1:n_pcs),
+  perc_var = round(mypca$percentVar[1:n_pcs] * 100, 1)
 )
 
 pca_var
 ```
 
-#### ANOVA of first 10 PCs
+#### ANOVA of first `r n_pcs` PCs
 ```{r} 
 pca_summary <- apply(
-  mypca$x[, 1:n], 2, 
+  mypca$x[, 1:n_pcs], 2, 
   function(x){
     summary(aov(update(formula, x ~ .), data = as.data.frame(cbind(x, colData(dds)))))
   }
@@ -1508,28 +1565,30 @@ pca_summary <- apply(
 pca_summary
 ```
 
-#### Percent variation in first 10 PCs for each factor
+#### Percent variation in first `r n_pcs` PCs for each factor
 
 ```{r}
 pcas <- lapply(pca_summary, function(i) data.frame(unclass(i)))
 
 pca_factors <- data.table(
   PCs = names(pcas),
-  total_var = pca_var$perc_var,
-  site_var = sapply(pcas, function(x) (x['Site ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
-  site_p = sapply(pcas, function(x) x['Site ', 'Pr..F.']),
-  cultivar_var = sapply(pcas, function(x) (x['Scion', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
-  cultivar_p = sapply(pcas, function(x) x['Scion', 'Pr..F.']),
-  season_var = sapply(pcas, function(x) (x['Season ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
-  season_p = sapply(pcas, function(x) x['Season ', 'Pr..F.']),
-  site_cultivar_var = sapply(pcas, function(x) (x['Site:Scion', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
-  site_cultivar_p = sapply(pcas, function(x) x['Site:Scion', 'Pr..F.']),
-  site_season_var = sapply(pcas, function(x) (x['Site:Season ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)),
-  site_season_p = sapply(pcas, function(x) x['Site:Season ', 'Pr..F.']),
-  residuals_var = sapply(pcas, function(x) (x['Residuals', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100))
+  "Total_%" = round(pca_var$perc_var, 2),
+  "Site_%" = round(sapply(pcas, function(x) (x['Site ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
+  "Site_*p*" = round(sapply(pcas, function(x) x['Site ', 'Pr..F.']), 4),
+  "Scion_%" = round(sapply(pcas, function(x) (x['Scion', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
+  "Scion_*p*" = round(sapply(pcas, function(x) x['Scion', 'Pr..F.']), 4),
+  "Season_%" = round(sapply(pcas, function(x) (x['Season ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
+  "Season_*p*" = round(sapply(pcas, function(x) x['Season ', 'Pr..F.']), 4),
+  "Site:Scion_%" = round(sapply(pcas, function(x) (x['Site:Scion', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
+  "Site:Scion_*p*" = round(sapply(pcas, function(x) x['Site:Scion', 'Pr..F.']), 4),
+  "Site:Season_%" = round(sapply(pcas, function(x) (x['Site:Season ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
+  "Site:Season_*p*" = round(sapply(pcas, function(x) x['Site:Season ', 'Pr..F.']), 4),
+  "Season:Scion_%" = round(sapply(pcas, function(x) (x['Season:Scion', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
+  "Season:Scion_*p*" = round(sapply(pcas, function(x) x['Season:Scion', 'Pr..F.']), 4),
+  "Residuals_%" = round(sapply(pcas, function(x) (x['Residuals', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2)
 )
 
-pca_factors
+kable(pca_factors)
 ```
 
 #### PCA plot
@@ -1549,6 +1608,19 @@ bac_pca_plot <- plotOrd(
 ggsave(filename = "bac_pca_plot.png", plot = bac_pca_plot, path = "figures/")
 
 bac_pca_plot
+
+bac_pca_2_3_plot <- plotOrd(
+  bac_pca,
+  colData(dds),
+  design = "Scion",
+  shape = "Site",
+  axes = c(2, 3), 
+  cbPalette = T,
+  alpha = 0.75,
+)
+
+ggsave(filename = "bac_pca_2_3_plot.png", plot = bac_pca_2_3_plot, path = "figures/")
+
 ```
 
 #### PCA sum of squares (% var)
@@ -1778,7 +1850,19 @@ This uses a nested negative binomial regression model.
 The base model for canker counts uses the formula: `r canker_design`.
 
 ```{r bac canker model}
-canker_model <- glm.nb(canker_design, data = cankers)
+# Filter out samples with missing canker count
+canker_abundance_data <- colData[complete.cases(colData$Cankers), ]
+
+# Base model
+canker_design = "Cankers ~ Site * Season * Scion"
+base_model <- glm.nb(canker_design, data = canker_abundance_data)
+
+# Abundance model
+abundance_design = paste(canker_design, "+ log(copy_number)")
+abundance_model <- glm.nb(abundance_design, data = canker_abundance_data)
+
+# ANOVA of abundance with canker count
+kable(anova(base_model, abundance_model))
 ```
 
 ### Effect of ASV abundance on canker count
@@ -1787,16 +1871,19 @@ canker_model <- glm.nb(canker_design, data = cankers)
 # Filter out samples with missing canker count
 top_asv_data <- top_asv_data[complete.cases(top_asv_data$Cankers), ]
 
+# Base model design
+canker_design = "Cankers ~ Site * Season * Scion"
+
 # Base model with ASV abundance data
 base_model <- glm.nb(canker_design, data = top_asv_data)
 
 # ANOVA of top ASVs with canker count
-asv_canker_anova <- function(otu, data) {
+asv_canker_anova <- function(otu, design, base_model, data) {
   log_otu = paste0("log(", otu, " + 1)")
-  f = paste(canker_design, "+", log_otu)
+  f = paste(design, "+", log_otu)#, "+", log_otu, ":Site")
   m = glm.nb(f, data = data)
   a = anova(base_model, m) %>% data.frame()
-  b = anova(m) %>% data.frame()
+  b = suppressWarnings(anova(m)) %>% data.frame()
   total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
   d = data.frame(
     OTU = otu,
@@ -1808,8 +1895,13 @@ asv_canker_anova <- function(otu, data) {
   return(d)
 }
 
+# kable(asv_canker_anova(top_asv_ids[1], canker_design, base_model, canker_top_asv_data))
+
 # Effect of ASV abundance on canker count for top ASVs
-asv_canker_results <- data.table(t(sapply(top_asv_ids, function(x) asv_canker_anova(x, top_asv_data))))
+asv_canker_results <- sapply(
+  top_asv_ids, 
+  function(x) asv_canker_anova(x, canker_design, base_model, top_asv_data)
+) %>% t() %>% data.table()
 
 # Adjust p-values for multiple testing
 asv_canker_results$p_adjusted <- p.adjust(asv_canker_results$p, method = "BH")
@@ -2008,4 +2100,9 @@ ggsave(
 )
 
 mega_combo_plot
+```
+
+```{r}
+# Save environment
+save.image("BAC.RData")
 ```
