@@ -1198,6 +1198,89 @@ if(nrow(asv_canker_results_1[p_adjusted < 0.05, ]) > 0) {
 
 ```
 
+#### Effect of aggregated genera on canker counts
+
+```{r}
+# Add genus from taxData to countData
+fun_genus_data <- countData %>% mutate(
+  genus = taxData[rownames(countData), "genus"]
+)
+
+# Group by genus and set genus to rownames
+fun_genus_data <- fun_genus_data %>% group_by(genus) %>% summarise_all(sum) %>% as.data.frame()
+
+# Rank not genus
+not_genus <- fun_genus_data$genus[grep("\\([a-z]\\)", fun_genus_data$genus)]
+# Remove rows with genus in not_genus
+fun_genus_data <- fun_genus_data[!fun_genus_data$genus %in% not_genus, ]
+cat(
+  length(not_genus), "non-genus ranks removed:\n\n",
+  not_genus, "\n"
+)
+
+# Set rownames as genus
+fun_genera <- fun_genus_data$genus
+rownames(fun_genus_data) <- fun_genera
+fun_genus_data <- dplyr::select(fun_genus_data, -genus)
+
+# Transpose and add metadata from colData
+fun_genus_data <- t(fun_genus_data) %>% as.data.frame() %>% mutate(
+  Site = colData[rownames(.), "Site"],
+  Season = colData[rownames(.), "Season"],
+  Scion = colData[rownames(.), "Scion"],
+  Cankers = colData[rownames(.), "Cankers"]
+)
+
+# Filter out samples with missing canker count
+fun_genus_data <- fun_genus_data[complete.cases(fun_genus_data$Cankers), ]
+```
+
+```{r}
+# Base model design
+canker_design = "Cankers ~ Site * Season * Scion"
+
+# Base model with genus abundance data
+base_model <- glm.nb(canker_design, data = fun_genus_data)
+
+# ANOVA of genus abundance with canker count
+genus_canker_anova <- function(genus, design, base_model, data) {
+  log_genus = paste0("log(", genus, " + 1)")
+  f = paste(design, "+", log_genus)#, "+", log_genus, ":Site")
+  m = glm.nb(f, data = data)
+  a = anova(base_model, m) %>% data.frame()
+  b = suppressWarnings(anova(m)) %>% data.frame()
+  total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
+  d = data.table(
+    Genus = genus,
+    Abundance = mean(data$genus),
+    coef = m$coefficients[log_genus],
+    var = b[log_genus, 'Deviance'] / total_deviance * 100,
+    p = a[2, 'Pr.Chi.']
+  )
+  return(d)
+}
+
+# genus_canker_anova(fun_genera[1], canker_design, base_model, fun_genus_data)
+
+# Effect of genera abundance on canker counts
+genus_canker_results <- sapply(
+  fun_genera, 
+  function(x) genus_canker_anova(x, canker_design, base_model, fun_genus_data)
+) %>% t() %>% data.table()
+
+# Adjust p-values for multiple testing
+genus_canker_results$p_adjusted <- p.adjust(genus_canker_results$p, method = "BH")
+
+# Summary of ASVs with statistically significant (*P* < 0.05) adjusted p-values
+cat(
+  nrow(genus_canker_results[p_adjusted < 0.05, ]), "of", nrow(genus_canker_results),
+  "genera have statistically significant (*P* < 0.05) adjusted p-values\n\n"
+)
+if(nrow(genus_canker_results[p_adjusted < 0.05, ]) > 0) {
+  genus_canker_results[p_adjusted < 0.05, ]
+}
+```
+
 ### Effect of α-diversity on canker count
 
 ```{r}
@@ -1912,6 +1995,98 @@ cat(
   "ASVs have statistically significant (*P* < 0.05) adjusted p-values"
 )
 asv_canker_results[p_adjusted < 0.05, ]
+```
+
+#### Effect of aggregated genera on canker counts
+
+```{r}
+# Add genus from taxData to countData
+bac_genus_data <- countData %>% mutate(
+  genus = taxData[rownames(countData), "genus"]
+)
+
+# Group by genus and set genus to rownames
+bac_genus_data <- bac_genus_data %>% group_by(genus) %>% summarise_all(sum) %>% as.data.frame()
+
+# Rank not genus
+not_genus <- bac_genus_data$genus[grep("\\([a-z]\\)", bac_genus_data$genus)]
+# Remove rows with genus in not_genus
+bac_genus_data <- bac_genus_data[!bac_genus_data$genus %in% not_genus, ]
+cat(
+  length(not_genus), "non-genus ranks removed:\n\n",
+  not_genus, "\n"
+)
+
+# Remove any with slashes or underscores
+removals <- bac_genus_data$genus[grep("[/_]", bac_genus_data$genus)]
+# Remove rows with symbols in the name
+bac_genus_data <- bac_genus_data[!bac_genus_data$genus %in% removals, ]
+cat(
+  length(removals), "ranks with slashes or underscores removed:\n\n",
+  removals, "\n"
+)
+
+# Set rownames as genus
+bac_genera <- bac_genus_data$genus
+rownames(bac_genus_data) <- bac_genera
+bac_genus_data <- dplyr::select(bac_genus_data, -genus)
+
+# Transpose and add metadata from colData
+bac_genus_data <- t(bac_genus_data) %>% as.data.frame() %>% mutate(
+  Site = colData[rownames(.), "Site"],
+  Season = colData[rownames(.), "Season"],
+  Scion = colData[rownames(.), "Scion"],
+  Cankers = colData[rownames(.), "Cankers"]
+)
+
+# Filter out samples with missing canker count
+bac_genus_data <- bac_genus_data[complete.cases(bac_genus_data$Cankers), ]
+```
+
+```{r}
+# Base model design
+canker_design = "Cankers ~ Site * Season * Scion"
+
+# Base model with genus abundance data
+base_model <- glm.nb(canker_design, data = bac_genus_data)
+
+# ANOVA of genus abundance with canker count
+genus_canker_anova <- function(genus, design, base_model, data) {
+  log_genus = paste0("log(", genus, " + 1)")
+  f = paste(design, "+", log_genus)#, "+", log_genus, ":Site")
+  m = glm.nb(f, data = data)
+  a = anova(base_model, m) %>% data.frame()
+  b = suppressWarnings(anova(m)) %>% data.frame()
+  total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
+  d = data.table(
+    Genus = genus,
+    Abundance = mean(data$genus),
+    coef = m$coefficients[log_genus],
+    var = b[log_genus, 'Deviance'] / total_deviance * 100,
+    p = a[2, 'Pr.Chi.']
+  )
+  return(d)
+}
+
+# genus_canker_anova(bac_genera[1], canker_design, base_model, bac_genus_data)
+
+# Effect of genera abundance on canker counts
+genus_canker_results <- sapply(
+  bac_genera, 
+  function(x) genus_canker_anova(x, canker_design, base_model, bac_genus_data)
+) %>% t() %>% data.table()
+
+# Adjust p-values for multiple testing
+genus_canker_results$p_adjusted <- p.adjust(genus_canker_results$p, method = "BH")
+
+# Summary of ASVs with statistically significant (*P* < 0.05) adjusted p-values
+cat(
+  nrow(genus_canker_results[p_adjusted < 0.05, ]), "of", nrow(genus_canker_results),
+  "genera have statistically significant (*P* < 0.05) adjusted p-values\n\n"
+)
+if(nrow(genus_canker_results[p_adjusted < 0.05, ]) > 0) {
+  genus_canker_results[p_adjusted < 0.05, ]
+}
 ```
 
 ### Effect of α-diversity on canker count
