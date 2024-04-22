@@ -1202,26 +1202,31 @@ if(nrow(asv_canker_results_1[p_adjusted < 0.05, ]) > 0) {
 
 ```{r}
 # Add genus from taxData to countData
-fun_genus_data <- countData %>% mutate(
+fun_genus_data <- counts(dds, normalize = T) %>% as.data.frame() %>% mutate(
   genus = taxData[rownames(countData), "genus"]
 )
 
-# Group by genus and set genus to rownames
+# Group by genus
 fun_genus_data <- fun_genus_data %>% group_by(genus) %>% summarise_all(sum) %>% as.data.frame()
 
+# Set rownames as genus
+rownames(fun_genus_data) <- fun_genus_data$genus
+fun_genus_data <- dplyr::select(fun_genus_data, -genus)
+
+# Filter genera with mean abundance < 100
+fun_genus_data <- fun_genus_data[rowMeans(fun_genus_data) > 10, ]
+
 # Rank not genus
-not_genus <- fun_genus_data$genus[grep("\\([a-z]\\)", fun_genus_data$genus)]
+not_genus <- rownames(fun_genus_data)[grep("\\([a-z]\\)", rownames(fun_genus_data))]
 # Remove rows with genus in not_genus
-fun_genus_data <- fun_genus_data[!fun_genus_data$genus %in% not_genus, ]
+fun_genus_data <- fun_genus_data[!rownames(fun_genus_data) %in% not_genus, ]
 cat(
   length(not_genus), "non-genus ranks removed:\n\n",
   not_genus, "\n"
 )
 
-# Set rownames as genus
-fun_genera <- fun_genus_data$genus
-rownames(fun_genus_data) <- fun_genera
-fun_genus_data <- dplyr::select(fun_genus_data, -genus)
+# Final genus list
+fun_genera <- rownames(fun_genus_data)
 
 # Transpose and add metadata from colData
 fun_genus_data <- t(fun_genus_data) %>% as.data.frame() %>% mutate(
@@ -1252,7 +1257,7 @@ genus_canker_anova <- function(genus, design, base_model, data) {
   total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
   d = data.table(
     Genus = genus,
-    Abundance = mean(data$genus),
+    Abundance = mean(data[[genus]]),
     coef = m$coefficients[log_genus],
     var = b[log_genus, 'Deviance'] / total_deviance * 100,
     p = a[2, 'Pr.Chi.']
@@ -1271,7 +1276,7 @@ genus_canker_results <- sapply(
 # Adjust p-values for multiple testing
 genus_canker_results$p_adjusted <- p.adjust(genus_canker_results$p, method = "BH")
 
-# Summary of ASVs with statistically significant (*P* < 0.05) adjusted p-values
+# Summary of genera with statistically significant (*P* < 0.05) adjusted p-values
 cat(
   nrow(genus_canker_results[p_adjusted < 0.05, ]), "of", nrow(genus_canker_results),
   "genera have statistically significant (*P* < 0.05) adjusted p-values\n\n"
@@ -2001,35 +2006,40 @@ asv_canker_results[p_adjusted < 0.05, ]
 
 ```{r}
 # Add genus from taxData to countData
-bac_genus_data <- countData %>% mutate(
+bac_genus_data <- counts(dds, normalize = T) %>% as.data.frame() %>% mutate(
   genus = taxData[rownames(countData), "genus"]
 )
 
 # Group by genus and set genus to rownames
 bac_genus_data <- bac_genus_data %>% group_by(genus) %>% summarise_all(sum) %>% as.data.frame()
 
+# Set rownames as genus
+rownames(bac_genus_data) <- bac_genus_data$genus
+bac_genus_data <- dplyr::select(bac_genus_data, -genus)
+
+# Filter genera with mean abundance < 100
+bac_genus_data <- bac_genus_data[rowMeans(bac_genus_data) > 10, ]
+
 # Rank not genus
-not_genus <- bac_genus_data$genus[grep("\\([a-z]\\)", bac_genus_data$genus)]
+not_genus <- rownames(bac_genus_data)[grep("\\([a-z]\\)", rownames(bac_genus_data))]
 # Remove rows with genus in not_genus
-bac_genus_data <- bac_genus_data[!bac_genus_data$genus %in% not_genus, ]
+bac_genus_data <- bac_genus_data[!rownames(bac_genus_data) %in% not_genus, ]
 cat(
   length(not_genus), "non-genus ranks removed:\n\n",
   not_genus, "\n"
 )
 
 # Remove any with slashes or underscores
-removals <- bac_genus_data$genus[grep("[/_]", bac_genus_data$genus)]
+removals <- rownames(bac_genus_data)[grep("[/_]", rownames(bac_genus_data))]
 # Remove rows with symbols in the name
-bac_genus_data <- bac_genus_data[!bac_genus_data$genus %in% removals, ]
+bac_genus_data <- bac_genus_data[!rownames(bac_genus_data) %in% removals, ]
 cat(
   length(removals), "ranks with slashes or underscores removed:\n\n",
   removals, "\n"
 )
 
 # Set rownames as genus
-bac_genera <- bac_genus_data$genus
-rownames(bac_genus_data) <- bac_genera
-bac_genus_data <- dplyr::select(bac_genus_data, -genus)
+bac_genera <- rownames(bac_genus_data)
 
 # Transpose and add metadata from colData
 bac_genus_data <- t(bac_genus_data) %>% as.data.frame() %>% mutate(
@@ -2060,7 +2070,7 @@ genus_canker_anova <- function(genus, design, base_model, data) {
   total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
   d = data.table(
     Genus = genus,
-    Abundance = mean(data$genus),
+    Abundance = mean(data[[genus]]),
     coef = m$coefficients[log_genus],
     var = b[log_genus, 'Deviance'] / total_deviance * 100,
     p = a[2, 'Pr.Chi.']
