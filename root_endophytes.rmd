@@ -911,7 +911,7 @@ fun_nmds_plot
 
 ## ASV abundance
 
-### Filter top ASVs
+### Explore distribution of ASV read counts
 
 ```{r top ASVs}
 # Extract normalised counts from DESeq object
@@ -977,6 +977,8 @@ cat(
 )
 ```
 
+### Filter top ASVs with mean read count > 100
+
 ```{r}
 # Filter the top x abundant OTUs by the sum of their normalised counts
 # top_asvs <- asv_counts[order(rowSums(asv_counts), decreasing = T)[1:DIFFOTU], ]
@@ -1016,6 +1018,7 @@ otu_lm_anova <- function(otu, formula, data) {
   d = data.frame(
     OTU = otu,
     Taxonomy = taxData[otu, "rank"],
+    Abundance = mean(data[[otu]]),
     site_var = a['Site ', 'Sum.Sq'] / total_var * 100,
     site_p = a['Site ', 'Pr..F.'],
     scion_var = a['Scion', 'Sum.Sq'] / total_var * 100,
@@ -1763,7 +1766,7 @@ bac_nmds_plot
 
 ## ASV abundance
 
-### Filter top ASVs
+### Explore distribution of ASV counts
 
 ```{r Bac top ASVs}
 # Extract normalised counts from DESeq object
@@ -1829,6 +1832,8 @@ cat(
 )
 ```
 
+### Filter top ASVs with mean read count > 100
+
 ```{r}
 # Filter the top x abundant OTUs by the sum of their normalised counts
 # top_asvs <- asv_counts[order(rowSums(asv_counts), decreasing = T)[1:DIFFOTU], ]
@@ -1865,6 +1870,7 @@ otu_lm_anova <- function(otu, formula, data) {
   d = data.frame(
     OTU = otu,
     Taxonomy = taxData[otu, "rank"],
+    Abundance = mean(data[[otu]]),
     site_var = a['Site ', 'Sum.Sq'] / total_var * 100,
     site_p = a['Site ', 'Pr..F.'],
     scion_var = a['Scion', 'Sum.Sq'] / total_var * 100,
@@ -2237,7 +2243,7 @@ alpha_box <- ggboxplot(
 
 ggsave(
   filename = "alpha_box.png", plot = alpha_box, path = "figures/", 
-  height = 12, width = 24, units = "cm"
+  height = 24, width = 24, units = "cm"
 )
 
 alpha_box
