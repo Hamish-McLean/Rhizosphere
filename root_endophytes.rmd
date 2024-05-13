@@ -610,6 +610,49 @@ data.table(
 
 ```
 
+### Taxonomy plots
+
+Plots of proportion of normalised reads assigned to members of phylum and class.
+
+```{r}
+dat <- list(as.data.frame(counts(dds, normalize = T)), taxData, as.data.frame(colData(dds)))
+
+design <- c("Site", "Season")
+
+# md1 <- getSummedTaxa(dat, conf = TAXCONF, design = design, cutoff = 0.1)
+md1 <- getSummedTaxa(dat, conf = TAXCONF, design = design, taxon = "phylum", cutoff = 0.1)
+
+md1[, Site := factor(Site, levels = c(1, 2, 3))]
+md1[, Season := factor(Season, levels = c("Spring", "Winter"))]
+md1[, taxon := factor(taxon, levels = unique(taxon[order(value, decreasing = T)]))]
+
+removals <- md1[, .(value = mean(value)), by = "taxon"][value < 0.5, taxon]
+md1 <- md1[!taxon %in% removals, ]
+
+fun_phylum_plot <- plotfun1(md1, x = "taxon", fill = "Site") +
+  facet_wrap(~ Season)
+
+ggsave("figures/fun_phylum.png", fun_phylum_plot, width = 25, height = 15, units = "cm")
+
+fun_phylum_plot
+
+md2 <- getSummedTaxa(dat, conf = TAXCONF, design = design, taxon = "class", cutoff = 0.1)
+
+md2[, Site := factor(Site, levels = c(1, 2, 3))]
+md2[, Season := factor(Season, levels = c("Spring", "Winter"))]
+md2[, taxon := factor(taxon, levels = unique(taxon[order(value, decreasing = T)]))]
+
+removals <- md2[, .(value = mean(value)), by = "taxon"][value < 0.5, taxon]
+md2 <- md2[!taxon %in% removals, ]
+
+fun_class_plot <- plotfun1(md2, x = "taxon", fill = "Site") +
+  facet_wrap(~ Season)
+
+ggsave("figures/fun_class.png", fun_class_plot, width = 25, height = 15, units = "cm")
+
+fun_class_plot
+```
+
 ## Abundance
 
 Plot copy number for each sample grouped by site, Scion, and Season.
@@ -1469,6 +1512,49 @@ data.table(
 
 ```
 
+### Taxonomy plots
+
+Plots of proportion of normalised reads assigned to members of phylum and class.
+
+```{r}
+dat <- list(as.data.frame(counts(dds, normalize = T)), taxData, as.data.frame(colData(dds)))
+
+design <- c("Site", "Season")
+
+# md1 <- getSummedTaxa(dat, conf = TAXCONF, design = design, cutoff = 0.1)
+md1 <- getSummedTaxa(dat, conf = TAXCONF, design = design, taxon = "phylum", cutoff = 0.1)
+
+md1[, Site := factor(Site, levels = c(1, 2, 3))]
+md1[, Season := factor(Season, levels = c("Spring", "Winter"))]
+md1[, taxon := factor(taxon, levels = unique(taxon[order(value, decreasing = T)]))]
+
+removals <- md1[, .(value = mean(value)), by = "taxon"][value < 0.5, taxon]
+md1 <- md1[!taxon %in% removals, ]
+
+bac_phylum_plot <- plotfun1(md1, x = "taxon", fill = "Site") +
+  facet_wrap(~ Season)
+
+ggsave("figures/bac_phylum.png", bac_phylum_plot, width = 25, height = 15, units = "cm")
+
+bac_phylum_plot
+
+md2 <- getSummedTaxa(dat, conf = TAXCONF, design = design, taxon = "class", cutoff = 0.1, topn = 9)
+
+md2[, Site := factor(Site, levels = c(1, 2, 3))]
+md2[, Season := factor(Season, levels = c("Spring", "Winter"))]
+md2[, taxon := factor(taxon, levels = unique(taxon[order(value, decreasing = T)]))]
+
+removals <- md2[, .(value = mean(value)), by = "taxon"][value < 0.5, taxon]
+md2 <- md2[!taxon %in% removals, ]
+
+bac_class_plot <- plotfun1(md2, x = "taxon", fill = "Site") +
+  facet_wrap(~ Season)
+
+ggsave("figures/bac_class.png", bac_class_plot, width = 25, height = 15, units = "cm")
+
+bac_class_plot
+```
+
 ## Abundance
 
 ```{r}
@@ -1500,7 +1586,7 @@ abundance_anova <- aov(formula, data = as.data.frame(colData(dds)))
 par(mfrow = c(2, 2))
 plot(abundance_anova)
 
-png("figures/fun_abundance_norm.png", width = 800, height = 600)
+png("figures/bac_abundance_norm.png", width = 800, height = 600)
 par(mfrow = c(2, 2))
 plot(abundance_anova)
 dev.off()
@@ -1535,7 +1621,7 @@ bac_alpha_plot <- plot_alpha(
 abundance_plot <- ggboxplot(
   data = as.data.frame(colData(dds)), x = "Site", y = "log_copy_number", 
   color = "Scion", add = "jitter", legend = "top", 
-  title = "Fungal abundance", xlab = "Site", ylab = "log10 copy number"
+  title = "Bacterial abundance", xlab = "Site", ylab = "log10 copy number"
 )
 
 ggsave(

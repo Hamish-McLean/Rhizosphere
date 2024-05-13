@@ -1,0 +1,117 @@
+# Alpha diversity indicators
+
+```{r}
+# get normalized counts, taxonomy and metadata in one list
+dat <- list(as.data.frame(counts(dds,normalize=T)),taxData,as.data.frame(colData(dds))) # combine given data into a list# Alpha diversity
+
+# plot_alpha will generate several diversity metrics - this is a hacked up copy of the function with the same name
+# in the phyloseq package. Set  returnData to true to return the alpha metrics rather than plotting
+
+all_alpha_ord <- plot_alpha(counts(dds,normalize=T),colData(dds),design="Sample.Name",returnData=T) # get the diversity index data
+
+# join diversity indices and metadata
+# first convert the metadata (extracted from the dds object) to a data.table 
+# retaining the rownames as a column called samples, then join this to the alpha diversity data.
+# this is a right outer join - as in all rows in the metadata will be present whether the corresponding sample
+# is in the alpha metrics or not.
+all_alpha_ord <- all_alpha_ord[as.data.table(colData(dds),keep.rownames="Samples"),on="Samples"] # data.table right join syntax: DT_left[DT_right,on=.(id)]
+
+```
+
+##  Diversity Plots
+
+```{r}
+design <- c("Time_days","Treatment") # used for summing taxonomy data
+```
+
+##### Fungi by Phylum
+
+```{r}
+# produces and saves two different style of taxonomy plot of combined reads at the phylum taxonomic rank
+
+# getSummedTaxa generates summed read counts at a specified taxonomic rank given an experimental design
+# has several options, including:
+# conf (numeric)  specifies a confidence level to assign at specified taxonomic rank
+# proportional (bool) whether reads should be converted to proportions
+# cutoff (numeric) minimum percentage of reads to keep taxon (only with proportional =T)
+# others (bool) whether taxons below cutoff or topn are aggregated into a single taxon called others
+
+md1 <- getSummedTaxa(dat,conf=TAXCONF,proportional=T,design=design,taxon = "phylum",others=T, cutoff=0.1)
+
+md1[,taxon:=factor(taxon, levels=unique(taxon[order(value,decreasing=T)]))] # reorder taxon factor based on read proportion
+
+#md1[,Biochar:=factor(Biochar,levels=unique(Biochar)[c(1,3,2)])] # set biochar to a factor - order the levels as none, beech, oak
+
+# plotfun1(md1,x="taxon",fill="Biochar")+  # simple plotting function
+#  theme(strip.text = element_text(size=10, lineheight=1)) + # make some formating changes - probably unnecessary
+#  facet_wrap(~Bag_age) # create a plot for each level of bag_age
+# save last plot
+
+plot_f_phylum <- ggplot(md1,aes(x=taxon,y=value,fill=Treatment))+
+  geom_col(position = "dodge") + 
+  theme(strip.text = element_text(size=10, lineheight=1), 
+        axis.text.x = element_text(angle = 90, 
+                                   vjust = 0.5, 
+                                   hjust= 1), 
+        legend.position = c(0.92,0.7)) +
+  facet_wrap(~Time_days,ncol = 4) + xlab("") + ylab("% value")# create a plot for each level of time
+
+filename <- paste0(RHB,"_taxonomy_phylum_v1.png") 
+ggsave(filename, plot=plot_f_phylum,device=DEVICE,dpi=DPI,width=16,height=10, unit="cm")
+
+
+ggplot(md1,aes(x=taxon,y=value,fill=Treatment))+
+  geom_col(position = "dodge") + 
+  theme(strip.text = element_text(size=10, lineheight=1), 
+        axis.text.x = element_text(angle = 90,
+                                   vjust = 0.5,
+                                   hjust=1), 
+                    legend.position = "none") + # create a row for each level of time
+                   facet_wrap(design,nrow=2) + 
+                   ylab("% reads")+
+                   xlab("")# 
+
+# plotfun2(md1,x="taxon")+ # simple plotting function  
+#  theme(strip.text = element_text(size=12, lineheight=1))+ # make some formating changes - probably unnecessary
+#  facet_wrap(design,nrow=4) # create a plot for each combined level of the experimental design (4  x 3 plots)
+
+ggsave(paste0(RHB,"_taxonomy_phylum_v2.png"),
+       device=DEVICE,
+       dpi=DPI,
+       width=WIDTH,
+       height=HEIGHT)
+
+# get average values out for each Phylum
+
+md1 %>% as.data.frame() %>% dplyr::group_by(taxon) %>% dplyr::summarise(xm = mean(value))
+
+```
+
+##### Fungi by Class
+```{r}
+# produces and saves two different style of taxonomy plot of
+# combined reads at the class taxonomic rank
+
+md1 <- getSummedTaxa(dat,conf=TAXCONF,proportional=T,design=design,taxon = "class",others=T, cutoff=0.1)
+	#md1[,Biochar:=factor(Biochar,levels=unique(Biochar)[c(1,3,2)])]
+	md1[,taxon:=factor(taxon, levels=unique(taxon[order(value,decreasing=T)]))]
+	
+	ggplot(md1,aes(x=taxon,y=value,fill=Treatment))+geom_col(position = "dodge") + theme(strip.text = element_text(size=10, lineheight=1), axis.text.x = element_text(angle = 90, vjust = 0, hjust=0), legend.position = c(0.92,0.4)) + facet_wrap(~Time_days) + xlab("")+ylab("% reads")# create a plot for each level of bag_age
+	
+	# plotfun1(md1,x="taxon",fill="Biochar")+  theme(strip.text = element_text(size=10, lineheight=1)) + facet_wrap(~Bag_age)
+	ggsave(paste0(RHB,"_taxonomy_class_v1.png"),
+	       device=DEVICE,
+	       dpi=DPI,
+	       width=WIDTH,
+	       height=HEIGHT)
+	
+	ggplot(md1,aes(x=taxon,y=value,fill=Treatment))+geom_col(position = "dodge") + theme(strip.text = element_text(size=10, lineheight=1), axis.text.x = element_text(angle = 90, vjust = 0, hjust=0), legend.position = "none") + facet_wrap(design,nrow=2) + xlab("")+ylab("% reads")# create a plot for each level of bag_age
+	
+	#plotfun2(md1,x="taxon")+facet_wrap(design,nrow=4)+  theme(strip.text = element_text(size=12, lineheight=1))
+	ggsave(paste0(RHB,"_taxonomy_class_v2.png"),
+	       device=DEVICE,
+	       dpi=DPI,
+	       width=WIDTH,
+	       height=HEIGHT)
+	
+```
