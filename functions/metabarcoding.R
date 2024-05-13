@@ -313,7 +313,7 @@ shift_legend <- function(p,position="center",...) {
 plotfun1 <- function(md1=md1,x="phylum",fill="Time.point") {
   g <- ggplot(md1,aes_string(x=x,y="value",fill=fill)) + theme_classic_thin()
   g <- g + geom_bar(stat="identity",colour="white",width = 0.8, position = position_dodge(width = 0.85))
-  if((levels(as.factor(md1[[x]])))<=8) {
+  if(length(levels(as.factor(md1[[x]])))<=8) {
     g <- g + scale_fill_manual(values=cbPalette)
   }
   g <- g  + xlab("")+ ylab("Frequency (%)")
