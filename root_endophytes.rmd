@@ -60,6 +60,7 @@ WIDTH =      9
 HEIGHT =     9
 
 # Model design
+FACTORS = c("Site", "Season", "Scion")
 DESIGN = y ~ Site + Season + Scion
 FULL_DESIGN = y ~ Site * Season * Scion
 canker_design = "Cankers ~ Site * Season * Scion"
@@ -1332,6 +1333,36 @@ if(nrow(genus_canker_results[p_adjusted < 0.05, ]) > 0) {
 }
 ```
 
+##### Plot of genus abundance against canker count
+
+```{r}
+significant_genera <- genus_canker_results[p_adjusted < 0.05]$Genus %>% unlist()
+
+significant_genera_data <- fun_genus_data[, c(significant_genera, FACTORS, "Cankers")]
+
+# Melt data for ggplot
+significant_genera_data <- significant_genera_data %>% reshape2::melt(
+  id.vars = c(FACTORS, "Cankers"), variable.name = "Genus", value.name = "Abundance"
+)
+
+# Log transform abundance
+significant_genera_data$log10_abundance <- log(significant_genera_data$Abundance + 1)
+# significant_genera_data$log10_cankers <- log(significant_genera_data$Cankers + 1)
+
+# Plot of genus abundance against canker count
+fun_genus_canker_plot <- ggscatter(
+  data = significant_genera_data, x = "log10_abundance", y = "Cankers", 
+  color = "Site", shape = "Season",
+  xlab = "Genus abundance (log10)", ylab = "Canker count",
+  free_x = T, free_y = T, palette = cbPalette
+) + facet_wrap(~ Genus, scales = "free")
+
+ggsave(
+  filename = "fun_genus_canker_plot.png", plot = fun_genus_canker_plot, path = "figures/",
+  height = 10, width = 20, units = "cm"
+)
+```
+
 ### Effect of α-diversity on canker count
 
 ```{r}
@@ -2189,6 +2220,35 @@ cat(
 if(nrow(genus_canker_results[p_adjusted < 0.05, ]) > 0) {
   genus_canker_results[p_adjusted < 0.05, ]
 }
+```
+
+##### Plot of genus abundance against canker count
+
+```{r}
+significant_genera <- genus_canker_results[p_adjusted < 0.05]$Genus %>% unlist()
+
+significant_genera_data <- bac_genus_data[, c(significant_genera, FACTORS, "Cankers")]
+
+# Melt data for ggplot
+significant_genera_data <- significant_genera_data %>% reshape2::melt(
+  id.vars = c(FACTORS, "Cankers"), variable.name = "Genus", value.name = "Abundance"
+)
+
+# Log transform abundance
+significant_genera_data$log10_abundance <- log10(significant_genera_data$Abundance + 1)
+
+# Plot of genus abundance against canker count
+bac_genus_canker_plot <- ggscatter(
+  data = significant_genera_data, x = "log10_abundance", y = "Cankers", 
+  color = "Site", shape = "Season",
+  xlab = "Genus abundance (log10)", ylab = "Canker count",
+  free_x = T, free_y = T, palette = cbPalette
+) + facet_wrap(~ Genus, scales = "free")
+
+ggsave(
+  filename = "bac_genus_canker_plot.png", plot = bac_genus_canker_plot, path = "figures/",
+  height = 10, width = 20, units = "cm"
+)
 ```
 
 ### Effect of α-diversity on canker count
