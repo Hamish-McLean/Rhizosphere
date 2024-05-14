@@ -860,27 +860,25 @@ pca_summary
 #### Percent variation in first `r n_pcs` PCs for each factor
 
 ```{r}
+# Extract PC scores as a list of dataframes
 pcas <- lapply(pca_summary, function(i) data.frame(unclass(i)))
 
-pca_factors <- data.table(
-  PCs = names(pcas),
-  "Total_%" = round(pca_var$perc_var, 2),
-  "Site_%" = round(sapply(pcas, function(x) (x['Site ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
-  "Site_*p*" = round(sapply(pcas, function(x) x['Site ', 'Pr..F.']), 4),
-  "Scion_%" = round(sapply(pcas, function(x) (x['Scion', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
-  "Scion_*p*" = round(sapply(pcas, function(x) x['Scion', 'Pr..F.']), 4),
-  "Season_%" = round(sapply(pcas, function(x) (x['Season ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
-  "Season_*p*" = round(sapply(pcas, function(x) x['Season ', 'Pr..F.']), 4),
-  "Site:Scion_%" = round(sapply(pcas, function(x) (x['Site:Scion', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
-  "Site:Scion_*p*" = round(sapply(pcas, function(x) x['Site:Scion', 'Pr..F.']), 4),
-  "Site:Season_%" = round(sapply(pcas, function(x) (x['Site:Season ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
-  "Site:Season_*p*" = round(sapply(pcas, function(x) x['Site:Season ', 'Pr..F.']), 4),
-  "Season:Scion_%" = round(sapply(pcas, function(x) (x['Season:Scion', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
-  "Season:Scion_*p*" = round(sapply(pcas, function(x) x['Season:Scion', 'Pr..F.']), 4),
-  "Residuals_%" = round(sapply(pcas, function(x) (x['Residuals', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2)
-)
+# Merge into single dataframe
+pcs_factors_tidy <- lapply(
+  names(pcas),
+  function(name) mutate(
+    pcas[[name]], 
+    var = Sum.Sq / sum(pcas[[name]]$Sum.Sq) * 100,
+    PC = substring(name, 3),
+    Factor = gsub(" ", "", rownames(pcas[[name]]))
+  )
+) %>% bind_rows() %>% data.table()
 
-kable(pca_factors)
+# Adjust p values for FDR
+pcs_factors_tidy$p.adj <- p.adjust(pcs_factors_tidy$`Pr..F.`, method = "BH")
+
+# Significant factors
+kable(pcs_factors_tidy[p.adj < 0.05, c("PC", "Factor", "Df", "F.value", "p.adj", "var")])
 ```
 
 #### PCA plot
@@ -1331,6 +1329,15 @@ cat(
 if(nrow(genus_canker_results[p_adjusted < 0.05, ]) > 0) {
   genus_canker_results[p_adjusted < 0.05, ]
 }
+
+sig_genus <- genus_canker_results[p_adjusted < 0.05]$Genus %>% unlist()
+
+for (genus in sig_genus) {
+  log_genus = paste0("log(", genus, " + 1)")
+  f = paste(canker_design, "+", log_genus)
+  m = glm.nb(f, data = fun_genus_data)
+  print(anova(base_model, m))
+}
 ```
 
 ##### Plot of genus abundance against canker count
@@ -1395,6 +1402,13 @@ alpha_canker_anova <- function(measure, data) {
 alpha_canker_results <- data.table(t(sapply(measures, function(x) alpha_canker_anova(x, all_alpha_ord))))
 
 alpha_canker_results
+
+# ANOVA results
+for (measure in measures) {
+  f = paste(canker_design, "+", measure)
+  m = glm.nb(f, data = all_alpha_ord)
+  print(anova(base_model, m))
+}
 ```
 
 ### Effect of β-diversity on canker count
@@ -1776,27 +1790,25 @@ pca_summary
 #### Percent variation in first `r n_pcs` PCs for each factor
 
 ```{r}
+# Extract PC scores as a list of dataframes
 pcas <- lapply(pca_summary, function(i) data.frame(unclass(i)))
 
-pca_factors <- data.table(
-  PCs = names(pcas),
-  "Total_%" = round(pca_var$perc_var, 2),
-  "Site_%" = round(sapply(pcas, function(x) (x['Site ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
-  "Site_*p*" = round(sapply(pcas, function(x) x['Site ', 'Pr..F.']), 4),
-  "Scion_%" = round(sapply(pcas, function(x) (x['Scion', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
-  "Scion_*p*" = round(sapply(pcas, function(x) x['Scion', 'Pr..F.']), 4),
-  "Season_%" = round(sapply(pcas, function(x) (x['Season ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
-  "Season_*p*" = round(sapply(pcas, function(x) x['Season ', 'Pr..F.']), 4),
-  "Site:Scion_%" = round(sapply(pcas, function(x) (x['Site:Scion', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
-  "Site:Scion_*p*" = round(sapply(pcas, function(x) x['Site:Scion', 'Pr..F.']), 4),
-  "Site:Season_%" = round(sapply(pcas, function(x) (x['Site:Season ', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
-  "Site:Season_*p*" = round(sapply(pcas, function(x) x['Site:Season ', 'Pr..F.']), 4),
-  "Season:Scion_%" = round(sapply(pcas, function(x) (x['Season:Scion', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2),
-  "Season:Scion_*p*" = round(sapply(pcas, function(x) x['Season:Scion', 'Pr..F.']), 4),
-  "Residuals_%" = round(sapply(pcas, function(x) (x['Residuals', 'Sum.Sq'] / sum(x['Sum.Sq']) * 100)), 2)
-)
+# Merge into single dataframe
+pcs_factors_tidy <- lapply(
+  names(pcas),
+  function(name) mutate(
+    pcas[[name]], 
+    var = Sum.Sq / sum(pcas[[name]]$Sum.Sq) * 100,
+    PC = substring(name, 3),
+    Factor = gsub(" ", "", rownames(pcas[[name]]))
+  )
+) %>% bind_rows() %>% data.table()
 
-kable(pca_factors)
+# Adjust p values for FDR
+pcs_factors_tidy$p.adj <- p.adjust(pcs_factors_tidy$`Pr..F.`, method = "BH")
+
+# Significant factors
+kable(pcs_factors_tidy[p.adj < 0.05, c("PC", "Factor", "Df", "F.value", "p.adj", "var")])
 ```
 
 #### PCA plot
@@ -2220,6 +2232,15 @@ cat(
 if(nrow(genus_canker_results[p_adjusted < 0.05, ]) > 0) {
   genus_canker_results[p_adjusted < 0.05, ]
 }
+
+sig_genus <- genus_canker_results[p_adjusted < 0.05]$Genus %>% unlist()
+
+for (genus in sig_genus) {
+  log_genus = paste0("log(", genus, " + 1)")
+  f = paste(canker_design, "+", log_genus)
+  m = glm.nb(f, data = bac_genus_data)
+  print(anova(base_model, m))
+}
 ```
 
 ##### Plot of genus abundance against canker count
@@ -2281,6 +2302,13 @@ alpha_canker_anova <- function(measure, data) {
 alpha_canker_results <- data.table(t(sapply(measures, function(x) alpha_canker_anova(x, all_alpha_ord))))
 
 alpha_canker_results
+
+# ANOVA results
+for (measure in measures) {
+  f = paste(canker_design, "+", measure)
+  m = glm.nb(f, data = all_alpha_ord)
+  print(anova(base_model, m))
+}
 ```
 
 ### Effect of β-diversity on canker count
@@ -2326,27 +2354,30 @@ beta_canker_results
 ```{r}
 abundance_combined <- rbind(
   as.data.frame(colData(ubiome_FUN$dds)), as.data.frame(colData(ubiome_BAC$dds))
-) %>% mutate(kingdom = ifelse(Target == "ITS", "Fungi", "Bacteria"))
+) %>% mutate(kingdom = ifelse(Target == "ITS", "Fungi", "Bacteria")) %>%
+  mutate(kingdom = factor(kingdom, levels = c("Fungi", "Bacteria"))) %>%
+  mutate(Season = factor(Season, levels = c("Winter", "Spring")))
 
-abundance_bar <- ggbarplot(
-  data = abundance_combined, x = "Season", y = "log_copy_number", 
-  fill = "Site", add = "mean_se", facet.by = "kingdom",
-  palette = cbPalette, position = position_dodge(0.8),
-  ylab = "Mean copy number (log10)", xlab = F, legend = "right"
-) + guides(fill = guide_legend(title = "Site"))
+# abundance_bar <- ggbarplot(
+#   data = abundance_combined, x = "Season", y = "log_copy_number", 
+#   fill = "Site", add = "mean_se", facet.by = "kingdom",
+#   palette = cbPalette, position = position_dodge(0.8),
+#   ylab = "Mean copy number (log10)", xlab = F, legend = "right"
+# ) + guides(fill = guide_legend(title = "Site"))
 
-ggsave(
-  filename = "abundance_bar.png", plot = abundance_bar, path = "figures/", 
-  height = 12, width = 24, units = "cm"
-)
+# ggsave(
+#   filename = "abundance_bar.png", plot = abundance_bar, path = "figures/", 
+#   height = 12, width = 24, units = "cm"
+# )
 
 # abundance_bar
 
 abundance_box <- ggboxplot(
   data = abundance_combined, x = "Site", y = "log_copy_number", 
   color = "Season", add = "jitter", facet.by = "kingdom",
-  palette = cbPalette, ylab = "Mean copy number (log10)", xlab = "Site"
-) + guides(color = guide_legend(position = "right"))
+  palette = cbPalette, legend = "bottom",
+  ylab = "Mean copy number (log10)", xlab = "Site"
+) 
 
 ggsave(
   filename = "abundance_box.png", plot = abundance_box, path = "figures/", 
@@ -2360,39 +2391,63 @@ abundance_box
 
 ```{r}
 alpha_combined <- rbind(fun_alpha, bac_alpha) %>% 
-  subset(select = c("Site", "Season", "Scion", "Target", "shannon", "simpson")) %>%
+  subset(select = c("Site", "Season", "Scion", "Target", "S.chao1", "shannon", "simpson")) %>%
   mutate(kingdom = ifelse(Target == "ITS", "Fungi", "Bacteria")) %>%
+  mutate(kingdom = factor(kingdom, levels = c("Fungi", "Bacteria"))) %>%
+  mutate(Season = factor(Season, levels = c("Winter", "Spring"))) %>%
+  rename(Chao1 = S.chao1, Shannon = shannon, Simpson = simpson) %>%
   pivot_longer(
-    cols = c("shannon", "simpson"), names_to = "measure", values_to = "value"
+    cols = c("Chao1", "Shannon", "Simpson"), names_to = "measure", values_to = "value"
   )
 
-alpha_bar <- ggbarplot(
-  data = alpha_combined, x = "Season", y = "value", 
-  fill = "Site", add = "mean_se", facet.by = c("measure", "kingdom"), 
-  palette = cbPalette, position = position_dodge(0.8), scales = "free_y",
-  ylab = "Mean diversity index", xlab = F, legend = "right"
-) + guides(fill = guide_legend(title = "Site"))
+# alpha_bar <- ggbarplot(
+#   data = alpha_combined, x = "Season", y = "value", 
+#   fill = "Site", add = "mean_se", facet.by = c("measure", "kingdom"), 
+#   palette = cbPalette, position = position_dodge(0.8), scales = "free_y",
+#   ylab = "Mean diversity index", xlab = F, legend = "right"
+# ) + guides(fill = guide_legend(title = "Site"))
 
-ggsave(
-  filename = "alpha_bar.png", plot = alpha_bar, path = "figures/", 
-  height = 12, width = 24, units = "cm"
-)
+# ggsave(
+#   filename = "alpha_bar.png", plot = alpha_bar, path = "figures/", 
+#   height = 12, width = 24, units = "cm"
+# )
 
-alpha_bar
+# alpha_bar
 
 alpha_box <- ggboxplot(
   data = alpha_combined, x = "Site", y = "value", 
   color = "Season", add = "jitter", facet.by = c("measure", "kingdom"),
-  palette = cbPalette, scales = "free_y",
+  palette = cbPalette, scales = "free_y", legend = "bottom",
   ylab = "Mean diversity index", xlab = "Site"
-) + guides(color = guide_legend(position = "right"))
-
+) #+ guides(color = guide_legend(position = "right"))
 ggsave(
   filename = "alpha_box.png", plot = alpha_box, path = "figures/", 
   height = 24, width = 24, units = "cm"
 )
 
 alpha_box
+
+alpha_box_fungi <- ggboxplot(
+  data = alpha_combined[alpha_combined$kingdom == "Fungi", ], x = "Site", y = "value", 
+  color = "Season", add = "jitter", facet.by = "measure",
+  palette = cbPalette, scales = "free_y", legend = "bottom",
+  ylab = "Mean diversity index", xlab = "Site"
+)
+ggsave(
+  filename = "alpha_box_fungi.png", plot = alpha_box_fungi, path = "figures/", 
+  height = 12, width = 24, units = "cm"
+)
+
+alpha_box_bacteria <- ggboxplot(
+  data = alpha_combined[alpha_combined$kingdom == "Bacteria", ], x = "Site", y = "value", 
+  color = "Season", add = "jitter", facet.by = "measure",
+  palette = cbPalette, scales = "free_y", legend = "bottom",
+  ylab = "Mean diversity index", xlab = "Site"
+)
+ggsave(
+  filename = "alpha_box_bacteria.png", plot = alpha_box_bacteria, path = "figures/", 
+  height = 12, width = 24, units = "cm"
+)
 ```
 
 ## PCA
