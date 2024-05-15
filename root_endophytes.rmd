@@ -60,10 +60,10 @@ WIDTH =      9
 HEIGHT =     9
 
 # Model design
-FACTORS = c("Site", "Season", "Scion")
-DESIGN = y ~ Site + Season + Scion
-FULL_DESIGN = y ~ Site * Season * Scion
-canker_design = "Cankers ~ Site * Season * Scion"
+FACTORS = c("Site", "Storage", "Scion")
+DESIGN = y ~ Site + Storage + Scion
+FULL_DESIGN = y ~ Site * Storage * Scion
+canker_design = "Cankers ~ Site * Storage * Scion"
 ```
 
 ```{r functions}
@@ -98,8 +98,8 @@ ubiome_BAC <- loadData("data/BAC.zotu_table.txt",metadata,"data/zBAC.sintax.taxa
 ubiome_FUN <- loadData("data/FUN.zotu_table.txt",metadata,"data/zFUN.sintax.taxa",RHB="FUN")
 
 # Change sites Avalon -> 1, Scripps -> 2, and WWF -> 3.
-# Correct for planting date month variability.
-# March and April are replaced by spring, December by winter.
+# Storage from planting date.
+# No storage for December plantings, yes for March and April (4months).
 mutate_factors <- function(data){
   data <- data %>%
     rename(location = site, Scion = cultivar) %>%
@@ -109,9 +109,9 @@ mutate_factors <- function(data){
         location == "Scripps" ~ 2,
         location == "WWF" ~ 3
       ) %>% as.factor(),
-      Season = case_when(
-        planting_date %in% c("march", "april") ~ "Spring",
-        planting_date %in% c("dec") ~ "Winter"
+      Storage = case_when(
+        planting_date %in% c("march", "april") ~ "yes",
+        planting_date %in% c("dec") ~ "no"
       ) %>% as.factor(),
       Scion = as.factor(Scion)
     )
@@ -321,7 +321,7 @@ canker_data <- fread("canker_data.csv", select = c(1:5, 7:34))
 # Remove spaces from column names and convert to lowercase
 colnames(canker_data) <- tolower(gsub(" ", "_", colnames(canker_data)))
 
-# Codify site names, add planting season and total canker count for timepoint 4
+# Codify site names, add storage and total canker count for timepoint 4
 canker_data <- mutate(
   canker_data,
   Site = case_when(
@@ -329,9 +329,9 @@ canker_data <- mutate(
     site == "Scripps" ~ 2,
     site == "WWF" ~ 3
   ) %>% as.factor(),
-  Season = case_when(
-    planting_date %in% c("March", "April") ~ "Spring",
-    planting_date %in% c("Dec") ~ "Winter"
+  Storage = case_when(
+    planting_date %in% c("March", "April") ~ "yes",
+    planting_date %in% c("Dec") ~ "no"
   ),
   Scion = as.factor(cultivar),
   total_cankers = a4 + b4 + c4 + d4 + e4
@@ -354,7 +354,7 @@ cankers <- canker_data %>%
   group_by(code) %>% 
   summarise(
     Site = first(Site),
-    Season = first(Season),
+    Storage = first(Storage),
     Scion = first(Scion),
     Cankers = sum(total_cankers)
   ) %>% 
@@ -417,11 +417,11 @@ ggsave(filename = "cankers_bar.png", plot = cankers_bar, path = "figures/")
 GLM
 
 ```{r canker GLM}
-# Effect of Site, Scion, and Season on canker count
+# Effect of Site, Scion, and Storage on canker count
 
 # Formula
 formula <- update(FULL_DESIGN, Cankers ~ .)
-# formula <- Cankers ~ Site + Season + Scion + site:Season + site:Scion + Season:Scion
+# formula <- Cankers ~ Site + Storage + Scion + site:Storage + site:Scion + Storage:Scion
 
 # Log-linear model
 canker_lm <- lm(update(FULL_DESIGN, log(Cankers + 1) ~ .), data = cankers)
@@ -618,20 +618,20 @@ Plots of proportion of normalised reads assigned to members of phylum and class.
 ```{r}
 dat <- list(as.data.frame(counts(dds, normalize = T)), taxData, as.data.frame(colData(dds)))
 
-design <- c("Site", "Season")
+design <- c("Site", "Storage")
 
 # md1 <- getSummedTaxa(dat, conf = TAXCONF, design = design, cutoff = 0.1)
 md1 <- getSummedTaxa(dat, conf = TAXCONF, design = design, taxon = "phylum", cutoff = 0.1)
 
 md1[, Site := factor(Site, levels = c(1, 2, 3))]
-md1[, Season := factor(Season, levels = c("Spring", "Winter"))]
+md1[, Storage := factor(Storage, levels = c("no", "yes"))]
 md1[, taxon := factor(taxon, levels = unique(taxon[order(value, decreasing = T)]))]
 
 removals <- md1[, .(value = mean(value)), by = "taxon"][value < 0.5, taxon]
 md1 <- md1[!taxon %in% removals, ]
 
 fun_phylum_plot <- plotfun1(md1, x = "taxon", fill = "Site") +
-  facet_wrap(~ Season)
+  facet_wrap(~ Storage)
 
 ggsave("figures/fun_phylum.png", fun_phylum_plot, width = 25, height = 15, units = "cm")
 
@@ -640,14 +640,14 @@ fun_phylum_plot
 md2 <- getSummedTaxa(dat, conf = TAXCONF, design = design, taxon = "class", cutoff = 0.1)
 
 md2[, Site := factor(Site, levels = c(1, 2, 3))]
-md2[, Season := factor(Season, levels = c("Spring", "Winter"))]
+md2[, Storage := factor(Storage, levels = c("no", "yes"))]
 md2[, taxon := factor(taxon, levels = unique(taxon[order(value, decreasing = T)]))]
 
 removals <- md2[, .(value = mean(value)), by = "taxon"][value < 0.5, taxon]
 md2 <- md2[!taxon %in% removals, ]
 
 fun_class_plot <- plotfun1(md2, x = "taxon", fill = "Site") +
-  facet_wrap(~ Season)
+  facet_wrap(~ Storage)
 
 ggsave("figures/fun_class.png", fun_class_plot, width = 25, height = 15, units = "cm")
 
@@ -656,13 +656,13 @@ fun_class_plot
 
 ## Abundance
 
-Plot copy number for each sample grouped by site, Scion, and Season.
-Test the effect of site, Scion, and Season on copy number using ANOVA.
+Plot copy number for each sample grouped by site, Scion, and Storage.
+Test the effect of site, Scion, and Storage on copy number using ANOVA.
 
 ```{r}
 # abundance_plot <- ggplot(
 #   data = as.data.frame(colData(dds)), 
-#   aes(x = site, y = log_copy_number, colour = Scion, shape = Season)
+#   aes(x = site, y = log_copy_number, colour = Scion, shape = Storage)
 # ) + geom_jitter() + 
 #   scale_colour_manual(values = cbPalette)
 
@@ -680,10 +680,10 @@ ggsave(
 fun_abundance_box
 
 fun_abundance_bar <- ggbarplot(
-  data = as.data.frame(colData(dds)), x = "Season", y = "log_copy_number", 
+  data = as.data.frame(colData(dds)), x = "Storage", y = "log_copy_number", 
   fill = "Site", add = "mean_se", 
   palette = cbPalette, position = position_dodge(0.8),
-  title = "(a) Fungal abundance", xlab = "Planting Season", ylab = "Mean copy number (log10)"
+  title = "(a) Fungal abundance", xlab = "Storage ", ylab = "Mean copy number (log10)"
 ) + guides(fill = guide_legend(title = "Site"))
 
 ggsave(
@@ -759,7 +759,7 @@ all_alpha_ord <- all_alpha_ord[
 
 fun_alpha <- all_alpha_ord
 
-formula <- FULL_DESIGN # x ~ Site * Season * Scion + Site / Site.block
+formula <- FULL_DESIGN # x ~ Site * Storage * Scion + Site / Site.block
 ```
 
 #### Chao1
@@ -888,7 +888,7 @@ fun_pca_plot <- plotOrd(
   fun_pca,
   colData(dds),
   design = "Site",
-  shapes = "Season",
+  shapes = "Storage",
   axes = c(1, 2),
   cbPalette = T,
   alpha = 0.75,
@@ -942,7 +942,7 @@ fun_nmds <- scores(ord)
 fun_nmds_plot <- plotOrd(
   fun_nmds, colData(dds), 
   design = "Site", 
-  shape = "Season", 
+  shape = "Storage", 
   alpha = 0.75, cbPalette = T
 ) #+ theme(text = element_text(size = 14))
 
@@ -1049,7 +1049,7 @@ top_asv_data <- merge(top_asv_data, colData, by = 0) %>% column_to_rownames("Row
 
 ### Effect of design factors on abundance of top ASVs
 
-Effect of Site, Scion, and planting season on abundance of top `r DIFFOTU` ASVs
+Effect of Site, Scion, and Storage on abundance of top `r DIFFOTU` ASVs
 
 ```{r ASV anova}
 # ANOVA of top ASVs
@@ -1065,14 +1065,14 @@ otu_lm_anova <- function(otu, formula, data) {
     site_p = a['Site ', 'Pr..F.'],
     scion_var = a['Scion', 'Sum.Sq'] / total_var * 100,
     scion_p = a['Scion', 'Pr..F.'],
-    season_var = a['Season ', 'Sum.Sq'] / total_var * 100,
-    season_p = a['Season ', 'Pr..F.'],
+    storage_var = a['Storage ', 'Sum.Sq'] / total_var * 100,
+    storage_p = a['Storage ', 'Pr..F.'],
     site_scion_var = a['Site:Scion', 'Sum.Sq'] / total_var * 100,
     site_scion_p = a['Site:Scion', 'Pr..F.'],
-    site_season_var = a['Site:Season ', 'Sum.Sq'] / total_var * 100,
-    site_season_p = a['Site:Season ', 'Pr..F.'],
-    season_scion_var = a['Season:Scion', 'Sum.Sq'] / total_var * 100,
-    season_scion_p = a['Season:Scion', 'Pr..F.'],
+    site_storage_var = a['Site:Storage ', 'Sum.Sq'] / total_var * 100,
+    site_storage_p = a['Site:Storage ', 'Pr..F.'],
+    storage_scion_var = a['Storage:Scion', 'Sum.Sq'] / total_var * 100,
+    storage_scion_p = a['Storage:Scion', 'Pr..F.'],
     residuals_var = a['Residuals', 'Sum.Sq'] / total_var * 100
   )
   return(d)
@@ -1091,8 +1091,8 @@ otu_negbin_anova <- function(otu, formula, data) {
     site_p = a['Site', 'Pr..Chi.'],
     cultivar_var = a['Scion', 'Deviance'] / total_deviance * 100,
     cultivar_p = a['Scion', 'Pr..Chi.'],
-    season_var = a['Season', 'Deviance'] / total_deviance * 100,
-    season_p = a['Season', 'Pr..Chi.']
+    storage_var = a['Storage', 'Deviance'] / total_deviance * 100,
+    storage_p = a['Storage', 'Pr..Chi.']
   )
   return(d)
 }
@@ -1100,7 +1100,7 @@ otu_negbin_anova <- function(otu, formula, data) {
 formula <- FULL_DESIGN
 
 # Full design model does not converge
-# formula <- y ~ site + Scion + Season + site:Scion + site:Season
+# formula <- y ~ site + Scion + Storage + site:Scion + site:Storage
 
 # formula <- DESIGN
 
@@ -1114,25 +1114,25 @@ otu_anova_results_adjusted <- otu_anova_results %>%
   mutate(
     site_p = p.adjust(site_p, method = "BH"),
     scion_p = p.adjust(scion_p, method = "BH"),
-    season_p = p.adjust(season_p, method = "BH"),
+    storage_p = p.adjust(storage_p, method = "BH"),
     site_scion_p = p.adjust(site_scion_p, method = "BH"),
-    site_season_p = p.adjust(site_season_p, method = "BH"),
-    season_scion_p = p.adjust(season_scion_p, method = "BH")
+    site_storage_p = p.adjust(site_storage_p, method = "BH"),
+    storage_scion_p = p.adjust(storage_scion_p, method = "BH")
   )
 
 cat(
   "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
   "Site:", nrow(otu_anova_results_adjusted[site_p < 0.05, ]), "\n",
   "Scion:", nrow(otu_anova_results_adjusted[scion_p < 0.05, ]), "\n",
-  "Season:", nrow(otu_anova_results_adjusted[season_p < 0.05, ]), "\n",
+  "Storage:", nrow(otu_anova_results_adjusted[storage_p < 0.05, ]), "\n",
   "Site:Scion:", nrow(otu_anova_results_adjusted[site_scion_p < 0.05, ]), "\n",
-  "Site:Season:", nrow(otu_anova_results_adjusted[site_season_p < 0.05, ]), "\n",
-  "Season:Scion:", nrow(otu_anova_results_adjusted[season_scion_p < 0.05, ]), "\n\n"
+  "Site:Storage:", nrow(otu_anova_results_adjusted[site_storage_p < 0.05, ]), "\n",
+  "Storage:Scion:", nrow(otu_anova_results_adjusted[storage_scion_p < 0.05, ]), "\n\n"
 )
 
 otu_anova_results_adjusted[scion_p < 0.05, ]
 otu_anova_results_adjusted[site_scion_p < 0.05, ]
-otu_anova_results_adjusted[season_scion_p < 0.05, ]
+otu_anova_results_adjusted[storage_scion_p < 0.05, ]
 ```
 
 ## Canker counts
@@ -1148,7 +1148,7 @@ The base model for canker counts uses the formula: `r canker_design`.
 canker_abundance_data <- colData[complete.cases(colData$Cankers), ]
 
 # Base model
-canker_design = "Cankers ~ Site * Season * Scion"
+canker_design = "Cankers ~ Site * Storage * Scion"
 base_model <- glm.nb(canker_design, data = canker_abundance_data)
 
 # Abundance model
@@ -1164,10 +1164,10 @@ kable(anova(base_model, abundance_model))
 ```{r}
 # Filter out samples with missing canker count
 canker_top_asv_data <- top_asv_data[complete.cases(top_asv_data$Cankers), ]
-# all.equal(top_asv_data[c("Site", "Season", "Scion", "Cankers")],cankers)
+# all.equal(top_asv_data[c("Site", "Storage", "Scion", "Cankers")],cankers)
 
 # Base model design
-canker_design = "Cankers ~ Site * Season * Scion"
+canker_design = "Cankers ~ Site * Storage * Scion"
 
 # Base model with ASV abundance data
 base_model <- glm.nb(canker_design, data = canker_top_asv_data)
@@ -1216,7 +1216,7 @@ if(nrow(asv_canker_results[p_adjusted < 0.05, ]) > 0) {
 ```{r}
 site <- 3
 
-canker_site_design <- "Cankers ~ Season * Scion"
+canker_site_design <- "Cankers ~ Storage * Scion"
 
 # Base model with ASV abundance data
 base_model_1 <- glm.nb(canker_site_design, data = canker_top_asv_data[canker_top_asv_data$Site == site,])
@@ -1276,7 +1276,7 @@ fun_genera <- rownames(fun_genus_data)
 # Transpose and add metadata from colData
 fun_genus_data <- t(fun_genus_data) %>% as.data.frame() %>% mutate(
   Site = colData[rownames(.), "Site"],
-  Season = colData[rownames(.), "Season"],
+  Storage = colData[rownames(.), "Storage"],
   Scion = colData[rownames(.), "Scion"],
   Cankers = colData[rownames(.), "Cankers"]
 )
@@ -1287,7 +1287,7 @@ fun_genus_data <- fun_genus_data[complete.cases(fun_genus_data$Cankers), ]
 
 ```{r}
 # Base model design
-canker_design = "Cankers ~ Site * Season * Scion"
+canker_design = "Cankers ~ Site * Storage * Scion"
 
 # Base model with genus abundance data
 base_model <- glm.nb(canker_design, data = fun_genus_data)
@@ -1359,7 +1359,7 @@ significant_genera_data$log10_abundance <- log(significant_genera_data$Abundance
 # Plot of genus abundance against canker count
 fun_genus_canker_plot <- ggscatter(
   data = significant_genera_data, x = "log10_abundance", y = "Cankers", 
-  color = "Site", shape = "Season",
+  color = "Site", shape = "Storage",
   xlab = "Genus abundance (log10)", ylab = "Canker count",
   free_x = T, free_y = T, palette = cbPalette
 ) + facet_wrap(~ Genus, scales = "free")
@@ -1564,20 +1564,20 @@ Plots of proportion of normalised reads assigned to members of phylum and class.
 ```{r}
 dat <- list(as.data.frame(counts(dds, normalize = T)), taxData, as.data.frame(colData(dds)))
 
-design <- c("Site", "Season")
+design <- c("Site", "Storage")
 
 # md1 <- getSummedTaxa(dat, conf = TAXCONF, design = design, cutoff = 0.1)
 md1 <- getSummedTaxa(dat, conf = TAXCONF, design = design, taxon = "phylum", cutoff = 0.1)
 
 md1[, Site := factor(Site, levels = c(1, 2, 3))]
-md1[, Season := factor(Season, levels = c("Spring", "Winter"))]
+md1[, Storage := factor(Storage, levels = c("no", "yes"))]
 md1[, taxon := factor(taxon, levels = unique(taxon[order(value, decreasing = T)]))]
 
 removals <- md1[, .(value = mean(value)), by = "taxon"][value < 0.5, taxon]
 md1 <- md1[!taxon %in% removals, ]
 
 bac_phylum_plot <- plotfun1(md1, x = "taxon", fill = "Site") +
-  facet_wrap(~ Season)
+  facet_wrap(~ Storage)
 
 ggsave("figures/bac_phylum.png", bac_phylum_plot, width = 25, height = 15, units = "cm")
 
@@ -1586,14 +1586,14 @@ bac_phylum_plot
 md2 <- getSummedTaxa(dat, conf = TAXCONF, design = design, taxon = "class", cutoff = 0.1, topn = 9)
 
 md2[, Site := factor(Site, levels = c(1, 2, 3))]
-md2[, Season := factor(Season, levels = c("Spring", "Winter"))]
+md2[, Storage := factor(Storage, levels = c("no", "yes"))]
 md2[, taxon := factor(taxon, levels = unique(taxon[order(value, decreasing = T)]))]
 
 removals <- md2[, .(value = mean(value)), by = "taxon"][value < 0.5, taxon]
 md2 <- md2[!taxon %in% removals, ]
 
 bac_class_plot <- plotfun1(md2, x = "taxon", fill = "Site") +
-  facet_wrap(~ Season)
+  facet_wrap(~ Storage)
 
 ggsave("figures/bac_class.png", bac_class_plot, width = 25, height = 15, units = "cm")
 
@@ -1605,7 +1605,7 @@ bac_class_plot
 ```{r}
 abundance_plot <- ggplot(
   data = as.data.frame(colData(dds)), 
-  aes(x = Site, y = log_copy_number, colour = Scion, shape = Season)
+  aes(x = Site, y = log_copy_number, colour = Scion, shape = Storage)
 ) + geom_jitter() + 
   scale_colour_manual(values = cbPalette)
 
@@ -1818,9 +1818,9 @@ bac_pca_plot <- plotOrd(
   bac_pca,
   colData(dds),
   design = "Site",
-  shape = "Season",
+  shape = "Storage",
   axes = c(1, 2),
-  # facet = "Season", 
+  # facet = "Storage", 
   cbPalette = T,
   alpha = 0.75,
 ) #+ facet_wrap(~facet)
@@ -1884,7 +1884,7 @@ bac_nmds <- scores(ord)
 bac_nmds_plot <- plotOrd(
   bac_nmds, colData(dds), 
   design = "Site", 
-  shape = "Season", 
+  shape = "Storage", 
   alpha = 0.75, cbPalette = T
 ) #+ theme(text = element_text(size = 14))
 
@@ -1988,7 +1988,7 @@ top_asv_data <- merge(top_asv_data, colData, by = 0) %>% column_to_rownames("Row
 
 ### Effect of design factors on top ASVs
 
-Effect of Site, Scion, and planting season on abundance of top `r DIFFOTU` ASVs
+Effect of Site, Scion, and Storage on abundance of top `r DIFFOTU` ASVs
 
 ```{r Bac ASV anova}
 # ANOVA of top ASVs
@@ -2004,14 +2004,14 @@ otu_lm_anova <- function(otu, formula, data) {
     site_p = a['Site ', 'Pr..F.'],
     scion_var = a['Scion', 'Sum.Sq'] / total_var * 100,
     scion_p = a['Scion', 'Pr..F.'],
-    season_var = a['Season ', 'Sum.Sq'] / total_var * 100,
-    season_p = a['Season ', 'Pr..F.'],
+    storage_var = a['Storage ', 'Sum.Sq'] / total_var * 100,
+    storage_p = a['Storage ', 'Pr..F.'],
     site_scion_var = a['Site:Scion', 'Sum.Sq'] / total_var * 100,
     site_scion_p = a['Site:Scion', 'Pr..F.'],
-    site_season_var = a['Site:Season ', 'Sum.Sq'] / total_var * 100,
-    site_season_p = a['Site:Season ', 'Pr..F.'],
-    season_scion_var = a['Season:Scion', 'Sum.Sq'] / total_var * 100,
-    season_scion_p = a['Season:Scion', 'Pr..F.'],
+    site_storage_var = a['Site:Storage ', 'Sum.Sq'] / total_var * 100,
+    site_storage_p = a['Site:Storage ', 'Pr..F.'],
+    storage_scion_var = a['Storage:Scion', 'Sum.Sq'] / total_var * 100,
+    storage_scion_p = a['Storage:Scion', 'Pr..F.'],
     residuals_var = a['Residuals', 'Sum.Sq'] / total_var * 100
   )
   return(d)
@@ -2030,8 +2030,8 @@ otu_negbin_anova <- function(otu, formula, data) {
     site_p = a['Site', 'Pr..Chi.'],
     scion_var = a['Scion', 'Deviance'] / total_deviance * 100,
     scion_p = a['Scion', 'Pr..Chi.'],
-    season_var = a['Season', 'Deviance'] / total_deviance * 100,
-    season_p = a['Season', 'Pr..Chi.']
+    storage_var = a['Storage', 'Deviance'] / total_deviance * 100,
+    storage_p = a['Storage', 'Pr..Chi.']
   )
   return(d)
 }
@@ -2046,22 +2046,22 @@ otu_anova_results_adjusted <- otu_anova_results %>%
   mutate(
     site_p = p.adjust(site_p, method = "BH"),
     scion_p = p.adjust(scion_p, method = "BH"),
-    season_p = p.adjust(season_p, method = "BH")
+    storage_p = p.adjust(storage_p, method = "BH")
   )
 
 cat(
   "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
   "Site:", nrow(otu_anova_results_adjusted[site_p < 0.05, ]), "\n",
   "Scion:", nrow(otu_anova_results_adjusted[scion_p < 0.05, ]), "\n",
-  "Season:", nrow(otu_anova_results_adjusted[season_p < 0.05, ]), "\n",
+  "Storage:", nrow(otu_anova_results_adjusted[storage_p < 0.05, ]), "\n",
   "Site:Scion:", nrow(otu_anova_results_adjusted[site_scion_p < 0.05, ]), "\n",
-  "Site:Season:", nrow(otu_anova_results_adjusted[site_season_p < 0.05, ]), "\n",
-  "Season:Scion:", nrow(otu_anova_results_adjusted[season_scion_p < 0.05, ]), "\n\n"
+  "Site:Storage:", nrow(otu_anova_results_adjusted[site_storage_p < 0.05, ]), "\n",
+  "Storage:Scion:", nrow(otu_anova_results_adjusted[storage_scion_p < 0.05, ]), "\n\n"
 )
 
 otu_anova_results_adjusted[scion_p < 0.05, ]
 otu_anova_results_adjusted[site_scion_p < 0.05, ]
-otu_anova_results_adjusted[season_scion_p < 0.05, ]
+otu_anova_results_adjusted[storage_scion_p < 0.05, ]
 ```
 
 ## Canker counts
@@ -2077,7 +2077,7 @@ The base model for canker counts uses the formula: `r canker_design`.
 canker_abundance_data <- colData[complete.cases(colData$Cankers), ]
 
 # Base model
-canker_design = "Cankers ~ Site * Season * Scion"
+canker_design = "Cankers ~ Site * Storage * Scion"
 base_model <- glm.nb(canker_design, data = canker_abundance_data)
 
 # Abundance model
@@ -2095,7 +2095,7 @@ kable(anova(base_model, abundance_model))
 top_asv_data <- top_asv_data[complete.cases(top_asv_data$Cankers), ]
 
 # Base model design
-canker_design = "Cankers ~ Site * Season * Scion"
+canker_design = "Cankers ~ Site * Storage * Scion"
 
 # Base model with ASV abundance data
 base_model <- glm.nb(canker_design, data = top_asv_data)
@@ -2179,7 +2179,7 @@ bac_genera <- rownames(bac_genus_data)
 # Transpose and add metadata from colData
 bac_genus_data <- t(bac_genus_data) %>% as.data.frame() %>% mutate(
   Site = colData[rownames(.), "Site"],
-  Season = colData[rownames(.), "Season"],
+  Storage = colData[rownames(.), "Storage"],
   Scion = colData[rownames(.), "Scion"],
   Cankers = colData[rownames(.), "Cankers"]
 )
@@ -2190,7 +2190,7 @@ bac_genus_data <- bac_genus_data[complete.cases(bac_genus_data$Cankers), ]
 
 ```{r}
 # Base model design
-canker_design = "Cankers ~ Site * Season * Scion"
+canker_design = "Cankers ~ Site * Storage * Scion"
 
 # Base model with genus abundance data
 base_model <- glm.nb(canker_design, data = bac_genus_data)
@@ -2261,7 +2261,7 @@ significant_genera_data$log10_abundance <- log10(significant_genera_data$Abundan
 # Plot of genus abundance against canker count
 bac_genus_canker_plot <- ggscatter(
   data = significant_genera_data, x = "log10_abundance", y = "Cankers", 
-  color = "Site", shape = "Season",
+  color = "Site", shape = "Storage",
   xlab = "Genus abundance (log10)", ylab = "Canker count",
   free_x = T, free_y = T, palette = cbPalette
 ) + facet_wrap(~ Genus, scales = "free")
@@ -2356,10 +2356,10 @@ abundance_combined <- rbind(
   as.data.frame(colData(ubiome_FUN$dds)), as.data.frame(colData(ubiome_BAC$dds))
 ) %>% mutate(kingdom = ifelse(Target == "ITS", "Fungi", "Bacteria")) %>%
   mutate(kingdom = factor(kingdom, levels = c("Fungi", "Bacteria"))) %>%
-  mutate(Season = factor(Season, levels = c("Winter", "Spring")))
+  mutate(Storage = factor(Storage, levels = c("no", "yes")))
 
 # abundance_bar <- ggbarplot(
-#   data = abundance_combined, x = "Season", y = "log_copy_number", 
+#   data = abundance_combined, x = "Storage", y = "log_copy_number", 
 #   fill = "Site", add = "mean_se", facet.by = "kingdom",
 #   palette = cbPalette, position = position_dodge(0.8),
 #   ylab = "Mean copy number (log10)", xlab = F, legend = "right"
@@ -2374,7 +2374,7 @@ abundance_combined <- rbind(
 
 abundance_box <- ggboxplot(
   data = abundance_combined, x = "Site", y = "log_copy_number", 
-  color = "Season", add = "jitter", facet.by = "kingdom",
+  color = "Storage", add = "jitter", facet.by = "kingdom",
   palette = cbPalette, legend = "bottom",
   ylab = "Mean copy number (log10)", xlab = "Site"
 ) 
@@ -2391,17 +2391,17 @@ abundance_box
 
 ```{r}
 alpha_combined <- rbind(fun_alpha, bac_alpha) %>% 
-  subset(select = c("Site", "Season", "Scion", "Target", "S.chao1", "shannon", "simpson")) %>%
+  subset(select = c("Site", "Storage", "Scion", "Target", "S.chao1", "shannon", "simpson")) %>%
   mutate(kingdom = ifelse(Target == "ITS", "Fungi", "Bacteria")) %>%
   mutate(kingdom = factor(kingdom, levels = c("Fungi", "Bacteria"))) %>%
-  mutate(Season = factor(Season, levels = c("Winter", "Spring"))) %>%
+  mutate(Storage = factor(Storage, levels = c("no", "yes"))) %>%
   rename(Chao1 = S.chao1, Shannon = shannon, Simpson = simpson) %>%
   pivot_longer(
     cols = c("Chao1", "Shannon", "Simpson"), names_to = "measure", values_to = "value"
   )
 
 # alpha_bar <- ggbarplot(
-#   data = alpha_combined, x = "Season", y = "value", 
+#   data = alpha_combined, x = "Storage", y = "value", 
 #   fill = "Site", add = "mean_se", facet.by = c("measure", "kingdom"), 
 #   palette = cbPalette, position = position_dodge(0.8), scales = "free_y",
 #   ylab = "Mean diversity index", xlab = F, legend = "right"
@@ -2416,7 +2416,7 @@ alpha_combined <- rbind(fun_alpha, bac_alpha) %>%
 
 alpha_box <- ggboxplot(
   data = alpha_combined, x = "Site", y = "value", 
-  color = "Season", add = "jitter", facet.by = c("measure", "kingdom"),
+  color = "Storage", add = "jitter", facet.by = c("measure", "kingdom"),
   palette = cbPalette, scales = "free_y", legend = "bottom",
   ylab = "Mean diversity index", xlab = "Site"
 ) #+ guides(color = guide_legend(position = "right"))
@@ -2429,7 +2429,7 @@ alpha_box
 
 alpha_box_fungi <- ggboxplot(
   data = alpha_combined[alpha_combined$kingdom == "Fungi", ], x = "Site", y = "value", 
-  color = "Season", add = "jitter", facet.by = "measure",
+  color = "Storage", add = "jitter", facet.by = "measure",
   palette = cbPalette, scales = "free_y", legend = "bottom",
   ylab = "Mean diversity index", xlab = "Site"
 )
@@ -2440,7 +2440,7 @@ ggsave(
 
 alpha_box_bacteria <- ggboxplot(
   data = alpha_combined[alpha_combined$kingdom == "Bacteria", ], x = "Site", y = "value", 
-  color = "Season", add = "jitter", facet.by = "measure",
+  color = "Storage", add = "jitter", facet.by = "measure",
   palette = cbPalette, scales = "free_y", legend = "bottom",
   ylab = "Mean diversity index", xlab = "Site"
 )
@@ -2484,7 +2484,7 @@ mega_combo_plot <- ggarrange(
   fun_nmds_plot, bac_nmds_plot,
   ncol = 2, nrow = 2, labels = c("A", "B", "C", "D"),
   common.legend = T, legend = "bottom"
-) + labs(shape = "Planting season")
+) + labs(shape = "Storage")
 
 ggsave(
   filename = "mega_combo_plot.png", plot = mega_combo_plot, path = "figures/", 
