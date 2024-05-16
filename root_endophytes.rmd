@@ -99,7 +99,7 @@ ubiome_FUN <- loadData("data/FUN.zotu_table.txt",metadata,"data/zFUN.sintax.taxa
 
 # Change sites Avalon -> 1, Scripps -> 2, and WWF -> 3.
 # Storage from planting date.
-# No storage for December plantings, yes for March and April (4months).
+# No storage for December plantings, yes for March and April (4 months).
 mutate_factors <- function(data){
   data <- data %>%
     rename(location = site, Scion = cultivar) %>%
@@ -807,7 +807,7 @@ df
 
 ```{r}
 # Number of PCs to include
-n_pcs <- 20
+n_pcs <- 10
 
 # Perform PC decomposition of DES object
 mypca <- des_to_pca(dds)
@@ -866,19 +866,29 @@ pcas <- lapply(pca_summary, function(i) data.frame(unclass(i)))
 # Merge into single dataframe
 pcs_factors_tidy <- lapply(
   names(pcas),
-  function(name) mutate(
-    pcas[[name]], 
-    var = Sum.Sq / sum(pcas[[name]]$Sum.Sq) * 100,
-    PC = substring(name, 3),
-    Factor = gsub(" ", "", rownames(pcas[[name]]))
-  )
+  function(name) {
+    mutate(
+      pcas[[name]], 
+      PC = substring(name, 3),
+      Factor = gsub(" ", "", rownames(pcas[[name]])),
+      var = Sum.Sq / sum(pcas[[name]]$Sum.Sq) * 100
+      # total_var = pca_var[name, "perc_var"]
+    ) %>%
+    mutate(
+      pcas[[name]],
+      total_var = var * pca_var[name, "perc_var"] / 100
+    )
+  }
 ) %>% bind_rows() %>% data.table()
 
 # Adjust p values for FDR
-pcs_factors_tidy$p.adj <- p.adjust(pcs_factors_tidy$`Pr..F.`, method = "BH")
+# pcs_factors_tidy$p.adj <- p.adjust(pcs_factors_tidy$`Pr..F.`, method = "BH")
 
 # Significant factors
-kable(pcs_factors_tidy[p.adj < 0.05, c("PC", "Factor", "Df", "F.value", "p.adj", "var")])
+kable(pcs_factors_tidy[
+  Pr..F. < 0.05, 
+  c("PC", "Factor", "Df", "F.value", "Pr..F.", "var", "total_var")
+])
 ```
 
 #### PCA plot
@@ -1148,11 +1158,11 @@ The base model for canker counts uses the formula: `r canker_design`.
 canker_abundance_data <- colData[complete.cases(colData$Cankers), ]
 
 # Base model
-canker_design = "Cankers ~ Site * Storage * Scion"
+canker_design <- "Cankers ~ Site * Storage * Scion"
 base_model <- glm.nb(canker_design, data = canker_abundance_data)
 
 # Abundance model
-abundance_design = paste(canker_design, "+ log(copy_number)")
+abundance_design <- paste(canker_design, "+ log(copy_number)")
 abundance_model <- glm.nb(abundance_design, data = canker_abundance_data)
 
 # ANOVA of abundance with canker count
@@ -1167,30 +1177,51 @@ canker_top_asv_data <- top_asv_data[complete.cases(top_asv_data$Cankers), ]
 # all.equal(top_asv_data[c("Site", "Storage", "Scion", "Cankers")],cankers)
 
 # Base model design
-canker_design = "Cankers ~ Site * Storage * Scion"
+canker_design <- "Cankers ~ Site * Storage * Scion"
 
 # Base model with ASV abundance data
 base_model <- glm.nb(canker_design, data = canker_top_asv_data)
+
+# Fits glm.nb model and returns a list of the model and warnings
+glm.nb_with_warnings <- function(f, data) {
+  m = tryCatch(
+    {
+      list(
+        fit = glm.nb(f, data = data),
+        warning = NA
+      )
+    },
+    warning = function(w) {
+      list(
+        fit = glm.nb(f, data = data),
+        warning = paste(conditionMessage(w), collapse = ", ")
+      )
+    }
+  )
+  return(m)
+}
 
 # ANOVA of top ASVs with canker count
 asv_canker_anova <- function(otu, design, base_model, data) {
   log_otu = paste0("log(", otu, " + 1)")
   f = paste(design, "+", log_otu)#, "+", log_otu, ":Site")
-  m = glm.nb(f, data = data)
-  a = anova(base_model, m) %>% data.frame()
-  b = suppressWarnings(anova(m)) %>% data.frame()
+  m = glm.nb_with_warnings(f, data)
+  a = anova(base_model, m$fit) %>% data.frame()
+  b = suppressWarnings(anova(m$fit)) %>% data.frame()
   total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
   d = data.frame(
     OTU = otu,
     Taxonomy = taxData[otu, "rank"],
-    coef = m$coefficients[log_otu],
+    Abundance = mean(data[[otu]]),
+    coef = m$fit$coefficients[log_otu],
     var = b[log_otu, 'Deviance'] / total_deviance * 100,
-    p = a[2, 'Pr.Chi.']
+    p = a[2, 'Pr.Chi.'],
+    warning = m$warning
   )
   return(d)
 }
 
-kable(asv_canker_anova(top_asv_ids[1], canker_design, base_model, canker_top_asv_data))
+# kable(asv_canker_anova(top_asv_ids[1], canker_design, base_model, canker_top_asv_data))
 
 # Effect of ASV abundance on canker count for top ASVs
 asv_canker_results <- sapply(
@@ -1214,33 +1245,87 @@ if(nrow(asv_canker_results[p_adjusted < 0.05, ]) > 0) {
 #### Effect of ASV abundance on canker count per site
 
 ```{r}
-site <- 3
+# For each site, select ASVs with mean abundance > 100
+top_asvs_per_site <- lapply(
+  unique(colData$Site),
+  function(site) {
+    samples <- filter(colData, Site == site)
+    top_asv_data <- select(asv_counts, rownames(samples))
+    top_asvs <- filter(top_asv_data, rowMeans(top_asv_data) > 100)
+    top_asv_ids <- rownames(top_asvs)
+    top_asvs <- data.frame(t(top_asvs)) %>% merge(samples, by = 0) %>% column_to_rownames("Row.names")
+    top_asvs <- top_asvs[complete.cases(top_asvs$Cankers), ]
+    return(list(asvs = top_asv_ids, data = top_asvs))
+  }
+)
+
+cat(
+  "Sites 1, 2, 3 contained",
+  paste(sapply(top_asvs_per_site, function(x) length(x$asvs)), collapse = ", "),
+  "ASVs respectively with mean read count > 100", "\n\n"
+)
 
 canker_site_design <- "Cankers ~ Storage * Scion"
 
-# Base model with ASV abundance data
-base_model_1 <- glm.nb(canker_site_design, data = canker_top_asv_data[canker_top_asv_data$Site == site,])
-
-# Effect of ASV abundance on canker count for top ASVs
-asv_canker_results_1 <- sapply(
-  top_asv_ids, function(x) asv_canker_anova(
-    x, canker_site_design, base_model_1, 
-    canker_top_asv_data[canker_top_asv_data$Site == site, ]
-  )
-) %>% t() %>% data.table()
-
-# Adjust p-values for multiple testing
-asv_canker_results_1$p_adjusted <- p.adjust(asv_canker_results$p, method = "BH")
-
-# Summary of ASVs with statistically significant (*P* < 0.05) adjusted p-values
-cat(
-  nrow(asv_canker_results_1[p_adjusted < 0.05, ]), "of", nrow(asv_canker_results_1),
-  "ASVs have statistically significant (*P* < 0.05) adjusted p-values\n\n"
-)
-if(nrow(asv_canker_results_1[p_adjusted < 0.05, ]) > 0) {
-  asv_canker_results_1[p_adjusted < 0.05, ]
+# ANOVA of ASV abundance with canker count per site
+asv_canker_site_anova <- function(asvs, data) {
+  base_model <- glm.nb(canker_site_design, data = data)
+  results <- sapply(
+    asvs, 
+    function(asv) asv_canker_anova(asv, canker_site_design, base_model, data)
+  ) %>% t() %>% data.table()
+  results$p_adjusted <- p.adjust(results$p, method = "BH")
+  return(results)
 }
 
+asv_canker_site_results <- lapply(
+  top_asvs_per_site,
+  function(x) asv_canker_site_anova(x$asvs, x$data)
+)
+
+# Significant ASVs
+significant_asvs <- lapply(
+  asv_canker_site_results, 
+  function(x) x[p_adjusted < 0.05 & is.na(warning), ]
+)
+
+kable(significant_asvs)
+```
+
+##### Plot of ASV abundance against canker count
+
+```{r}
+# List of significant ASVs
+significant_asv_list <- lapply(significant_asvs, function(x) x$OTU) %>% unlist()
+
+significant_asv_data <- asv_counts[significant_asv_list, ] %>% 
+  t() %>% 
+  data.frame() %>% 
+  merge(colData, by = 0) %>% 
+  column_to_rownames("Row.names") %>%
+  select(c(significant_asv_list, "Site", "Storage", "Scion", "Cankers"))
+
+# Melt data for ggplot
+significant_asv_long_data <- significant_asv_data %>% reshape2::melt(
+  id.vars = c("Site", "Storage", "Scion", "Cankers"), variable.name = "OTU", value.name = "Abundance"
+)
+
+# Log trasnform abundance
+significant_asv_long_data$log10_abundance <- log10(significant_asv_long_data$Abundance + 1)
+
+fun_asv_canker_plot <- ggscatter(
+  data = significant_asv_long_data, x = "log10_abundance", y = "Cankers", 
+  color = "Storage", facet.by = c("OTU", "Site"),
+  xlab = "ASV abundance (log10)", ylab = "Canker count",
+  palette = cbPalette, legend = "bottom"
+)
+
+ggsave(
+  filename = "fun_asv_canker_plot.png", plot = fun_asv_canker_plot, path = "figures/",
+  height = 40, width = 20, units = "cm"
+)
+
+fun_asv_canker_plot
 ```
 
 #### Effect of aggregated genera on canker counts
@@ -1739,7 +1824,7 @@ df
 ### PCA 
 ```{r}
 # Number of PCs to include
-n_pcs <- 20
+n_pcs <- 10
 
 # perform PC decomposition of DES object
 mypca <- des_to_pca(dds)
@@ -1796,19 +1881,29 @@ pcas <- lapply(pca_summary, function(i) data.frame(unclass(i)))
 # Merge into single dataframe
 pcs_factors_tidy <- lapply(
   names(pcas),
-  function(name) mutate(
-    pcas[[name]], 
-    var = Sum.Sq / sum(pcas[[name]]$Sum.Sq) * 100,
-    PC = substring(name, 3),
-    Factor = gsub(" ", "", rownames(pcas[[name]]))
-  )
+  function(name) {
+    mutate(
+      pcas[[name]], 
+      PC = substring(name, 3),
+      Factor = gsub(" ", "", rownames(pcas[[name]])),
+      var = Sum.Sq / sum(pcas[[name]]$Sum.Sq) * 100
+      # total_var = pca_var[name, "perc_var"]
+    ) %>%
+    mutate(
+      pcas[[name]],
+      total_var = var * pca_var[name, "perc_var"] / 100
+    )
+  }
 ) %>% bind_rows() %>% data.table()
 
 # Adjust p values for FDR
-pcs_factors_tidy$p.adj <- p.adjust(pcs_factors_tidy$`Pr..F.`, method = "BH")
+# pcs_factors_tidy$p.adj <- p.adjust(pcs_factors_tidy$`Pr..F.`, method = "BH")
 
 # Significant factors
-kable(pcs_factors_tidy[p.adj < 0.05, c("PC", "Factor", "Df", "F.value", "p.adj", "var")])
+kable(pcs_factors_tidy[
+  Pr..F. < 0.05, 
+  c("PC", "Factor", "Df", "F.value", "Pr..F.", "var", "total_var")
+])
 ```
 
 #### PCA plot
@@ -2100,24 +2195,6 @@ canker_design = "Cankers ~ Site * Storage * Scion"
 # Base model with ASV abundance data
 base_model <- glm.nb(canker_design, data = top_asv_data)
 
-# ANOVA of top ASVs with canker count
-asv_canker_anova <- function(otu, design, base_model, data) {
-  log_otu = paste0("log(", otu, " + 1)")
-  f = paste(design, "+", log_otu)#, "+", log_otu, ":Site")
-  m = glm.nb(f, data = data)
-  a = anova(base_model, m) %>% data.frame()
-  b = suppressWarnings(anova(m)) %>% data.frame()
-  total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
-  d = data.frame(
-    OTU = otu,
-    Taxonomy = taxData[otu, "rank"],
-    coef = m$coefficients[log_otu],
-    var = b[log_otu, 'Deviance'] / total_deviance * 100,
-    p = a[2, 'Pr.Chi.']
-  )
-  return(d)
-}
-
 # kable(asv_canker_anova(top_asv_ids[1], canker_design, base_model, canker_top_asv_data))
 
 # Effect of ASV abundance on canker count for top ASVs
@@ -2135,6 +2212,92 @@ cat(
   "ASVs have statistically significant (*P* < 0.05) adjusted p-values"
 )
 asv_canker_results[p_adjusted < 0.05, ]
+```
+
+#### Effect of ASV abundance on canker count per site
+
+```{r}
+# For each site, select ASVs with mean abundance > 100
+top_asvs_per_site <- lapply(
+  unique(colData$Site),
+  function(site) {
+    samples <- filter(colData, Site == site)
+    top_asv_data <- select(asv_counts, rownames(samples))
+    top_asvs <- filter(top_asv_data, rowMeans(top_asv_data) > 100)
+    top_asv_ids <- rownames(top_asvs)
+    top_asvs <- data.frame(t(top_asvs)) %>% merge(samples, by = 0) %>% column_to_rownames("Row.names")
+    top_asvs <- top_asvs[complete.cases(top_asvs$Cankers), ]
+    return(list(asvs = top_asv_ids, data = top_asvs))
+  }
+)
+
+cat(
+  "Sites 1, 2, 3 contained",
+  paste(sapply(top_asvs_per_site, function(x) length(x$asvs)), collapse = ", "),
+  "ASVs respectively with mean read count > 100", "\n\n"
+)
+
+canker_site_design <- "Cankers ~ Storage * Scion"
+
+# ANOVA of ASV abundance with canker count per site
+asv_canker_site_anova <- function(asvs, data) {
+  base_model <- glm.nb(canker_site_design, data = data)
+  results <- sapply(
+    asvs, 
+    function(asv) asv_canker_anova(asv, canker_site_design, base_model, data)
+  ) %>% t() %>% data.table()
+  results$p_adjusted <- p.adjust(results$p, method = "BH")
+  return(results)
+}
+
+asv_canker_site_results <- lapply(
+  top_asvs_per_site,
+  function(x) asv_canker_site_anova(x$asvs, x$data)
+)
+
+# Significant ASVs
+significant_asvs <- lapply(
+  asv_canker_site_results, 
+  function(x) x[p_adjusted < 0.05 & is.na(warning), ]
+)
+
+kable(significant_asvs)
+```
+
+##### Plot of ASV abundance against canker count
+
+```{r}
+# List of significant ASVs
+significant_asv_list <- lapply(significant_asvs, function(x) x$OTU) %>% unlist()
+
+significant_asv_data <- asv_counts[significant_asv_list, ] %>% 
+  t() %>% 
+  data.frame() %>% 
+  merge(colData, by = 0) %>% 
+  column_to_rownames("Row.names") %>%
+  select(c(significant_asv_list, "Site", "Storage", "Scion", "Cankers"))
+
+# Melt data for ggplot
+significant_asv_long_data <- significant_asv_data %>% reshape2::melt(
+  id.vars = c("Site", "Storage", "Scion", "Cankers"), variable.name = "OTU", value.name = "Abundance"
+)
+
+# Log trasnform abundance
+significant_asv_long_data$log10_abundance <- log10(significant_asv_long_data$Abundance + 1)
+
+bac_asv_canker_plot <- ggscatter(
+  data = significant_asv_long_data, x = "log10_abundance", y = "Cankers", 
+  color = "Storage", facet.by = c("OTU", "Site"),
+  xlab = "ASV abundance (log10)", ylab = "Canker count",
+  palette = cbPalette, legend = "bottom"
+)
+
+ggsave(
+  filename = "bac_asv_canker_plot.png", plot = bac_asv_canker_plot, path = "figures/",
+  height = 40, width = 20, units = "cm"
+)
+
+bac_asv_canker_plot
 ```
 
 #### Effect of aggregated genera on canker counts
