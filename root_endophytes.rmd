@@ -1267,7 +1267,7 @@ cat(
 
 canker_site_design <- "Cankers ~ Storage * Scion"
 
-# ANOVA of ASV abundance with canker count per site
+# ANOVA of ASV abundance with canker count per ASV
 asv_canker_site_anova <- function(asvs, data) {
   base_model <- glm.nb(canker_site_design, data = data)
   results <- sapply(
@@ -1278,25 +1278,33 @@ asv_canker_site_anova <- function(asvs, data) {
   return(results)
 }
 
+# Run ANOVA per site
 asv_canker_site_results <- lapply(
   top_asvs_per_site,
   function(x) asv_canker_site_anova(x$asvs, x$data)
 )
 
-# Significant ASVs
-significant_asvs <- lapply(
-  asv_canker_site_results, 
-  function(x) x[p_adjusted < 0.05 & is.na(warning), ]
-)
+# Add site to each result as new column and merge into single data.table
+asv_canker_site_results <- lapply(
+  1:3, 
+  function(site) {
+    result <- asv_canker_site_results[[site]]
+    result$Site <- site
+    result
+  }
+) %>% bind_rows()
 
-kable(significant_asvs)
+# Significant ASVs
+significant_asvs <- asv_canker_site_results[p_adjusted < 0.05 & is.na(warning), ]
+
+significant_asvs
 ```
 
 ##### Plot of ASV abundance against canker count
 
 ```{r}
 # List of significant ASVs
-significant_asv_list <- lapply(significant_asvs, function(x) x$OTU) %>% unlist()
+significant_asv_list <- significant_asvs$OTU %>% unlist()
 
 significant_asv_data <- asv_counts[significant_asv_list, ] %>% 
   t() %>% 
@@ -2239,7 +2247,7 @@ cat(
 
 canker_site_design <- "Cankers ~ Storage * Scion"
 
-# ANOVA of ASV abundance with canker count per site
+# ANOVA of ASV abundance with canker count per ASV
 asv_canker_site_anova <- function(asvs, data) {
   base_model <- glm.nb(canker_site_design, data = data)
   results <- sapply(
@@ -2250,25 +2258,33 @@ asv_canker_site_anova <- function(asvs, data) {
   return(results)
 }
 
+# Run ANOVA per site
 asv_canker_site_results <- lapply(
   top_asvs_per_site,
   function(x) asv_canker_site_anova(x$asvs, x$data)
 )
 
-# Significant ASVs
-significant_asvs <- lapply(
-  asv_canker_site_results, 
-  function(x) x[p_adjusted < 0.05 & is.na(warning), ]
-)
+# Add site to each result as new column and merge into single data.table
+asv_canker_site_results <- lapply(
+  1:3, 
+  function(site) {
+    result <- asv_canker_site_results[[site]]
+    result$Site <- site
+    result
+  }
+) %>% bind_rows()
 
-kable(significant_asvs)
+# Significant ASVs
+significant_asvs <- asv_canker_site_results[p_adjusted < 0.05 & is.na(warning), ]
+
+significant_asvs
 ```
 
 ##### Plot of ASV abundance against canker count
 
 ```{r}
 # List of significant ASVs
-significant_asv_list <- lapply(significant_asvs, function(x) x$OTU) %>% unlist()
+significant_asv_list <- significant_asvs$OTU %>% unlist()
 
 significant_asv_data <- asv_counts[significant_asv_list, ] %>% 
   t() %>% 
