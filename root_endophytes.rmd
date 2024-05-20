@@ -1146,6 +1146,17 @@ otu_anova_results_adjusted[site_scion_p < 0.05, ]
 otu_anova_results_adjusted[storage_scion_p < 0.05, ]
 ```
 
+```{r}
+# Export significant OTUS as fasta
+scion_otus <- as.character(otu_anova_results_adjusted[scion_p < 0.05, ]$OTU)
+FUN_otus <- read.fasta("data/FUN.otus.fa")
+write.fasta(
+  sequences = FUN_otus[scion_otus],
+  names = paste(scion_otus, "ITS"),
+  file = "FUN_scion_otus.fasta"
+)
+```
+
 ## Canker counts
 
 Testing the effects of of total abundance, ASV abundance, α-diversity, and β-diversity on canker counts.
@@ -2178,6 +2189,17 @@ cat(
 otu_anova_results_adjusted[scion_p < 0.05, ]
 otu_anova_results_adjusted[site_scion_p < 0.05, ]
 otu_anova_results_adjusted[storage_scion_p < 0.05, ]
+```
+
+```{r}
+# Export significant OTUS as fasta
+scion_otus <- as.character(otu_anova_results_adjusted[scion_p < 0.05, ]$OTU)
+BAC_otus <- read.fasta("data/BAC.otus.fa")
+write.fasta(
+  sequences = BAC_otus[scion_otus],
+  names = paste(scion_otus, "16S"),
+  file = "BAC_scion_otus.fasta"
+)
 ```
 
 ## Canker counts
