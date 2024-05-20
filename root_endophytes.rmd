@@ -1166,10 +1166,10 @@ otu_anova_results_adjusted[storage_scion_p < 0.05, ]
 ```{r}
 # Export significant OTUS as fasta
 scion_otus <- as.character(otu_anova_results_adjusted[scion_p < 0.05, ]$OTU)
-FUN_otus <- read.fasta("data/FUN.otus.fa")
+FUN_otus <- read.fasta("data/FUN.zotus.fa")
 write.fasta(
   sequences = FUN_otus[scion_otus],
-  names = paste(scion_otus, "ITS"),
+  names = paste(scion_otus, taxData[scion_otus, "rank"]),
   file = "FUN_scion_otus.fasta"
 )
 ```
@@ -1333,7 +1333,7 @@ significant_asvs
 # Export significant ASVs as FASTA
 
 # Search for significant ASVs the `FUN.otus.fa` fasta file and write to a new file
-FUN_otus <- read.fasta("data/FUN.otus.fa")
+FUN_otus <- read.fasta("data/FUN.zotus.fa")
 write.fasta(
   sequences = FUN_otus[as.character(significant_asvs$OTU)],
   names = paste(significant_asvs$OTU, taxData[as.character(significant_asvs$OTU), "rank"]),
@@ -2229,7 +2229,7 @@ otu_anova_results_adjusted[storage_scion_p < 0.05, ]
 ```{r}
 # Export significant OTUS as fasta
 scion_otus <- as.character(otu_anova_results_adjusted[scion_p < 0.05, ]$OTU)
-BAC_otus <- read.fasta("data/BAC.otus.fa")
+BAC_otus <- read.fasta("data/BAC.zotus.fa")
 write.fasta(
   sequences = BAC_otus[scion_otus],
   names = paste(scion_otus, taxData[scion_otus, "rank"]),
@@ -2354,7 +2354,7 @@ significant_asvs
 # Export significant ASVs as FASTA
 
 # Search for significant ASVs the `FUN.otus.fa` fasta file and write to a new file
-BAC_otus <- read.fasta("data/BAC.otus.fa")
+BAC_otus <- read.fasta("data/BAC.zotus.fa")
 write.fasta(
   sequences = BAC_otus[as.character(significant_asvs$OTU)],
   names = paste(significant_asvs$OTU, taxData[as.character(significant_asvs$OTU), "rank"]),
