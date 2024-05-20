@@ -33,6 +33,7 @@ library(lmPerm)
 library(MASS)
 library(pscl)
 # library(rcompanion)
+library(seqinr)
 library(tidyverse)
 library(vegan)
 library(viridis)
@@ -94,8 +95,8 @@ Site names are encoded as follows according to previous work:
 metadata <- "sample_metadata.txt"
 
 # Load data
-ubiome_BAC <- loadData("data/BAC.zotu_table.txt",metadata,"data/zBAC.sintax.taxa",RHB="BAC")
 ubiome_FUN <- loadData("data/FUN.zotu_table.txt",metadata,"data/zFUN.sintax.taxa",RHB="FUN")
+ubiome_BAC <- loadData("data/BAC.zotu_table.txt",metadata,"data/zBAC.sintax.taxa",RHB="BAC")
 
 # Change sites Avalon -> 1, Scripps -> 2, and WWF -> 3.
 # Storage from planting date.
@@ -1300,6 +1301,18 @@ significant_asvs <- asv_canker_site_results[p_adjusted < 0.05 & is.na(warning), 
 significant_asvs
 ```
 
+```{r}
+# Export significant ASVs as FASTA
+
+# Search for significant ASVs the `FUN.otus.fa` fasta file and write to a new file
+FUN_otus <- read.fasta("data/FUN.otus.fa")
+write.fasta(
+  sequences = FUN_otus[as.character(significant_asvs$OTU)],
+  names = paste(significant_asvs$OTU, "ITS"),
+  file = "FUN_canker_otus.fasta"
+)
+```
+
 ##### Plot of ASV abundance against canker count
 
 ```{r}
@@ -2278,6 +2291,18 @@ asv_canker_site_results <- lapply(
 significant_asvs <- asv_canker_site_results[p_adjusted < 0.05 & is.na(warning), ]
 
 significant_asvs
+```
+
+```{r}
+# Export significant ASVs as FASTA
+
+# Search for significant ASVs the `FUN.otus.fa` fasta file and write to a new file
+BAC_otus <- read.fasta("data/BAC.otus.fa")
+write.fasta(
+  sequences = BAC_otus[as.character(significant_asvs$OTU)],
+  names = paste(significant_asvs$OTU, "16S"),
+  file = "BAC_canker_otus.fasta"
+)
 ```
 
 ##### Plot of ASV abundance against canker count
