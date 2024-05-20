@@ -838,7 +838,7 @@ ggsave(filename = "fun_cum_pca.png", plot = fun_cum_pca, path = "figures/",)
 fun_cum_pca
 
 pca_var <- data.frame(
-  row.names = paste0("PC", 1:n_pcs),
+  PC = paste0("PC", 1:n_pcs),
   perc_var = round(mypca$percentVar[1:n_pcs] * 100, 1)
 )
 
@@ -868,28 +868,45 @@ pcas <- lapply(pca_summary, function(i) data.frame(unclass(i)))
 pcs_factors_tidy <- lapply(
   names(pcas),
   function(name) {
+    pcas[[name]] %>%
     mutate(
-      pcas[[name]], 
-      PC = substring(name, 3),
+      PC = name, #substring(name, 3),
       Factor = gsub(" ", "", rownames(pcas[[name]])),
-      var = Sum.Sq / sum(pcas[[name]]$Sum.Sq) * 100
-      # total_var = pca_var[name, "perc_var"]
-    ) %>%
-    mutate(
-      pcas[[name]],
-      total_var = var * pca_var[name, "perc_var"] / 100
+      var = Sum.Sq / sum(pcas[[name]]$Sum.Sq) * 100,
+      pc_var = subset(pca_var, PC == name)$"perc_var",
+      total_var = var * pc_var / 100,
+      sig = case_when(
+        is.na(Pr..F.) ~ "",
+        Pr..F. < 0.001 ~ "***",
+        Pr..F. < 0.01 ~ "**",
+        Pr..F. < 0.05 ~ "*",
+        TRUE ~ ""
+      ),
+      variance = ifelse(
+        total_var < 0.01, paste0("<0.01", sig),
+        paste0(round(total_var, 2), sig)
+      )
     )
   }
 ) %>% bind_rows() %>% data.table()
 
-# Adjust p values for FDR
-# pcs_factors_tidy$p.adj <- p.adjust(pcs_factors_tidy$`Pr..F.`, method = "BH")
+# Order PCs and factors
+pcs_factors_tidy$PC <- factor(pcs_factors_tidy$PC, levels = paste0("PC", 1:n_pcs))
+pcs_factors_tidy$Factor <- factor(pcs_factors_tidy$Factor, levels = unique(pcs_factors_tidy$Factor))
 
 # Significant factors
-kable(pcs_factors_tidy[
+pcs_factors_tidy[
   Pr..F. < 0.05, 
-  c("PC", "Factor", "Df", "F.value", "Pr..F.", "var", "total_var")
-])
+  c("PC", "Factor", "Df", "F.value", "Pr..F.", "var", "pc_var", "total_var")
+]
+
+# Table with factors as columns and PCs as rows
+# pcs_factors <- dcast(pcs_factors_tidy, PC ~ Factor, value.var = "variance")
+pcs_factors <- pcs_factors_tidy %>%
+  select(PC, pc_var, Factor, variance) %>%
+  spread(key = Factor, value = variance)
+
+pcs_factors
 ```
 
 #### PCA plot
@@ -1885,7 +1902,7 @@ ggsave(filename = "bac_cum_pca.png", plot = bac_cum_pca, path = "figures/",)
 bac_cum_pca
 
 pca_var <- data.frame(
-  row.names = paste0("PC", 1:n_pcs),
+  PC = paste0("PC", 1:n_pcs),
   perc_var = round(mypca$percentVar[1:n_pcs] * 100, 1)
 )
 
@@ -1914,28 +1931,45 @@ pcas <- lapply(pca_summary, function(i) data.frame(unclass(i)))
 pcs_factors_tidy <- lapply(
   names(pcas),
   function(name) {
+    pcas[[name]] %>%
     mutate(
-      pcas[[name]], 
-      PC = substring(name, 3),
+      PC = name, #substring(name, 3),
       Factor = gsub(" ", "", rownames(pcas[[name]])),
-      var = Sum.Sq / sum(pcas[[name]]$Sum.Sq) * 100
-      # total_var = pca_var[name, "perc_var"]
-    ) %>%
-    mutate(
-      pcas[[name]],
-      total_var = var * pca_var[name, "perc_var"] / 100
+      var = Sum.Sq / sum(pcas[[name]]$Sum.Sq) * 100,
+      pc_var = subset(pca_var, PC == name)$"perc_var",
+      total_var = var * pc_var / 100,
+      sig = case_when(
+        is.na(Pr..F.) ~ "",
+        Pr..F. < 0.001 ~ "***",
+        Pr..F. < 0.01 ~ "**",
+        Pr..F. < 0.05 ~ "*",
+        TRUE ~ ""
+      ),
+      variance = ifelse(
+        total_var < 0.01, paste0("<0.01", sig),
+        paste0(round(total_var, 2), sig)
+      )
     )
   }
 ) %>% bind_rows() %>% data.table()
 
-# Adjust p values for FDR
-# pcs_factors_tidy$p.adj <- p.adjust(pcs_factors_tidy$`Pr..F.`, method = "BH")
+# Order PCs and factors
+pcs_factors_tidy$PC <- factor(pcs_factors_tidy$PC, levels = paste0("PC", 1:n_pcs))
+pcs_factors_tidy$Factor <- factor(pcs_factors_tidy$Factor, levels = unique(pcs_factors_tidy$Factor))
 
 # Significant factors
-kable(pcs_factors_tidy[
+pcs_factors_tidy[
   Pr..F. < 0.05, 
-  c("PC", "Factor", "Df", "F.value", "Pr..F.", "var", "total_var")
-])
+  c("PC", "Factor", "Df", "F.value", "Pr..F.", "var", "pc_var", "total_var")
+]
+
+# Table with factors as columns and PCs as rows
+# pcs_factors <- dcast(pcs_factors_tidy, PC ~ Factor, value.var = "variance")
+pcs_factors <- pcs_factors_tidy %>%
+  select(PC, pc_var, Factor, variance) %>%
+  spread(key = Factor, value = variance)
+
+pcs_factors
 ```
 
 #### PCA plot
@@ -1956,18 +1990,19 @@ ggsave(filename = "bac_pca_plot.png", plot = bac_pca_plot, path = "figures/")
 
 bac_pca_plot
 
-bac_pca_2_3_plot <- plotOrd(
+bac_pca_3_6_plot <- plotOrd(
   bac_pca,
   colData(dds),
   design = "Scion",
-  shape = "Site",
-  axes = c(2, 3), 
+  shape = "Storage",
+  axes = c(3, 6), 
   cbPalette = T,
   alpha = 0.75,
 )
 
-ggsave(filename = "bac_pca_2_3_plot.png", plot = bac_pca_2_3_plot, path = "figures/")
+ggsave(filename = "bac_pca_3_6_plot.png", plot = bac_pca_3_6_plot, path = "figures/")
 
+bac_pca_3_6_plot
 ```
 
 #### PCA sum of squares (% var)
