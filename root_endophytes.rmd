@@ -1336,7 +1336,7 @@ significant_asvs
 FUN_otus <- read.fasta("data/FUN.otus.fa")
 write.fasta(
   sequences = FUN_otus[as.character(significant_asvs$OTU)],
-  names = paste(significant_asvs$OTU, "ITS"),
+  names = paste(significant_asvs$OTU, taxData[as.character(significant_asvs$OTU), "rank"]),
   file = "FUN_canker_otus.fasta"
 )
 ```
@@ -2232,7 +2232,7 @@ scion_otus <- as.character(otu_anova_results_adjusted[scion_p < 0.05, ]$OTU)
 BAC_otus <- read.fasta("data/BAC.otus.fa")
 write.fasta(
   sequences = BAC_otus[scion_otus],
-  names = paste(scion_otus, "16S"),
+  names = paste(scion_otus, taxData[scion_otus, "rank"]),
   file = "BAC_scion_otus.fasta"
 )
 ```
@@ -2357,7 +2357,7 @@ significant_asvs
 BAC_otus <- read.fasta("data/BAC.otus.fa")
 write.fasta(
   sequences = BAC_otus[as.character(significant_asvs$OTU)],
-  names = paste(significant_asvs$OTU, "16S"),
+  names = paste(significant_asvs$OTU, taxData[as.character(significant_asvs$OTU), "rank"]),
   file = "BAC_canker_otus.fasta"
 )
 ```
@@ -2717,25 +2717,25 @@ ggsave(
 pca_combo_plot <- ggarrange(
   fun_pca_plot, bac_pca_plot,
   ncol = 2, nrow = 1, labels = c("A", "B"),
-  common.legend = T, legend = "right"
+  common.legend = T, legend = "bottom"
 )
 
 ggsave(
   filename = "pca_combo_plot.png", plot = pca_combo_plot, path = "figures/", 
-  height = 18, width = 25, units = "cm"
+  height = 10, width = 24, units = "cm"
 )
 
 pca_combo_plot
 
 nmds_combo_plot <- ggarrange(
   fun_nmds_plot, bac_nmds_plot,
-  ncol = 2, nrow = 1, labels = c("A", "B"),
-  common.legend = T, legend = "right"
+  ncol = 2, nrow = 1, widths = c(1.19, 1),
+  common.legend = T, legend = "bottom"
 )
 
 ggsave(
   filename = "nmds_combo_plot.png", plot = nmds_combo_plot, path = "figures/", 
-  height = 18, width = 25, units = "cm"
+  height = 13, width = 24, units = "cm"
 )
 
 nmds_combo_plot
