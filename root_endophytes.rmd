@@ -121,6 +121,13 @@ mutate_factors <- function(data){
 
 ubiome_BAC$colData <- mutate_factors(ubiome_BAC$colData)
 ubiome_FUN$colData <- mutate_factors(ubiome_FUN$colData)
+
+# In taxData and countData replace 'OTU' with 'ASV'
+names(ubiome_BAC$taxData) <- gsub("OTU", "ASV", names(ubiome_BAC$taxData))
+names(ubiome_FUN$taxData) <- gsub("OTU", "ASV", names(ubiome_FUN$taxData))
+
+names(ubiome_BAC$countData) <- gsub("OTU", "ASV", names(ubiome_BAC$countData))
+names(ubiome_FUN$countData) <- gsub("OTU", "ASV", names(ubiome_FUN$countData))
 ```
 
 ### Global removals
@@ -133,24 +140,24 @@ ubiome_FUN$colData <- ubiome_FUN$colData[!rownames(ubiome_FUN$colData) %in% "HMA
 ubiome_FUN$countData <- ubiome_FUN$countData[, !colnames(ubiome_FUN$countData) %in% "HMA27"]
 ```
 
-## Filter samples and OTUs
+## Filter samples and ASVs
 
 ### Filtering taxa
 
 Plantae taxa are filtered from fungal `taxData`.
 Chloroplast and Eukaryote  taxa are filtered from bacterial `taxData`.
-Corresponding OTUs are removed from `countData`.
+Corresponding ASVs are removed from `countData`.
 
 ```{r filter_taxa}
-# Filter Plant, Chloroplast, and Eukaryote OTUs
+# Filter Plant, Chloroplast, and Eukaryote ASVs
 
-# Fungi: Plantae OTUs
-cat("Fungi:", length(grep("Plantae", ubiome_FUN$taxData$kingdom)), "Plantae OTUs\n")
+# Fungi: Plantae ASVs
+cat("Fungi:", length(grep("Plantae", ubiome_FUN$taxData$kingdom)), "Plantae ASVs\n")
 
-# Bacteria: Chloroplast (Streptophyta) and Eukaryote OTUs
+# Bacteria: Chloroplast (Streptophyta) and Eukaryote ASVs
 cat(
-  "Bacteria:", length(grep("Streptophyta", ubiome_BAC$taxData$genus)), "Chloroplast OTUs;", 
-  length(grep("Eukaryota", ubiome_BAC$taxData$kingdom)), "Eukaryote OTUs\n"
+  "Bacteria:", length(grep("Streptophyta", ubiome_BAC$taxData$genus)), "Chloroplast ASVs;", 
+  length(grep("Eukaryota", ubiome_BAC$taxData$kingdom)), "Eukaryote ASVs\n"
 )
 
 # Filter Chloroplast and Eukaryote
@@ -163,7 +170,7 @@ filt <- rownames(
 
 filt <- c(filt, rownames(ubiome_BAC$taxData[grep("Eukaryota", ubiome_BAC$taxData$kingdom), ]))
 
-cat("Bacteria: removing", length(filt), "OTUs")
+cat("Bacteria: removing", length(filt), "ASVs")
 
 ubiome_BAC$taxData <- ubiome_BAC$taxData[!rownames(ubiome_BAC$taxData) %in% filt, ]
 ubiome_BAC$countData <- ubiome_BAC$countData[!rownames(ubiome_BAC$countData) %in% filt, ]
@@ -237,14 +244,14 @@ Remove ASVs with read count below `r OTUFILTER * 100` % of total reads.
 ```{r filter_reads}
 # Fungi
 keep <- filter_otus(ubiome_FUN$countData, OTUFILTER)
-cat("Fungi: removing", nrow(ubiome_FUN$countData) - length(keep), "OTUs\n")
+cat("Fungi: removing", nrow(ubiome_FUN$countData) - length(keep), "ASVs\n")
 
 ubiome_FUN$taxData <- ubiome_FUN$taxData[rownames(ubiome_FUN$taxData) %in% keep,]
 ubiome_FUN$countData <- ubiome_FUN$countData[rownames(ubiome_FUN$countData) %in% keep,]
 
 # Bacteria
 keep <-  filter_otus(ubiome_BAC$countData, OTUFILTER)
-cat("Bacteria: removing", nrow(ubiome_BAC$countData) - length(keep), "OTUs")
+cat("Bacteria: removing", nrow(ubiome_BAC$countData) - length(keep), "ASVs")
 
 ubiome_BAC$taxData <- ubiome_BAC$taxData[rownames(ubiome_BAC$taxData) %in% keep,]
 ubiome_BAC$countData <- ubiome_BAC$countData[rownames(ubiome_BAC$countData) %in% keep,]
@@ -252,7 +259,7 @@ ubiome_BAC$countData <- ubiome_BAC$countData[rownames(ubiome_BAC$countData) %in%
 
 ## Absolute abundance normalisation
 
-OTU normalisation is performed using qPCR theoretical copy number data.
+ASV normalisation is performed using qPCR theoretical copy number data.
 Copy number is calculated per mg of root sample from the qPCR data.
 
 ### Prepare qPCR abundance data
@@ -516,7 +523,7 @@ save.image("data_loaded.RData")
 invisible(mapply(assign, names(ubiome_FUN), ubiome_FUN, MoreArgs = list(envir = globalenv())))
 ```
 
-## OTU and sample summary
+## ASV and sample summary
 
 ### Read and sample summary
 
@@ -542,24 +549,24 @@ cat("Normalised reads", "\n\n",
 #round(colSums(counts(dds,normalize = T)),0)
 ```
 
-### OTU summary 
+### ASV summary 
 
-```{r otu_summary}
+```{r asv_summary}
 cat(
-  "Total OTUs:\t\t", nrow(taxData),"\n\n",
-  "Raw reads per OTU summary", "\n\n",
-  "Mean raw reads per OTU:\t", mean(rowSums(countData)),"\n",
-  "Median raw per OTU:\t\t", median(rowSums(countData)),"\n",
-  "OTU raw Min reads:\t\t", min(rowSums(countData)),"\n",
-  "OTU raw Max reads:\t\t", max(rowSums(countData)),"\n\n"
+  "Total ASVs:\t\t", nrow(taxData),"\n\n",
+  "Raw reads per ASV summary", "\n\n",
+  "Mean raw reads per ASV:\t", mean(rowSums(countData)),"\n",
+  "Median raw per ASV:\t\t", median(rowSums(countData)),"\n",
+  "ASV raw Min reads:\t\t", min(rowSums(countData)),"\n",
+  "ASV raw Max reads:\t\t", max(rowSums(countData)),"\n\n"
 )
 
 cat(
-  "Normalised reads per OTU summary","\n\n",
-  "Mean normalised reads per OTU:\t\t", mean(rowSums(nct)),"\n",
-  "Median normalised reads per OTU:\t", median(rowSums(nct)),"\n",
-  "OTU normalised Min reads:\t\t", min(rowSums(nct)),"\n",
-  "OTU normalised Max reads:\t\t", max(rowSums(nct)),"\n\n"
+  "Normalised reads per ASV summary","\n\n",
+  "Mean normalised reads per ASV:\t\t", mean(rowSums(nct)),"\n",
+  "Median normalised reads per ASV:\t", median(rowSums(nct)),"\n",
+  "ASV normalised Min reads:\t\t", min(rowSums(nct)),"\n",
+  "ASV normalised Max reads:\t\t", max(rowSums(nct)),"\n\n"
 )
 
 y <- rowSums(nct)
@@ -567,7 +574,7 @@ y <- y[order(y, decreasing = T)]
 # proportion
 xy <- y / sum(y)
 
-cat("Top " ,TOPOTU, "OTUs:\n")
+cat("Top " ,TOPOTU, "ASVs:\n")
 data.frame(counts = y[1:TOPOTU], proportion = xy[1:TOPOTU], rank = taxData[names(y)[1:TOPOTU],]$rank)
 ```
 
@@ -575,11 +582,11 @@ data.frame(counts = y[1:TOPOTU], proportion = xy[1:TOPOTU], rank = taxData[names
 
 ### Taxonomy identifiable
 
-Proportion of OTUs which can be assigned (with the given confidence) at each taxonomic rank.
+Proportion of ASVs which can be assigned (with the given confidence) at each taxonomic rank.
 
 ```{r}
 
-# Proportion of OTUs which can be assigned (with the given confidence) at each taxonomic rank
+# Proportion of ASVs which can be assigned (with the given confidence) at each taxonomic rank
 
 tx <- copy(taxData)
 setDT(tx)
@@ -1050,7 +1057,7 @@ cat(
 ### Filter top ASVs with mean read count > 100
 
 ```{r}
-# Filter the top x abundant OTUs by the sum of their normalised counts
+# Filter the top x abundant ASVs by the sum of their normalised counts
 # top_asvs <- asv_counts[order(rowSums(asv_counts), decreasing = T)[1:DIFFOTU], ]
 
 # Filter ASVs with mean read count > 100
@@ -1059,7 +1066,7 @@ top_asvs <- asv_counts[rowMeans(asv_counts) > 100, ]
 # Check that sample names match
 identical(names(top_asvs), rownames(colData))
 
-# Extract taxonomic data for top OTUs
+# Extract taxonomic data for top ASVs
 top_taxa <- taxData[rownames(top_asvs), ]
 
 # Log transform normalised counts
@@ -1071,7 +1078,7 @@ top_asv_ids <- rownames(top_asvs)
 # Check that sample names match
 identical(rownames(top_asv_data), rownames(colData))
 
-# Add sample metadata to top OTU data
+# Add sample metadata to top ASV data
 top_asv_data <- merge(top_asv_data, colData, by = 0) %>% column_to_rownames("Row.names")
 ```
 
@@ -1081,14 +1088,14 @@ Effect of Site, Scion, and Storage on abundance of top `r DIFFOTU` ASVs
 
 ```{r ASV anova}
 # ANOVA of top ASVs
-otu_lm_anova <- function(otu, formula, data) {
-  f = update(formula, paste0("log(", otu, " + 1) ~ ."))
+asv_lm_anova <- function(asv, formula, data) {
+  f = update(formula, paste0("log(", asv, " + 1) ~ ."))
   a = aov(f, data = data) %>% summary() %>% unclass() %>% data.frame()
   total_var = sum(a$Sum.Sq)
   d = data.frame(
-    OTU = otu,
-    Taxonomy = taxData[otu, "rank"],
-    Abundance = mean(data[[otu]]),
+    ASV = asv,
+    Taxonomy = taxData[asv, "rank"],
+    Abundance = mean(data[[asv]]),
     site_var = a['Site ', 'Sum.Sq'] / total_var * 100,
     site_p = a['Site ', 'Pr..F.'],
     scion_var = a['Scion', 'Sum.Sq'] / total_var * 100,
@@ -1107,14 +1114,14 @@ otu_lm_anova <- function(otu, formula, data) {
 }
 
 # Negative binomial regression model
-otu_negbin_anova <- function(otu, formula, data) {
-  f = update(formula, paste0(otu, " ~ ."))
+asv_negbin_anova <- function(asv, formula, data) {
+  f = update(formula, paste0(asv, " ~ ."))
   m = glm.nb(f, data = data)
   a = anova(m, test = "Chisq") %>% data.frame()
   total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
   d = data.frame(
-    OTU = otu,
-    Taxonomy = taxData[otu, "rank"],
+    ASV = asv,
+    Taxonomy = taxData[asv, "rank"],
     site_var = a['Site', 'Deviance'] / total_deviance * 100,
     site_p = a['Site', 'Pr..Chi.'],
     cultivar_var = a['Scion', 'Deviance'] / total_deviance * 100,
@@ -1132,13 +1139,13 @@ formula <- FULL_DESIGN
 
 # formula <- DESIGN
 
-# otu_lm_anova(top_asv_ids[1], formula, top_asv_data)
+# asv_lm_anova(top_asv_ids[1], formula, top_asv_data)
 
-otu_anova_results <- sapply(
-  top_asv_ids, function(x) otu_lm_anova(x, formula, top_asv_data)
+asv_anova_results <- sapply(
+  top_asv_ids, function(x) asv_lm_anova(x, formula, top_asv_data)
 ) %>% t() %>% data.table()
 
-otu_anova_results_adjusted <- otu_anova_results %>% 
+asv_anova_results_adjusted <- asv_anova_results %>% 
   mutate(
     site_p = p.adjust(site_p, method = "BH"),
     scion_p = p.adjust(scion_p, method = "BH"),
@@ -1150,27 +1157,35 @@ otu_anova_results_adjusted <- otu_anova_results %>%
 
 cat(
   "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
-  "Site:", nrow(otu_anova_results_adjusted[site_p < 0.05, ]), "\n",
-  "Scion:", nrow(otu_anova_results_adjusted[scion_p < 0.05, ]), "\n",
-  "Storage:", nrow(otu_anova_results_adjusted[storage_p < 0.05, ]), "\n",
-  "Site:Scion:", nrow(otu_anova_results_adjusted[site_scion_p < 0.05, ]), "\n",
-  "Site:Storage:", nrow(otu_anova_results_adjusted[site_storage_p < 0.05, ]), "\n",
-  "Storage:Scion:", nrow(otu_anova_results_adjusted[storage_scion_p < 0.05, ]), "\n\n"
+  "Site:", nrow(asv_anova_results_adjusted[site_p < 0.05, ]), "\n",
+  "Scion:", nrow(asv_anova_results_adjusted[scion_p < 0.05, ]), "\n",
+  "Storage:", nrow(asv_anova_results_adjusted[storage_p < 0.05, ]), "\n",
+  "Site:Scion:", nrow(asv_anova_results_adjusted[site_scion_p < 0.05, ]), "\n",
+  "Site:Storage:", nrow(asv_anova_results_adjusted[site_storage_p < 0.05, ]), "\n",
+  "Storage:Scion:", nrow(asv_anova_results_adjusted[storage_scion_p < 0.05, ]), "\n\n"
 )
 
-otu_anova_results_adjusted[scion_p < 0.05, ]
-otu_anova_results_adjusted[site_scion_p < 0.05, ]
-otu_anova_results_adjusted[storage_scion_p < 0.05, ]
+asv_anova_results_adjusted[scion_p < 0.05, ]
+asv_anova_results_adjusted[site_scion_p < 0.05, ]
+asv_anova_results_adjusted[storage_scion_p < 0.05, ]
 ```
 
 ```{r}
-# Export significant OTUS as fasta
-scion_otus <- as.character(otu_anova_results_adjusted[scion_p < 0.05, ]$OTU)
-FUN_otus <- read.fasta("data/FUN.zotus.fa")
+# Export significant ASVs as fasta
+
+# Filter ASVs with significant Scion effect
+scion_asvs <- as.character(asv_anova_results_adjusted[scion_p < 0.05, ]$ASV)
+
+# Read FUN ASVs
+FUN_asvs <- read.fasta("data/FUN.zotus.fa")
+# Replace 'OTU' with 'ASV' in sequence names
+names(FUN_asvs) <- gsub("OTU", "ASV", names(FUN_asvs))
+
+# Write significant ASVs to fasta
 write.fasta(
-  sequences = FUN_otus[scion_otus],
-  names = paste(scion_otus, taxData[scion_otus, "rank"]),
-  file = "FUN_scion_otus.fasta"
+  sequences = FUN_asvs[scion_asvs],
+  names = paste(scion_asvs, taxData[scion_asvs, "rank"]),
+  file = "FUN_scion_asvs.fasta"
 )
 ```
 
@@ -1231,19 +1246,19 @@ glm.nb_with_warnings <- function(f, data) {
 }
 
 # ANOVA of top ASVs with canker count
-asv_canker_anova <- function(otu, design, base_model, data) {
-  log_otu = paste0("log(", otu, " + 1)")
-  f = paste(design, "+", log_otu)#, "+", log_otu, ":Site")
+asv_canker_anova <- function(asv, design, base_model, data) {
+  log_asv = paste0("log(", asv, " + 1)")
+  f = paste(design, "+", log_asv)#, "+", log_asv, ":Site")
   m = glm.nb_with_warnings(f, data)
   a = anova(base_model, m$fit) %>% data.frame()
   b = suppressWarnings(anova(m$fit)) %>% data.frame()
   total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
   d = data.frame(
-    OTU = otu,
-    Taxonomy = taxData[otu, "rank"],
-    Abundance = mean(data[[otu]]),
-    coef = m$fit$coefficients[log_otu],
-    var = b[log_otu, 'Deviance'] / total_deviance * 100,
+    ASV = asv,
+    Taxonomy = taxData[asv, "rank"],
+    Abundance = mean(data[[asv]]),
+    coef = m$fit$coefficients[log_asv],
+    var = b[log_asv, 'Deviance'] / total_deviance * 100,
     p = a[2, 'Pr.Chi.'],
     warning = m$warning
   )
@@ -1331,13 +1346,10 @@ significant_asvs
 
 ```{r}
 # Export significant ASVs as FASTA
-
-# Search for significant ASVs the `FUN.otus.fa` fasta file and write to a new file
-FUN_otus <- read.fasta("data/FUN.zotus.fa")
 write.fasta(
-  sequences = FUN_otus[as.character(significant_asvs$OTU)],
-  names = paste(significant_asvs$OTU, taxData[as.character(significant_asvs$OTU), "rank"]),
-  file = "FUN_canker_otus.fasta"
+  sequences = FUN_asvs[as.character(significant_asvs$ASV)],
+  names = paste(significant_asvs$ASV, taxData[as.character(significant_asvs$ASV), "rank"]),
+  file = "FUN_canker_asvs.fasta"
 )
 ```
 
@@ -1345,7 +1357,7 @@ write.fasta(
 
 ```{r}
 # List of significant ASVs
-significant_asv_list <- significant_asvs$OTU %>% unlist()
+significant_asv_list <- significant_asvs$ASV %>% unlist()
 
 significant_asv_data <- asv_counts[significant_asv_list, ] %>% 
   t() %>% 
@@ -1356,7 +1368,7 @@ significant_asv_data <- asv_counts[significant_asv_list, ] %>%
 
 # Melt data for ggplot
 significant_asv_long_data <- significant_asv_data %>% reshape2::melt(
-  id.vars = c("Site", "Storage", "Scion", "Cankers"), variable.name = "OTU", value.name = "Abundance"
+  id.vars = c("Site", "Storage", "Scion", "Cankers"), variable.name = "ASV", value.name = "Abundance"
 )
 
 # Log trasnform abundance
@@ -1364,7 +1376,7 @@ significant_asv_long_data$log10_abundance <- log10(significant_asv_long_data$Abu
 
 fun_asv_canker_plot <- ggscatter(
   data = significant_asv_long_data, x = "log10_abundance", y = "Cankers", 
-  color = "Storage", facet.by = c("OTU", "Site"),
+  color = "Storage", facet.by = c("ASV", "Site"),
   xlab = "ASV abundance (log10)", ylab = "Canker count",
   palette = cbPalette, legend = "bottom"
 )
@@ -1595,7 +1607,7 @@ save.image("FUN.RData")
 invisible(mapply(assign, names(ubiome_BAC), ubiome_BAC, MoreArgs = list(envir = globalenv())))
 ```
 
-## OTU and sample summary
+## ASV and sample summary
 
 ### Read and sample summary
 
@@ -1621,24 +1633,24 @@ cat("Normalised reads", "\n\n",
 #round(colSums(counts(dds,normalize = T)),0)
 ```
 
-### OTU summary 
+### ASV summary 
 
 ```{r}
 cat(
-  "Total OTUs:\t\t", nrow(taxData),"\n\n",
-  "Raw reads per OTU summary", "\n\n",
-  "Mean raw reads per OTU:\t", mean(rowSums(countData)),"\n",
-  "Median raw per OTU:\t\t", median(rowSums(countData)),"\n",
-  "OTU raw Min reads:\t\t", min(rowSums(countData)),"\n",
-  "OTU raw Max reads:\t\t", max(rowSums(countData)),"\n\n"
+  "Total ASVs:\t\t", nrow(taxData),"\n\n",
+  "Raw reads per ASV summary", "\n\n",
+  "Mean raw reads per ASV:\t", mean(rowSums(countData)),"\n",
+  "Median raw per ASV:\t\t", median(rowSums(countData)),"\n",
+  "ASV raw Min reads:\t\t", min(rowSums(countData)),"\n",
+  "ASV raw Max reads:\t\t", max(rowSums(countData)),"\n\n"
 )
 
 cat(
-  "Normalised reads per OTU summary","\n\n",
-  "Mean normalised reads per OTU:\t\t", mean(rowSums(nct)),"\n",
-  "Median normalised reads per OTU:\t", median(rowSums(nct)),"\n",
-  "OTU normalised Min reads:\t\t", min(rowSums(nct)),"\n",
-  "OTU normalised Max reads:\t\t", max(rowSums(nct)),"\n\n"
+  "Normalised reads per ASV summary","\n\n",
+  "Mean normalised reads per ASV:\t\t", mean(rowSums(nct)),"\n",
+  "Median normalised reads per ASV:\t", median(rowSums(nct)),"\n",
+  "ASV normalised Min reads:\t\t", min(rowSums(nct)),"\n",
+  "ASV normalised Max reads:\t\t", max(rowSums(nct)),"\n\n"
 )
 
 y <- rowSums(nct)
@@ -1646,7 +1658,7 @@ y <- y[order(y, decreasing = T)]
 # proportion
 xy <- y/sum(y)
 
-cat("Top ", TOPOTU, "OTUs:\n")
+cat("Top ", TOPOTU, "ASVs:\n")
 data.frame(counts = y[1:TOPOTU], proportion = xy[1:TOPOTU], rank = taxData[names(y)[1:TOPOTU],]$rank)
 ```
 
@@ -1654,11 +1666,11 @@ data.frame(counts = y[1:TOPOTU], proportion = xy[1:TOPOTU], rank = taxData[names
 
 ### Taxonomy identifiable
 
-Proportion of OTUs which can be assigned (with the given confidence) at each taxonomic rank
+Proportion of ASVs which can be assigned (with the given confidence) at each taxonomic rank
 
 ```{r}
 
-# Proportion of OTUs which can be assigned (with the given confidence) at each taxonomic rank
+# Proportion of ASVs which can be assigned (with the given confidence) at each taxonomic rank
 
 tx <- copy(taxData)
 setDT(tx)
@@ -2126,7 +2138,7 @@ cat(
 ### Filter top ASVs with mean read count > 100
 
 ```{r}
-# Filter the top x abundant OTUs by the sum of their normalised counts
+# Filter the top x abundant ASVs by the sum of their normalised counts
 # top_asvs <- asv_counts[order(rowSums(asv_counts), decreasing = T)[1:DIFFOTU], ]
 
 # Filter ASVs with mean read count > 100
@@ -2135,7 +2147,7 @@ top_asvs <- asv_counts[rowMeans(asv_counts) > 100, ]
 # Check that sample names match
 identical(names(top_asvs), rownames(colData))
 
-# Extract taxonomic data for top OTUs
+# Extract taxonomic data for top ASVs
 top_taxa <- taxData[rownames(top_asvs), ]
 
 # Log transform normalised counts
@@ -2154,14 +2166,14 @@ Effect of Site, Scion, and Storage on abundance of top `r DIFFOTU` ASVs
 
 ```{r Bac ASV anova}
 # ANOVA of top ASVs
-otu_lm_anova <- function(otu, formula, data) {
-  f = update(formula, paste0("log(", otu, " + 1) ~ ."))
+asv_lm_anova <- function(asv, formula, data) {
+  f = update(formula, paste0("log(", asv, " + 1) ~ ."))
   a = aov(f, data = data) %>% summary() %>% unclass() %>% data.frame()
   total_var = sum(a$Sum.Sq)
   d = data.frame(
-    OTU = otu,
-    Taxonomy = taxData[otu, "rank"],
-    Abundance = mean(data[[otu]]),
+    ASV = asv,
+    Taxonomy = taxData[asv, "rank"],
+    Abundance = mean(data[[asv]]),
     site_var = a['Site ', 'Sum.Sq'] / total_var * 100,
     site_p = a['Site ', 'Pr..F.'],
     scion_var = a['Scion', 'Sum.Sq'] / total_var * 100,
@@ -2180,14 +2192,14 @@ otu_lm_anova <- function(otu, formula, data) {
 }
 
 # Negative binomial regression model
-otu_negbin_anova <- function(otu, formula, data) {
-  f = update(formula, paste0(otu, " ~ ."))
+asv_negbin_anova <- function(asv, formula, data) {
+  f = update(formula, paste0(asv, " ~ ."))
   m = glm.nb(f, data = data)
   a = anova(m, test = "Chisq") %>% data.frame()
   total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
   d = data.frame(
-    OTU = otu,
-    Taxonomy = taxData[otu, "rank"],
+    ASV = asv,
+    Taxonomy = taxData[asv, "rank"],
     site_var = a['Site', 'Deviance'] / total_deviance * 100,
     site_p = a['Site', 'Pr..Chi.'],
     scion_var = a['Scion', 'Deviance'] / total_deviance * 100,
@@ -2200,11 +2212,11 @@ otu_negbin_anova <- function(otu, formula, data) {
 
 formula <- FULL_DESIGN
 
-otu_anova_results <- sapply(
-  top_asv_ids, function(x) otu_lm_anova(x, formula, top_asv_data)
+asv_anova_results <- sapply(
+  top_asv_ids, function(x) asv_lm_anova(x, formula, top_asv_data)
 ) %>% t() %>% data.table()
 
-otu_anova_results_adjusted <- otu_anova_results %>% 
+asv_anova_results_adjusted <- asv_anova_results %>% 
   mutate(
     site_p = p.adjust(site_p, method = "BH"),
     scion_p = p.adjust(scion_p, method = "BH"),
@@ -2213,27 +2225,35 @@ otu_anova_results_adjusted <- otu_anova_results %>%
 
 cat(
   "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
-  "Site:", nrow(otu_anova_results_adjusted[site_p < 0.05, ]), "\n",
-  "Scion:", nrow(otu_anova_results_adjusted[scion_p < 0.05, ]), "\n",
-  "Storage:", nrow(otu_anova_results_adjusted[storage_p < 0.05, ]), "\n",
-  "Site:Scion:", nrow(otu_anova_results_adjusted[site_scion_p < 0.05, ]), "\n",
-  "Site:Storage:", nrow(otu_anova_results_adjusted[site_storage_p < 0.05, ]), "\n",
-  "Storage:Scion:", nrow(otu_anova_results_adjusted[storage_scion_p < 0.05, ]), "\n\n"
+  "Site:", nrow(asv_anova_results_adjusted[site_p < 0.05, ]), "\n",
+  "Scion:", nrow(asv_anova_results_adjusted[scion_p < 0.05, ]), "\n",
+  "Storage:", nrow(asv_anova_results_adjusted[storage_p < 0.05, ]), "\n",
+  "Site:Scion:", nrow(asv_anova_results_adjusted[site_scion_p < 0.05, ]), "\n",
+  "Site:Storage:", nrow(asv_anova_results_adjusted[site_storage_p < 0.05, ]), "\n",
+  "Storage:Scion:", nrow(asv_anova_results_adjusted[storage_scion_p < 0.05, ]), "\n\n"
 )
 
-otu_anova_results_adjusted[scion_p < 0.05, ]
-otu_anova_results_adjusted[site_scion_p < 0.05, ]
-otu_anova_results_adjusted[storage_scion_p < 0.05, ]
+asv_anova_results_adjusted[scion_p < 0.05, ]
+asv_anova_results_adjusted[site_scion_p < 0.05, ]
+asv_anova_results_adjusted[storage_scion_p < 0.05, ]
 ```
 
 ```{r}
-# Export significant OTUS as fasta
-scion_otus <- as.character(otu_anova_results_adjusted[scion_p < 0.05, ]$OTU)
-BAC_otus <- read.fasta("data/BAC.zotus.fa")
+# Export significant ASVs as fasta
+
+# Filter ASVs with significant Scion effect
+scion_asvs <- as.character(asv_anova_results_adjusted[scion_p < 0.05, ]$ASV)
+
+# Read BAC ASVs
+BAC_asvs <- read.fasta("data/BAC.zotus.fa")
+# Replace 'OTU' with 'ASV' in sequence names
+names(BAC_asvs) <- gsub("OTU", "ASV", names(BAC_asvs))
+
+# Write significant ASVs to fasta
 write.fasta(
-  sequences = BAC_otus[scion_otus],
-  names = paste(scion_otus, taxData[scion_otus, "rank"]),
-  file = "BAC_scion_otus.fasta"
+  sequences = BAC_asvs[scion_asvs],
+  names = paste(scion_asvs, taxData[scion_asvs, "rank"]),
+  file = "BAC_scion_asvs.fasta"
 )
 ```
 
@@ -2352,13 +2372,10 @@ significant_asvs
 
 ```{r}
 # Export significant ASVs as FASTA
-
-# Search for significant ASVs the `FUN.otus.fa` fasta file and write to a new file
-BAC_otus <- read.fasta("data/BAC.zotus.fa")
 write.fasta(
-  sequences = BAC_otus[as.character(significant_asvs$OTU)],
-  names = paste(significant_asvs$OTU, taxData[as.character(significant_asvs$OTU), "rank"]),
-  file = "BAC_canker_otus.fasta"
+  sequences = BAC_asvs[as.character(significant_asvs$ASV)],
+  names = paste(significant_asvs$ASV, taxData[as.character(significant_asvs$ASV), "rank"]),
+  file = "BAC_canker_asvs.fasta"
 )
 ```
 
@@ -2366,7 +2383,7 @@ write.fasta(
 
 ```{r}
 # List of significant ASVs
-significant_asv_list <- significant_asvs$OTU %>% unlist()
+significant_asv_list <- significant_asvs$ASV %>% unlist()
 
 significant_asv_data <- asv_counts[significant_asv_list, ] %>% 
   t() %>% 
@@ -2377,7 +2394,7 @@ significant_asv_data <- asv_counts[significant_asv_list, ] %>%
 
 # Melt data for ggplot
 significant_asv_long_data <- significant_asv_data %>% reshape2::melt(
-  id.vars = c("Site", "Storage", "Scion", "Cankers"), variable.name = "OTU", value.name = "Abundance"
+  id.vars = c("Site", "Storage", "Scion", "Cankers"), variable.name = "ASV", value.name = "Abundance"
 )
 
 # Log trasnform abundance
@@ -2385,7 +2402,7 @@ significant_asv_long_data$log10_abundance <- log10(significant_asv_long_data$Abu
 
 bac_asv_canker_plot <- ggscatter(
   data = significant_asv_long_data, x = "log10_abundance", y = "Cankers", 
-  color = "Storage", facet.by = c("OTU", "Site"),
+  color = "Storage", facet.by = c("ASV", "Site"),
   xlab = "ASV abundance (log10)", ylab = "Canker count",
   palette = cbPalette, legend = "bottom"
 )
