@@ -1,0 +1,26 @@
+name: rhizosphere
+channels:
+  - conda-forge
+  - bioconda
+  - r
+  - defaults
+  - anaconda
+dependencies:
+  - bioconductor-deseq2
+  - r-base
+  - r-cowplot
+  - r-data.table
+  - r-devtools
+  - r-dharma
+  - r-ggpubr
+  - r-gridextra
+  - r-inext
+  - r-kableextra
+  - r-knitr
+  - r-lmperm
+  - r-mass
+  - r-pscl
+  - r-seqinr
+  - r-tidyverse
+  - r-vegan
+  - r-viridis

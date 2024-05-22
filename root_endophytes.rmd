@@ -28,6 +28,7 @@ library(ggpubr)
 library(grid)
 library(gridExtra)
 library(iNEXT)
+library(kableExtra)
 library(knitr)
 library(lmPerm)
 library(MASS)
@@ -38,8 +39,7 @@ library(tidyverse)
 library(vegan)
 library(viridis)
 
-# library(devtools)
-# install_github("eastmallingresearch/Metabarcoding_pipeline/scripts")
+# devtools::install_github("eastmallingresearch/Metabarcoding_pipeline/scripts")
 library(metafuncs)
 ```
 
@@ -914,6 +914,8 @@ pcs_factors <- pcs_factors_tidy %>%
   spread(key = Factor, value = variance)
 
 pcs_factors
+
+# save_kable(kable(pcs_factors, format = "pandoc"), "tables/FUN_pca_factors.docx")
 ```
 
 #### PCA plot
@@ -2195,7 +2197,8 @@ top_asvs_anova_results$Factor <- factor(top_asvs_anova_results$Factor, levels = 
 # Summary of top ASV ANOVA results
 top_asvs_anova_summary <- top_asvs_anova_results %>% 
   select(ASV, Taxonomy, Abundance, Factor, Variance) %>% 
-  spread(key = Factor, value = Variance)
+  spread(key = Factor, value = Variance) %>%
+  data.table()
 
 top_asvs_anova_summary
 
