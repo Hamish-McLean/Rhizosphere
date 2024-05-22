@@ -119,15 +119,15 @@ mutate_factors <- function(data){
   return(data)
 }
 
-ubiome_BAC$colData <- mutate_factors(ubiome_BAC$colData)
 ubiome_FUN$colData <- mutate_factors(ubiome_FUN$colData)
+ubiome_BAC$colData <- mutate_factors(ubiome_BAC$colData)
 
 # In taxData and countData replace 'OTU' with 'ASV'
-names(ubiome_BAC$taxData) <- gsub("OTU", "ASV", names(ubiome_BAC$taxData))
-names(ubiome_FUN$taxData) <- gsub("OTU", "ASV", names(ubiome_FUN$taxData))
+rownames(ubiome_FUN$taxData) <- gsub("OTU", "ASV", rownames(ubiome_FUN$taxData))
+rownames(ubiome_BAC$taxData) <- gsub("OTU", "ASV", rownames(ubiome_BAC$taxData))
 
-names(ubiome_BAC$countData) <- gsub("OTU", "ASV", names(ubiome_BAC$countData))
-names(ubiome_FUN$countData) <- gsub("OTU", "ASV", names(ubiome_FUN$countData))
+rownames(ubiome_FUN$countData) <- gsub("OTU", "ASV", rownames(ubiome_FUN$countData))
+rownames(ubiome_BAC$countData) <- gsub("OTU", "ASV", rownames(ubiome_BAC$countData))
 ```
 
 ### Global removals
@@ -1090,27 +1090,9 @@ Effect of Site, Scion, and Storage on abundance of top `r DIFFOTU` ASVs
 # ANOVA of top ASVs
 asv_lm_anova <- function(asv, formula, data) {
   f = update(formula, paste0("log(", asv, " + 1) ~ ."))
-  a = aov(f, data = data) %>% summary() %>% unclass() %>% data.frame()
-  total_var = sum(a$Sum.Sq)
-  d = data.frame(
-    ASV = asv,
-    Taxonomy = taxData[asv, "rank"],
-    Abundance = mean(data[[asv]]),
-    site_var = a['Site ', 'Sum.Sq'] / total_var * 100,
-    site_p = a['Site ', 'Pr..F.'],
-    scion_var = a['Scion', 'Sum.Sq'] / total_var * 100,
-    scion_p = a['Scion', 'Pr..F.'],
-    storage_var = a['Storage ', 'Sum.Sq'] / total_var * 100,
-    storage_p = a['Storage ', 'Pr..F.'],
-    site_scion_var = a['Site:Scion', 'Sum.Sq'] / total_var * 100,
-    site_scion_p = a['Site:Scion', 'Pr..F.'],
-    site_storage_var = a['Site:Storage ', 'Sum.Sq'] / total_var * 100,
-    site_storage_p = a['Site:Storage ', 'Pr..F.'],
-    storage_scion_var = a['Storage:Scion', 'Sum.Sq'] / total_var * 100,
-    storage_scion_p = a['Storage:Scion', 'Pr..F.'],
-    residuals_var = a['Residuals', 'Sum.Sq'] / total_var * 100
-  )
-  return(d)
+  a = aov(f, data = data) 
+  a = a %>% summary() %>% unclass() %>% data.frame()
+  return(a)
 }
 
 # Negative binomial regression model
@@ -1118,18 +1100,7 @@ asv_negbin_anova <- function(asv, formula, data) {
   f = update(formula, paste0(asv, " ~ ."))
   m = glm.nb(f, data = data)
   a = anova(m, test = "Chisq") %>% data.frame()
-  total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
-  d = data.frame(
-    ASV = asv,
-    Taxonomy = taxData[asv, "rank"],
-    site_var = a['Site', 'Deviance'] / total_deviance * 100,
-    site_p = a['Site', 'Pr..Chi.'],
-    cultivar_var = a['Scion', 'Deviance'] / total_deviance * 100,
-    cultivar_p = a['Scion', 'Pr..Chi.'],
-    storage_var = a['Storage', 'Deviance'] / total_deviance * 100,
-    storage_p = a['Storage', 'Pr..Chi.']
-  )
-  return(d)
+  return(a)
 }
 
 formula <- FULL_DESIGN
@@ -1137,44 +1108,82 @@ formula <- FULL_DESIGN
 # Full design model does not converge
 # formula <- y ~ site + Scion + Storage + site:Scion + site:Storage
 
-# formula <- DESIGN
-
-# asv_lm_anova(top_asv_ids[1], formula, top_asv_data)
-
-asv_anova_results <- sapply(
-  top_asv_ids, function(x) asv_lm_anova(x, formula, top_asv_data)
-) %>% t() %>% data.table()
-
-asv_anova_results_adjusted <- asv_anova_results %>% 
-  mutate(
-    site_p = p.adjust(site_p, method = "BH"),
-    scion_p = p.adjust(scion_p, method = "BH"),
-    storage_p = p.adjust(storage_p, method = "BH"),
-    site_scion_p = p.adjust(site_scion_p, method = "BH"),
-    site_storage_p = p.adjust(site_storage_p, method = "BH"),
-    storage_scion_p = p.adjust(storage_scion_p, method = "BH")
+# Extend ANOVA results with ASV metadata
+extend_asv_anova <- function(anova_result, asv) {
+  anova_result %>% mutate(
+    ASV = asv,
+    Taxonomy = taxData[asv, "rank"],
+    Abundance = round(mean(top_asv_data[[asv]])),
+    Factor = gsub(" ", "", rownames(anova_result)),
+    perc_var = Sum.Sq / sum(anova_result$Sum.Sq) * 100,
+    sig = case_when(
+      is.na(Pr..F.) ~ "",
+      Pr..F. < 0.001 ~ "***",
+      Pr..F. < 0.01 ~ "**",
+      Pr..F. < 0.05 ~ "*",
+      TRUE ~ ""
+    ),
+    Variance = ifelse(
+      perc_var < 0.01, paste0("<0.01", sig),
+      paste0(round(perc_var, 2), sig)
+    )
   )
+}
+
+# Perform ANOVA on list of top ASVs
+top_asvs_anova_results <- lapply(
+  top_asv_ids, 
+  function(asv) {
+    asv_lm_anova(asv, formula, top_asv_data) %>%
+    extend_asv_anova(asv)
+  }
+) %>% bind_rows() %>% data.table()
+
+# Group by factor and adjust p-values
+top_asvs_anova_results <- top_asvs_anova_results %>% 
+  group_by(Factor) %>% 
+  mutate(p.adj = p.adjust(`Pr..F.`, method = "BH")) %>% 
+  data.table()
+
+# Order factors by original order
+top_asvs_anova_results$Factor <- factor(top_asvs_anova_results$Factor, levels = unique(top_asvs_anova_results$Factor))
+
+# Summary of top ASV ANOVA results
+top_asvs_anova_summary <- top_asvs_anova_results %>% 
+  select(ASV, Taxonomy, Abundance, Factor, Variance) %>% 
+  spread(key = Factor, value = Variance) %>%
+  data.table()
+
+top_asvs_anova_summary
 
 cat(
   "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
-  "Site:", nrow(asv_anova_results_adjusted[site_p < 0.05, ]), "\n",
-  "Scion:", nrow(asv_anova_results_adjusted[scion_p < 0.05, ]), "\n",
-  "Storage:", nrow(asv_anova_results_adjusted[storage_p < 0.05, ]), "\n",
-  "Site:Scion:", nrow(asv_anova_results_adjusted[site_scion_p < 0.05, ]), "\n",
-  "Site:Storage:", nrow(asv_anova_results_adjusted[site_storage_p < 0.05, ]), "\n",
-  "Storage:Scion:", nrow(asv_anova_results_adjusted[storage_scion_p < 0.05, ]), "\n\n"
+  "Site:", nrow(top_asvs_anova_results[Factor == "Site" & p.adj < 0.05, ]), "\n",
+  "Storage:", nrow(top_asvs_anova_results[Factor == "Storage" & p.adj < 0.05, ]), "\n",
+  "Scion:", nrow(top_asvs_anova_results[Factor == "Scion" & p.adj < 0.05, ]), "\n",
+  "Site:Storage:", nrow(top_asvs_anova_results[Factor == "Site:Storage" & p.adj < 0.05, ]), "\n",
+  "Site:Scion:", nrow(top_asvs_anova_results[Factor == "Site:Scion" & p.adj < 0.05, ]), "\n",
+  "Storage:Scion:", nrow(top_asvs_anova_results[Factor == "Storage:Scion" & p.adj < 0.05, ]), "\n",
+  "Site:Storage:Scion:", nrow(top_asvs_anova_results[Factor == "Site:Storage:Scion" & p.adj < 0.05, ]), "\n\n",
+  "Total ASVs:", length(unique(top_asvs_anova_results$ASV)), "\n\n"
 )
 
-asv_anova_results_adjusted[scion_p < 0.05, ]
-asv_anova_results_adjusted[site_scion_p < 0.05, ]
-asv_anova_results_adjusted[storage_scion_p < 0.05, ]
+# Filter by significant effect of scion and its interactions
+scion_asvs <- top_asvs_anova_results[grepl("Scion", Factor) & p.adj < 0.05, ]
+
+scion_asvs
+
+cat(
+  length(scion_asvs$ASV), 
+  "ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Scion and its interactions.", "\n\n"
+)
+
+# Summary of ASVs with significant Scion effect
+top_asvs_anova_summary[ASV %in% scion_asvs$ASV, ]
 ```
 
 ```{r}
 # Export significant ASVs as fasta
-
-# Filter ASVs with significant Scion effect
-scion_asvs <- as.character(asv_anova_results_adjusted[scion_p < 0.05, ]$ASV)
 
 # Read FUN ASVs
 FUN_asvs <- read.fasta("data/FUN.zotus.fa")
@@ -1183,9 +1192,9 @@ names(FUN_asvs) <- gsub("OTU", "ASV", names(FUN_asvs))
 
 # Write significant ASVs to fasta
 write.fasta(
-  sequences = FUN_asvs[scion_asvs],
-  names = paste(scion_asvs, taxData[scion_asvs, "rank"]),
-  file = "FUN_scion_asvs.fasta"
+  sequences = FUN_asvs[scion_asvs$ASV],
+  names = paste(scion_asvs$ASV, taxData[scion_asvs$ASV, "rank"]),
+  file = "fasta/FUN_scion_asvs.fasta"
 )
 ```
 
@@ -1349,7 +1358,7 @@ significant_asvs
 write.fasta(
   sequences = FUN_asvs[as.character(significant_asvs$ASV)],
   names = paste(significant_asvs$ASV, taxData[as.character(significant_asvs$ASV), "rank"]),
-  file = "FUN_canker_asvs.fasta"
+  file = "fasta/FUN_canker_asvs.fasta"
 )
 ```
 
@@ -2160,89 +2169,64 @@ identical(rownames(top_asv_data), rownames(colData))
 top_asv_data <- merge(top_asv_data, colData, by = 0) %>% column_to_rownames("Row.names")
 ```
 
-### Effect of design factors on top ASVs
+### Effect of design factors on abundance of top ASVs
 
 Effect of Site, Scion, and Storage on abundance of top `r DIFFOTU` ASVs
 
 ```{r Bac ASV anova}
-# ANOVA of top ASVs
-asv_lm_anova <- function(asv, formula, data) {
-  f = update(formula, paste0("log(", asv, " + 1) ~ ."))
-  a = aov(f, data = data) %>% summary() %>% unclass() %>% data.frame()
-  total_var = sum(a$Sum.Sq)
-  d = data.frame(
-    ASV = asv,
-    Taxonomy = taxData[asv, "rank"],
-    Abundance = mean(data[[asv]]),
-    site_var = a['Site ', 'Sum.Sq'] / total_var * 100,
-    site_p = a['Site ', 'Pr..F.'],
-    scion_var = a['Scion', 'Sum.Sq'] / total_var * 100,
-    scion_p = a['Scion', 'Pr..F.'],
-    storage_var = a['Storage ', 'Sum.Sq'] / total_var * 100,
-    storage_p = a['Storage ', 'Pr..F.'],
-    site_scion_var = a['Site:Scion', 'Sum.Sq'] / total_var * 100,
-    site_scion_p = a['Site:Scion', 'Pr..F.'],
-    site_storage_var = a['Site:Storage ', 'Sum.Sq'] / total_var * 100,
-    site_storage_p = a['Site:Storage ', 'Pr..F.'],
-    storage_scion_var = a['Storage:Scion', 'Sum.Sq'] / total_var * 100,
-    storage_scion_p = a['Storage:Scion', 'Pr..F.'],
-    residuals_var = a['Residuals', 'Sum.Sq'] / total_var * 100
-  )
-  return(d)
-}
+# Perform ANOVA on list of top ASVs
+top_asvs_anova_results <- lapply(
+  top_asv_ids, 
+  function(asv) {
+    asv_lm_anova(asv, formula, top_asv_data) %>%
+    extend_asv_anova(asv)
+  }
+) %>% bind_rows() %>% data.table()
 
-# Negative binomial regression model
-asv_negbin_anova <- function(asv, formula, data) {
-  f = update(formula, paste0(asv, " ~ ."))
-  m = glm.nb(f, data = data)
-  a = anova(m, test = "Chisq") %>% data.frame()
-  total_deviance = sum(a$Deviance, na.rm = T) + tail(a$Resid..Dev, 1)
-  d = data.frame(
-    ASV = asv,
-    Taxonomy = taxData[asv, "rank"],
-    site_var = a['Site', 'Deviance'] / total_deviance * 100,
-    site_p = a['Site', 'Pr..Chi.'],
-    scion_var = a['Scion', 'Deviance'] / total_deviance * 100,
-    scion_p = a['Scion', 'Pr..Chi.'],
-    storage_var = a['Storage', 'Deviance'] / total_deviance * 100,
-    storage_p = a['Storage', 'Pr..Chi.']
-  )
-  return(d)
-}
+# Group by factor and adjust p-values
+top_asvs_anova_results <- top_asvs_anova_results %>% 
+  group_by(Factor) %>% 
+  mutate(p.adj = p.adjust(`Pr..F.`, method = "BH")) %>% 
+  data.table()
 
-formula <- FULL_DESIGN
+# Order factors by original order
+top_asvs_anova_results$Factor <- factor(top_asvs_anova_results$Factor, levels = unique(top_asvs_anova_results$Factor))
 
-asv_anova_results <- sapply(
-  top_asv_ids, function(x) asv_lm_anova(x, formula, top_asv_data)
-) %>% t() %>% data.table()
+# Summary of top ASV ANOVA results
+top_asvs_anova_summary <- top_asvs_anova_results %>% 
+  select(ASV, Taxonomy, Abundance, Factor, Variance) %>% 
+  spread(key = Factor, value = Variance)
 
-asv_anova_results_adjusted <- asv_anova_results %>% 
-  mutate(
-    site_p = p.adjust(site_p, method = "BH"),
-    scion_p = p.adjust(scion_p, method = "BH"),
-    storage_p = p.adjust(storage_p, method = "BH")
-  )
+top_asvs_anova_summary
 
 cat(
   "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
-  "Site:", nrow(asv_anova_results_adjusted[site_p < 0.05, ]), "\n",
-  "Scion:", nrow(asv_anova_results_adjusted[scion_p < 0.05, ]), "\n",
-  "Storage:", nrow(asv_anova_results_adjusted[storage_p < 0.05, ]), "\n",
-  "Site:Scion:", nrow(asv_anova_results_adjusted[site_scion_p < 0.05, ]), "\n",
-  "Site:Storage:", nrow(asv_anova_results_adjusted[site_storage_p < 0.05, ]), "\n",
-  "Storage:Scion:", nrow(asv_anova_results_adjusted[storage_scion_p < 0.05, ]), "\n\n"
+  "Site:", nrow(top_asvs_anova_results[Factor == "Site" & p.adj < 0.05, ]), "\n",
+  "Storage:", nrow(top_asvs_anova_results[Factor == "Storage" & p.adj < 0.05, ]), "\n",
+  "Scion:", nrow(top_asvs_anova_results[Factor == "Scion" & p.adj < 0.05, ]), "\n",
+  "Site:Storage:", nrow(top_asvs_anova_results[Factor == "Site:Storage" & p.adj < 0.05, ]), "\n",
+  "Site:Scion:", nrow(top_asvs_anova_results[Factor == "Site:Scion" & p.adj < 0.05, ]), "\n",
+  "Storage:Scion:", nrow(top_asvs_anova_results[Factor == "Storage:Scion" & p.adj < 0.05, ]), "\n",
+  "Site:Storage:Scion:", nrow(top_asvs_anova_results[Factor == "Site:Storage:Scion" & p.adj < 0.05, ]), "\n\n",
+  "Total ASVs:", length(unique(top_asvs_anova_results$ASV)), "\n\n"
 )
 
-asv_anova_results_adjusted[scion_p < 0.05, ]
-asv_anova_results_adjusted[site_scion_p < 0.05, ]
-asv_anova_results_adjusted[storage_scion_p < 0.05, ]
+# Filter by significant effect of scion and its interactions
+scion_asvs <- top_asvs_anova_results[grepl("Scion", Factor) & p.adj < 0.05, ]
+
+scion_asvs
+
+cat(
+  length(scion_asvs$ASV), 
+  "ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Scion and its interactions.", "\n\n"
+)
+
+# Summary of ASVs with significant Scion effect
+top_asvs_anova_summary[ASV %in% scion_asvs$ASV, ]
 ```
 
 ```{r}
 # Export significant ASVs as fasta
-
-# Filter ASVs with significant Scion effect
-scion_asvs <- as.character(asv_anova_results_adjusted[scion_p < 0.05, ]$ASV)
 
 # Read BAC ASVs
 BAC_asvs <- read.fasta("data/BAC.zotus.fa")
@@ -2251,9 +2235,9 @@ names(BAC_asvs) <- gsub("OTU", "ASV", names(BAC_asvs))
 
 # Write significant ASVs to fasta
 write.fasta(
-  sequences = BAC_asvs[scion_asvs],
-  names = paste(scion_asvs, taxData[scion_asvs, "rank"]),
-  file = "BAC_scion_asvs.fasta"
+  sequences = BAC_asvs[scion_asvs$ASV],
+  names = paste(scion_asvs$ASV, taxData[scion_asvs$ASV, "rank"]),
+  file = "fasta/BAC_scion_asvs.fasta"
 )
 ```
 
@@ -2375,7 +2359,7 @@ significant_asvs
 write.fasta(
   sequences = BAC_asvs[as.character(significant_asvs$ASV)],
   names = paste(significant_asvs$ASV, taxData[as.character(significant_asvs$ASV), "rank"]),
-  file = "BAC_canker_asvs.fasta"
+  file = "fasta/BAC_canker_asvs.fasta"
 )
 ```
 
