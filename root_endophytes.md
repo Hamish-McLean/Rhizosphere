@@ -1373,13 +1373,13 @@ summary(result)
 ```
 # Component 1 :
 #                    Df R Sum Sq R Mean Sq Iter Pr(Prob)    
-# Site                2  11554.5    5777.2 5000  0.00040 ***
-# Storage             1   2056.4    2056.4 2293  0.04187 *  
-# Site:Storage        2    812.4     406.2  622  0.43248    
-# Scion               6    875.7     145.9   77  1.00000    
-# Site:Scion         12   2817.7     234.8  816  0.94240    
-# Storage:Scion       6   2046.5     341.1  108  0.88889    
-# Site:Storage:Scion 12   2735.3     227.9  470  0.94468    
+# Site                2  11554.5    5777.2 5000   <2e-16 ***
+# Storage             1   2056.4    2056.4 2513   0.0386 *  
+# Site:Storage        2    812.4     406.2  515   0.6000    
+# Scion               6    875.7     145.9   98   1.0000    
+# Site:Scion         12   2817.7     234.8  259   0.9228    
+# Storage:Scion       6   2046.5     341.1  862   0.6868    
+# Site:Storage:Scion 12   2735.3     227.9  173   1.0000    
 # Residuals          39  21381.5     548.2                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -1413,7 +1413,7 @@ df %>%
    <td style="text-align:right;"> 11554.4684 </td>
    <td style="text-align:right;"> 5777.2342 </td>
    <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0004000 </td>
+   <td style="text-align:right;"> 0.0000000 </td>
    <td style="text-align:right;"> 26.094102 </td>
   </tr>
   <tr>
@@ -1421,8 +1421,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 2056.4245 </td>
    <td style="text-align:right;"> 2056.4245 </td>
-   <td style="text-align:right;"> 2293 </td>
-   <td style="text-align:right;"> 0.0418666 </td>
+   <td style="text-align:right;"> 2513 </td>
+   <td style="text-align:right;"> 0.0385993 </td>
    <td style="text-align:right;"> 4.644139 </td>
   </tr>
   <tr>
@@ -1430,8 +1430,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 812.3544 </td>
    <td style="text-align:right;"> 406.1772 </td>
-   <td style="text-align:right;"> 622 </td>
-   <td style="text-align:right;"> 0.4324759 </td>
+   <td style="text-align:right;"> 515 </td>
+   <td style="text-align:right;"> 0.6000000 </td>
    <td style="text-align:right;"> 1.834585 </td>
   </tr>
   <tr>
@@ -1439,7 +1439,7 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 875.6763 </td>
    <td style="text-align:right;"> 145.9461 </td>
-   <td style="text-align:right;"> 77 </td>
+   <td style="text-align:right;"> 98 </td>
    <td style="text-align:right;"> 1.0000000 </td>
    <td style="text-align:right;"> 1.977589 </td>
   </tr>
@@ -1448,8 +1448,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2817.7201 </td>
    <td style="text-align:right;"> 234.8100 </td>
-   <td style="text-align:right;"> 816 </td>
-   <td style="text-align:right;"> 0.9424020 </td>
+   <td style="text-align:right;"> 259 </td>
+   <td style="text-align:right;"> 0.9227799 </td>
    <td style="text-align:right;"> 6.363415 </td>
   </tr>
   <tr>
@@ -1457,8 +1457,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2046.5389 </td>
    <td style="text-align:right;"> 341.0898 </td>
-   <td style="text-align:right;"> 108 </td>
-   <td style="text-align:right;"> 0.8888889 </td>
+   <td style="text-align:right;"> 862 </td>
+   <td style="text-align:right;"> 0.6867749 </td>
    <td style="text-align:right;"> 4.621813 </td>
   </tr>
   <tr>
@@ -1466,8 +1466,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2735.3173 </td>
    <td style="text-align:right;"> 227.9431 </td>
-   <td style="text-align:right;"> 470 </td>
-   <td style="text-align:right;"> 0.9446809 </td>
+   <td style="text-align:right;"> 173 </td>
+   <td style="text-align:right;"> 1.0000000 </td>
    <td style="text-align:right;"> 6.177320 </td>
   </tr>
   <tr>
@@ -1502,13 +1502,13 @@ summary(result)
 ```
 # Component 1 :
 #                    Df R Sum Sq R Mean Sq Iter Pr(Prob)    
-# Site                2  12291.8    6145.9 5000   <2e-16 ***
-# Storage             1   1077.6    1077.6  554   0.1534    
-# Site:Storage        2   2320.4    1160.2 1175   0.1285    
-# Scion               6    570.9      95.1  370   0.8973    
-# Site:Scion         12   3082.1     256.8  599   0.7596    
-# Storage:Scion       6   2730.6     455.1  944   0.3570    
-# Site:Storage:Scion 12   5311.1     442.6 1486   0.5646    
+# Site                2  12291.8    6145.9 5000  < 2e-16 ***
+# Storage             1   1077.6    1077.6 1184  0.07855 .  
+# Site:Storage        2   2320.4    1160.2 2042  0.06758 .  
+# Scion               6    570.9      95.1  170  1.00000    
+# Site:Scion         12   3082.1     256.8  593  0.87690    
+# Storage:Scion       6   2730.6     455.1 1813  0.26917    
+# Site:Storage:Scion 12   5311.1     442.6 1207  0.44325    
 # Residuals          39  16895.5     433.2                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -1550,8 +1550,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 1077.5749 </td>
    <td style="text-align:right;"> 1077.57489 </td>
-   <td style="text-align:right;"> 554 </td>
-   <td style="text-align:right;"> 0.1534296 </td>
+   <td style="text-align:right;"> 1184 </td>
+   <td style="text-align:right;"> 0.0785473 </td>
    <td style="text-align:right;"> 2.433548 </td>
   </tr>
   <tr>
@@ -1559,8 +1559,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 2320.4220 </td>
    <td style="text-align:right;"> 1160.21098 </td>
-   <td style="text-align:right;"> 1175 </td>
-   <td style="text-align:right;"> 0.1285106 </td>
+   <td style="text-align:right;"> 2042 </td>
+   <td style="text-align:right;"> 0.0675808 </td>
    <td style="text-align:right;"> 5.240339 </td>
   </tr>
   <tr>
@@ -1568,8 +1568,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 570.8675 </td>
    <td style="text-align:right;"> 95.14458 </td>
-   <td style="text-align:right;"> 370 </td>
-   <td style="text-align:right;"> 0.8972973 </td>
+   <td style="text-align:right;"> 170 </td>
+   <td style="text-align:right;"> 1.0000000 </td>
    <td style="text-align:right;"> 1.289222 </td>
   </tr>
   <tr>
@@ -1577,8 +1577,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 3082.1462 </td>
    <td style="text-align:right;"> 256.84552 </td>
-   <td style="text-align:right;"> 599 </td>
-   <td style="text-align:right;"> 0.7595993 </td>
+   <td style="text-align:right;"> 593 </td>
+   <td style="text-align:right;"> 0.8768971 </td>
    <td style="text-align:right;"> 6.960583 </td>
   </tr>
   <tr>
@@ -1586,8 +1586,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2730.6068 </td>
    <td style="text-align:right;"> 455.10114 </td>
-   <td style="text-align:right;"> 944 </td>
-   <td style="text-align:right;"> 0.3569915 </td>
+   <td style="text-align:right;"> 1813 </td>
+   <td style="text-align:right;"> 0.2691671 </td>
    <td style="text-align:right;"> 6.166682 </td>
   </tr>
   <tr>
@@ -1595,8 +1595,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 5311.1323 </td>
    <td style="text-align:right;"> 442.59435 </td>
-   <td style="text-align:right;"> 1486 </td>
-   <td style="text-align:right;"> 0.5646030 </td>
+   <td style="text-align:right;"> 1207 </td>
+   <td style="text-align:right;"> 0.4432477 </td>
    <td style="text-align:right;"> 11.994427 </td>
   </tr>
   <tr>
@@ -1631,13 +1631,13 @@ summary(result)
 ```
 # Component 1 :
 #                    Df R Sum Sq R Mean Sq Iter Pr(Prob)    
-# Site                2  12937.5    6468.8 5000  < 2e-16 ***
-# Storage             1    764.2     764.2 1222  0.07610 .  
-# Site:Storage        2   2484.2    1242.1 1466  0.08458 .  
-# Scion               6   1188.1     198.0  554  0.90433    
-# Site:Scion         12   2027.8     169.0  669  0.94469    
-# Storage:Scion       6   2529.6     421.6 1072  0.61474    
-# Site:Storage:Scion 12   5334.6     444.6  874  0.48627    
+# Site                2  12937.5    6468.8 5000   <2e-16 ***
+# Storage             1    764.2     764.2  475   0.1747    
+# Site:Storage        2   2484.2    1242.1  915   0.1355    
+# Scion               6   1188.1     198.0  596   0.8557    
+# Site:Scion         12   2027.8     169.0  801   0.9600    
+# Storage:Scion       6   2529.6     421.6  840   0.4274    
+# Site:Storage:Scion 12   5334.6     444.6 1342   0.3920    
 # Residuals          39  17014.0     436.3                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -1679,8 +1679,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 764.2007 </td>
    <td style="text-align:right;"> 764.2007 </td>
-   <td style="text-align:right;"> 1222 </td>
-   <td style="text-align:right;"> 0.0761047 </td>
+   <td style="text-align:right;"> 475 </td>
+   <td style="text-align:right;"> 0.1747368 </td>
    <td style="text-align:right;"> 1.725837 </td>
   </tr>
   <tr>
@@ -1688,8 +1688,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 2484.2454 </td>
    <td style="text-align:right;"> 1242.1227 </td>
-   <td style="text-align:right;"> 1466 </td>
-   <td style="text-align:right;"> 0.0845839 </td>
+   <td style="text-align:right;"> 915 </td>
+   <td style="text-align:right;"> 0.1355191 </td>
    <td style="text-align:right;"> 5.610310 </td>
   </tr>
   <tr>
@@ -1697,8 +1697,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 1188.0542 </td>
    <td style="text-align:right;"> 198.0090 </td>
-   <td style="text-align:right;"> 554 </td>
-   <td style="text-align:right;"> 0.9043321 </td>
+   <td style="text-align:right;"> 596 </td>
+   <td style="text-align:right;"> 0.8557047 </td>
    <td style="text-align:right;"> 2.683049 </td>
   </tr>
   <tr>
@@ -1706,8 +1706,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2027.7819 </td>
    <td style="text-align:right;"> 168.9818 </td>
-   <td style="text-align:right;"> 669 </td>
-   <td style="text-align:right;"> 0.9446936 </td>
+   <td style="text-align:right;"> 801 </td>
+   <td style="text-align:right;"> 0.9600499 </td>
    <td style="text-align:right;"> 4.579453 </td>
   </tr>
   <tr>
@@ -1715,8 +1715,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2529.5940 </td>
    <td style="text-align:right;"> 421.5990 </td>
-   <td style="text-align:right;"> 1072 </td>
-   <td style="text-align:right;"> 0.6147388 </td>
+   <td style="text-align:right;"> 840 </td>
+   <td style="text-align:right;"> 0.4273810 </td>
    <td style="text-align:right;"> 5.712724 </td>
   </tr>
   <tr>
@@ -1724,8 +1724,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 5334.6194 </td>
    <td style="text-align:right;"> 444.5516 </td>
-   <td style="text-align:right;"> 874 </td>
-   <td style="text-align:right;"> 0.4862700 </td>
+   <td style="text-align:right;"> 1342 </td>
+   <td style="text-align:right;"> 0.3919523 </td>
    <td style="text-align:right;"> 12.047469 </td>
   </tr>
   <tr>
@@ -4942,15 +4942,26 @@ top_asvs_per_site <- lapply(
   }
 )
 
-cat(
-  "Sites 1, 2, 3 contained",
-  paste(sapply(top_asvs_per_site, function(x) length(x$asvs)), collapse = ", "),
-  "ASVs respectively with mean read count > 100", "\n\n"
-)
+# Summary of top ASVs per site
+data.table(
+  Site = 1:3,
+  topASVs = sapply(top_asvs_per_site, function(x) length(x$asvs)),
+  totalASVs = sapply(top_asvs_per_site, function(x) sum(rowSums(asv_counts[, rownames(x$data)]) > 0, na.rm = TRUE)),
+  topreads = sapply(top_asvs_per_site, function(x) sum(select(x$data, starts_with("ASV")))),
+  totalreads = sapply(top_asvs_per_site, function(x) sum(asv_counts[, rownames(x$data)]))
+) %>%
+  mutate(
+    "ASV%" = round(topASVs / totalASVs * 100),
+    "Read%" = round(topreads / totalreads * 100)
+  )
 ```
 
 ```
-# Sites 1, 2, 3 contained 111, 163, 101 ASVs respectively with mean read count > 100
+#     Site topASVs totalASVs topreads totalreads  ASV% Read%
+#    <int>   <int>     <int>    <num>      <num> <num> <num>
+# 1:     1     111       820  1847045    2024873    14    91
+# 2:     2     163       915  5716207    6092025    18    94
+# 3:     3     101       822  2728361    2989425    12    91
 ```
 
 ``` r
@@ -9159,15 +9170,26 @@ top_asvs_per_site <- lapply(
   }
 )
 
-cat(
-  "Sites 1, 2, 3 contained",
-  paste(sapply(top_asvs_per_site, function(x) length(x$asvs)), collapse = ", "),
-  "ASVs respectively with mean read count > 100", "\n\n"
-)
+# Summary of top ASVs per site
+data.table(
+  Site = 1:3,
+  topASVs = sapply(top_asvs_per_site, function(x) length(x$asvs)),
+  totalASVs = sapply(top_asvs_per_site, function(x) sum(rowSums(asv_counts[, rownames(x$data)]) > 0, na.rm = TRUE)),
+  topreads = sapply(top_asvs_per_site, function(x) sum(select(x$data, starts_with("ASV")))),
+  totalreads = sapply(top_asvs_per_site, function(x) sum(asv_counts[, rownames(x$data)]))
+) %>%
+  mutate(
+    "ASV%" = round(topASVs / totalASVs * 100),
+    "Read%" = round(topreads / totalreads * 100)
+  )
 ```
 
 ```
-# Sites 1, 2, 3 contained 113, 39, 78 ASVs respectively with mean read count > 100
+#     Site topASVs totalASVs topreads totalreads  ASV% Read%
+#    <int>   <int>     <int>    <num>      <num> <num> <num>
+# 1:     1     113      5713 879008.0    1801618     2    49
+# 2:     2      39      5750 240576.8     820971     1    29
+# 3:     3      78      5587 634626.6    1418274     1    45
 ```
 
 ``` r
@@ -9880,7 +9902,7 @@ abundance_box <- ggboxplot(
   data = abundance_combined, x = "Site", y = "log_copy_number", 
   color = "Storage", add = "jitter", facet.by = "kingdom",
   palette = cbPalette, legend = "bottom",
-  ylab = "Mean copy number (log10)", xlab = "Site"
+  ylab = "Copy number (log10)", xlab = "Site"
 ) 
 
 ggsave(
@@ -9963,7 +9985,7 @@ alpha_box_fungi <- ggboxplot(
   data = alpha_combined[alpha_combined$kingdom == "Fungi", ], x = "Site", y = "value", 
   color = "Storage", add = "jitter", facet.by = "measure",
   palette = cbPalette, scales = "free_y", legend = "bottom",
-  ylab = "Mean diversity index", xlab = "Site"
+  ylab = "Diversity index", xlab = "Site"
 )
 ```
 
@@ -9987,7 +10009,7 @@ alpha_box_bacteria <- ggboxplot(
   data = alpha_combined[alpha_combined$kingdom == "Bacteria", ], x = "Site", y = "value", 
   color = "Storage", add = "jitter", facet.by = "measure",
   palette = cbPalette, scales = "free_y", legend = "bottom",
-  ylab = "Mean diversity index", xlab = "Site"
+  ylab = "Diversity index", xlab = "Site"
 )
 ```
 
