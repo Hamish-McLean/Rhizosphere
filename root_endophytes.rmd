@@ -3,7 +3,7 @@ title: "Root endophyte analysis"
 output: 
   html_document:
     keep_md: true
-    cache: true
+    cache: false
 ---
 
 Built with R version  `r getRversion()`.
@@ -15,7 +15,7 @@ knitr::opts_chunk$set(warning = F)
 knitr::opts_chunk$set(comment = "#")
 knitr::opts_chunk$set(fig.width = 9, fig.height = 9)
 knitr::opts_chunk$set(error = TRUE)
-knitr::opts_chunk$set(cache = T)
+knitr::opts_chunk$set(cache = F)
 ```
 
 ## Setup
@@ -50,19 +50,21 @@ library(metafuncs)
 ### Functions and constants
 
 ```{r constants}
-ALPHA =      0.1   # DESeq2 alpha value
-OTUFILTER =  0.01  # Remove OTUs with proportion of total reads below value
-READFILTER = 0.05  # Will remove samples with read sum below sample_median_reads*READFILTER 
-PAIREDONLY = F     # Will remove the pair of samples which fail the readfilter - probably only useful for DESeq separated by type NOTE removes pairs before DESeq object is created   
-TAXCONF =    0.80  # Sets the taxonomy confidence level to get "rank" in taxonomy files
-TOPOTU =     10    # Number of Top OTUs for summary information
-DIFFOTU =    200    # Number of Top OTUs for correlation analysis
+ALPHA =        0.1   # DESeq2 alpha value
+OTUFILTER =    0.01  # Remove OTUs with proportion of total reads below value
+READFILTER =   0.05  # Will remove samples with read sum below sample_median_reads*READFILTER 
+PAIREDONLY =   F     # Will remove the pair of samples which fail the readfilter - probably only useful for DESeq separated by type NOTE removes pairs before DESeq object is created   
+TAXCONF =      0.80  # Sets the taxonomy confidence level to get "rank" in taxonomy files
+TOPOTU =       10    # Number of Top OTUs for summary information
+DIFFOTU =      200   # Number of Top OTUs for correlation analysis
+FUNASVFILTER = 0.05  # Filter fungal ASVs with proportion of total reads below value
+BACASVFILTER = 0.5   # Filter bacterial ASVs with proportion of total reads below value
 
 # graphics
-DEVICE =     "png"
-DPI =        1200
-WIDTH =      9
-HEIGHT =     9
+DEVICE =       "png"
+DPI =          1200
+WIDTH =        9
+HEIGHT =       9
 
 # Model design
 FACTORS = c("Site", "Storage", "Scion")
@@ -1068,9 +1070,10 @@ fun_cum_asv
 
 # Find the number of ASVs that account for 50%, 80%, and 99% of total reads
 cat(
-  "Number of ASVs that account for 50%, 80%, and 99% of total reads", "\n\n",
+  "Number of ASVs that account for 50%, 80%, 90%, and 99% of total reads", "\n\n",
   "50%:", sum(cumulative <= 50), "\n",
   "80%:", sum(cumulative <= 80), "\n",
+  "90%:", sum(cumulative <= 90), "\n",
   "99%:", sum(cumulative <= 99), "\n"
 )
 
@@ -1104,14 +1107,17 @@ cat(
 )
 ```
 
-### Filter top ASVs with mean read count > 100
+### Filter top ASVs with `r (1 - FUNASVFILTER) * 100` % of reads
 
 ```{r}
 # Filter the top x abundant ASVs by the sum of their normalised counts
 # top_asvs <- asv_counts[order(rowSums(asv_counts), decreasing = T)[1:DIFFOTU], ]
 
 # Filter ASVs with mean read count > 100
-top_asvs <- asv_counts[rowMeans(asv_counts) > 100, ]
+# top_asvs <- asv_counts[rowMeans(asv_counts) > 100, ]
+
+# Filter top ASVs with 90% of reads
+top_asvs <- asv_counts[filter_otus(asv_counts, FUNASVFILTER), ]
 
 # Check that sample names match
 identical(names(top_asvs), rownames(colData))
@@ -1357,14 +1363,18 @@ if(nrow(asv_canker_results[p_adjusted < 0.05, ]) > 0) {
 
 #### Effect of ASV abundance on canker count per site
 
+Filter top ASVs with `r (1 - FUNASVFILTER) * 100` % of reads per site
+and test the effect of ASV abundance on canker count per site.
+
 ```{r}
-# For each site, select ASVs with mean abundance > 100
+# For each site, select top ASVs with 90% of reads
 top_asvs_per_site <- lapply(
   unique(colData$Site),
   function(site) {
     samples <- filter(colData, Site == site)
     top_asv_data <- select(asv_counts, rownames(samples))
-    top_asvs <- filter(top_asv_data, rowMeans(top_asv_data) > 100)
+    # top_asvs <- filter(top_asv_data, rowMeans(top_asv_data) > 100)
+    top_asvs <- top_asv_data[filter_otus(top_asv_data, FUNASVFILTER), ]
     top_asv_ids <- rownames(top_asvs)
     top_asvs <- data.frame(t(top_asvs)) %>% merge(samples, by = 0) %>% column_to_rownames("Row.names")
     top_asvs <- top_asvs[complete.cases(top_asvs$Cankers), ]
@@ -1416,11 +1426,11 @@ asv_canker_site_results <- lapply(
 # Significant ASVs
 significant_asvs <- asv_canker_site_results[p_adjusted < 0.05 & is.na(warning), ]
 
-significant_asvs[, c("Site", "ASV", "Taxonomy", "Abundance", "coef", "var", "p_adjusted")] %>%
-  kbl("html", digits = 3) %>%
-  kable_styling("striped", full_width = T) %>%
-  column_spec(3, extra_css = "word-wrap: break-all; white-space: normal; width: 10cm;") %>%
-  save_kable("tables/FUN_canker_site_asvs.html")
+significant_asvs[, c("Site", "ASV", "Taxonomy", "Abundance", "coef", "var", "p_adjusted")]
+  # kbl("html", digits = 3) %>%
+  # kable_styling("striped", full_width = T) %>%
+  # column_spec(3, extra_css = "word-wrap: break-all; white-space: normal; width: 10cm;") %>%
+  # save_kable("tables/FUN_canker_site_asvs.html")
 
 significant_asvs$Taxonomy %>% unlist
 ```
@@ -2216,9 +2226,10 @@ bac_cum_asv
 
 # Find the number of ASVs that account for 50%, 80%, and 99% of total reads
 cat(
-  "Number of ASVs that account for 50%, 80%, and 99% of total reads", "\n\n",
+  "Number of ASVs that account for 50%, 80%, 90%, and 99% of total reads", "\n\n",
   "50%:", sum(cumulative <= 50), "\n",
   "80%:", sum(cumulative <= 80), "\n",
+  "90%:", sum(cumulative <= 90), "\n",
   "99%:", sum(cumulative <= 99), "\n"
 )
 
@@ -2252,14 +2263,17 @@ cat(
 )
 ```
 
-### Filter top ASVs with mean read count > 100
+### Filter top ASVs with `r (1 - BACASVFILTER) * 100` % of reads
 
 ```{r}
 # Filter the top x abundant ASVs by the sum of their normalised counts
 # top_asvs <- asv_counts[order(rowSums(asv_counts), decreasing = T)[1:DIFFOTU], ]
 
 # Filter ASVs with mean read count > 100
-top_asvs <- asv_counts[rowMeans(asv_counts) > 100, ]
+# top_asvs <- asv_counts[rowMeans(asv_counts) > 100, ]
+
+# Filter top ASVs with 90% of reads
+top_asvs <- asv_counts[filter_otus(asv_counts, BACASVFILTER), ]
 
 # Check that sample names match
 identical(names(top_asvs), rownames(colData))
@@ -2417,14 +2431,18 @@ asv_canker_results[p_adjusted < 0.05, ] %>%
 
 #### Effect of ASV abundance on canker count per site
 
+Filter top ASVs with `r (1 - BACASVFILTER) * 100` % of reads per site
+and test the effect of ASV abundance on canker count per site.
+
 ```{r}
-# For each site, select ASVs with mean abundance > 100
+# For each site, select top ASVs with 50% of reads
 top_asvs_per_site <- lapply(
   unique(colData$Site),
   function(site) {
     samples <- filter(colData, Site == site)
     top_asv_data <- select(asv_counts, rownames(samples))
-    top_asvs <- filter(top_asv_data, rowMeans(top_asv_data) > 100)
+    # top_asvs <- filter(top_asv_data, rowMeans(top_asv_data) > 100)
+    top_asvs <- top_asv_data[filter_otus(top_asv_data, BACASVFILTER), ]
     top_asv_ids <- rownames(top_asvs)
     top_asvs <- data.frame(t(top_asvs)) %>% merge(samples, by = 0) %>% column_to_rownames("Row.names")
     top_asvs <- top_asvs[complete.cases(top_asvs$Cankers), ]
@@ -2476,10 +2494,12 @@ asv_canker_site_results <- lapply(
 # Significant ASVs
 significant_asvs <- asv_canker_site_results[p_adjusted < 0.05 & is.na(warning), ]
 
-significant_asvs[, c("Site", "ASV", "Taxonomy", "Abundance", "coef", "var", "p_adjusted")] %>%
-  kbl("html", digits = 3) %>%
-  kable_styling("striped", full_width = T) %>%
-  column_spec(3, extra_css = "word-wrap: break-word;")
+significant_asvs[, c("Site", "ASV", "Taxonomy", "Abundance", "coef", "var", "p_adjusted")]
+  # kbl("html", digits = 3) %>%
+  # kable_styling("striped", full_width = T) %>%
+  # column_spec(3, extra_css = "word-wrap: break-word;")
+
+significant_asvs$Taxonomy %>% unlist()
 ```
 
 ```{r}

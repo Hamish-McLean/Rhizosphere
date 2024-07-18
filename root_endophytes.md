@@ -3,7 +3,7 @@ title: "Root endophyte analysis"
 output: 
   html_document:
     keep_md: true
-    cache: true
+    cache: false
 ---
 
 Built with R version  4.3.3.
@@ -44,19 +44,21 @@ library(metafuncs)
 
 
 ``` r
-ALPHA =      0.1   # DESeq2 alpha value
-OTUFILTER =  0.01  # Remove OTUs with proportion of total reads below value
-READFILTER = 0.05  # Will remove samples with read sum below sample_median_reads*READFILTER 
-PAIREDONLY = F     # Will remove the pair of samples which fail the readfilter - probably only useful for DESeq separated by type NOTE removes pairs before DESeq object is created   
-TAXCONF =    0.80  # Sets the taxonomy confidence level to get "rank" in taxonomy files
-TOPOTU =     10    # Number of Top OTUs for summary information
-DIFFOTU =    200    # Number of Top OTUs for correlation analysis
+ALPHA =        0.1   # DESeq2 alpha value
+OTUFILTER =    0.01  # Remove OTUs with proportion of total reads below value
+READFILTER =   0.05  # Will remove samples with read sum below sample_median_reads*READFILTER 
+PAIREDONLY =   F     # Will remove the pair of samples which fail the readfilter - probably only useful for DESeq separated by type NOTE removes pairs before DESeq object is created   
+TAXCONF =      0.80  # Sets the taxonomy confidence level to get "rank" in taxonomy files
+TOPOTU =       10    # Number of Top OTUs for summary information
+DIFFOTU =      200   # Number of Top OTUs for correlation analysis
+FUNASVFILTER = 0.05  # Filter fungal ASVs with proportion of total reads below value
+BACASVFILTER = 0.5   # Filter bacterial ASVs with proportion of total reads below value
 
 # graphics
-DEVICE =     "png"
-DPI =        1200
-WIDTH =      9
-HEIGHT =     9
+DEVICE =       "png"
+DPI =          1200
+WIDTH =        9
+HEIGHT =       9
 
 # Model design
 FACTORS = c("Site", "Storage", "Scion")
@@ -1375,12 +1377,12 @@ summary(result)
 # Component 1 :
 #                    Df R Sum Sq R Mean Sq Iter Pr(Prob)    
 # Site                2  11554.5    5777.2 5000  < 2e-16 ***
-# Storage             1   2056.4    2056.4 1826  0.05203 .  
-# Site:Storage        2    812.4     406.2  371  0.45822    
-# Scion               6    875.7     145.9  494  0.98583    
-# Site:Scion         12   2817.7     234.8  344  0.80233    
-# Storage:Scion       6   2046.5     341.1  736  0.65897    
-# Site:Storage:Scion 12   2735.3     227.9  921  0.92074    
+# Storage             1   2056.4    2056.4 1110  0.08288 .  
+# Site:Storage        2    812.4     406.2   51  0.80392    
+# Scion               6    875.7     145.9  214  1.00000    
+# Site:Scion         12   2817.7     234.8  341  1.00000    
+# Storage:Scion       6   2046.5     341.1 1279  0.72166    
+# Site:Storage:Scion 12   2735.3     227.9 1953  0.96211    
 # Residuals          39  21381.5     548.2                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -1422,8 +1424,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 2056.4245 </td>
    <td style="text-align:right;"> 2056.4245 </td>
-   <td style="text-align:right;"> 1826 </td>
-   <td style="text-align:right;"> 0.0520263 </td>
+   <td style="text-align:right;"> 1110 </td>
+   <td style="text-align:right;"> 0.0828829 </td>
    <td style="text-align:right;"> 4.644139 </td>
   </tr>
   <tr>
@@ -1431,8 +1433,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 812.3544 </td>
    <td style="text-align:right;"> 406.1772 </td>
-   <td style="text-align:right;"> 371 </td>
-   <td style="text-align:right;"> 0.4582210 </td>
+   <td style="text-align:right;"> 51 </td>
+   <td style="text-align:right;"> 0.8039216 </td>
    <td style="text-align:right;"> 1.834585 </td>
   </tr>
   <tr>
@@ -1440,8 +1442,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 875.6763 </td>
    <td style="text-align:right;"> 145.9461 </td>
-   <td style="text-align:right;"> 494 </td>
-   <td style="text-align:right;"> 0.9858300 </td>
+   <td style="text-align:right;"> 214 </td>
+   <td style="text-align:right;"> 1.0000000 </td>
    <td style="text-align:right;"> 1.977589 </td>
   </tr>
   <tr>
@@ -1449,8 +1451,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2817.7201 </td>
    <td style="text-align:right;"> 234.8100 </td>
-   <td style="text-align:right;"> 344 </td>
-   <td style="text-align:right;"> 0.8023256 </td>
+   <td style="text-align:right;"> 341 </td>
+   <td style="text-align:right;"> 1.0000000 </td>
    <td style="text-align:right;"> 6.363415 </td>
   </tr>
   <tr>
@@ -1458,8 +1460,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2046.5389 </td>
    <td style="text-align:right;"> 341.0898 </td>
-   <td style="text-align:right;"> 736 </td>
-   <td style="text-align:right;"> 0.6589674 </td>
+   <td style="text-align:right;"> 1279 </td>
+   <td style="text-align:right;"> 0.7216575 </td>
    <td style="text-align:right;"> 4.621813 </td>
   </tr>
   <tr>
@@ -1467,8 +1469,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2735.3173 </td>
    <td style="text-align:right;"> 227.9431 </td>
-   <td style="text-align:right;"> 921 </td>
-   <td style="text-align:right;"> 0.9207383 </td>
+   <td style="text-align:right;"> 1953 </td>
+   <td style="text-align:right;"> 0.9621096 </td>
    <td style="text-align:right;"> 6.177320 </td>
   </tr>
   <tr>
@@ -1504,12 +1506,12 @@ summary(result)
 # Component 1 :
 #                    Df R Sum Sq R Mean Sq Iter Pr(Prob)    
 # Site                2  12291.8    6145.9 5000  < 2e-16 ***
-# Storage             1   1077.6    1077.6  908  0.10022    
-# Site:Storage        2   2320.4    1160.2 2743  0.04995 *  
-# Scion               6    570.9      95.1  260  0.99615    
-# Site:Scion         12   3082.1     256.8  672  0.82440    
-# Storage:Scion       6   2730.6     455.1 1890  0.39735    
-# Site:Storage:Scion 12   5311.1     442.6 2008  0.38098    
+# Storage             1   1077.6    1077.6  305  0.24918    
+# Site:Storage        2   2320.4    1160.2 1509  0.07356 .  
+# Scion               6    570.9      95.1   83  1.00000    
+# Site:Scion         12   3082.1     256.8  521  0.92706    
+# Storage:Scion       6   2730.6     455.1 3666  0.41353    
+# Site:Storage:Scion 12   5311.1     442.6 1903  0.49764    
 # Residuals          39  16895.5     433.2                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -1551,8 +1553,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 1077.5749 </td>
    <td style="text-align:right;"> 1077.57489 </td>
-   <td style="text-align:right;"> 908 </td>
-   <td style="text-align:right;"> 0.1002203 </td>
+   <td style="text-align:right;"> 305 </td>
+   <td style="text-align:right;"> 0.2491803 </td>
    <td style="text-align:right;"> 2.433548 </td>
   </tr>
   <tr>
@@ -1560,8 +1562,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 2320.4220 </td>
    <td style="text-align:right;"> 1160.21098 </td>
-   <td style="text-align:right;"> 2743 </td>
-   <td style="text-align:right;"> 0.0499453 </td>
+   <td style="text-align:right;"> 1509 </td>
+   <td style="text-align:right;"> 0.0735586 </td>
    <td style="text-align:right;"> 5.240339 </td>
   </tr>
   <tr>
@@ -1569,8 +1571,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 570.8675 </td>
    <td style="text-align:right;"> 95.14458 </td>
-   <td style="text-align:right;"> 260 </td>
-   <td style="text-align:right;"> 0.9961538 </td>
+   <td style="text-align:right;"> 83 </td>
+   <td style="text-align:right;"> 1.0000000 </td>
    <td style="text-align:right;"> 1.289222 </td>
   </tr>
   <tr>
@@ -1578,8 +1580,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 3082.1462 </td>
    <td style="text-align:right;"> 256.84552 </td>
-   <td style="text-align:right;"> 672 </td>
-   <td style="text-align:right;"> 0.8244048 </td>
+   <td style="text-align:right;"> 521 </td>
+   <td style="text-align:right;"> 0.9270633 </td>
    <td style="text-align:right;"> 6.960583 </td>
   </tr>
   <tr>
@@ -1587,8 +1589,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2730.6068 </td>
    <td style="text-align:right;"> 455.10114 </td>
-   <td style="text-align:right;"> 1890 </td>
-   <td style="text-align:right;"> 0.3973545 </td>
+   <td style="text-align:right;"> 3666 </td>
+   <td style="text-align:right;"> 0.4135297 </td>
    <td style="text-align:right;"> 6.166682 </td>
   </tr>
   <tr>
@@ -1596,8 +1598,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 5311.1323 </td>
    <td style="text-align:right;"> 442.59435 </td>
-   <td style="text-align:right;"> 2008 </td>
-   <td style="text-align:right;"> 0.3809761 </td>
+   <td style="text-align:right;"> 1903 </td>
+   <td style="text-align:right;"> 0.4976353 </td>
    <td style="text-align:right;"> 11.994427 </td>
   </tr>
   <tr>
@@ -1633,12 +1635,12 @@ summary(result)
 # Component 1 :
 #                    Df R Sum Sq R Mean Sq Iter Pr(Prob)    
 # Site                2  12937.5    6468.8 5000  < 2e-16 ***
-# Storage             1    764.2     764.2  668  0.13024    
-# Site:Storage        2   2484.2    1242.1 1725  0.05507 .  
-# Scion               6   1188.1     198.0  248  0.76210    
-# Site:Scion         12   2027.8     169.0   92  1.00000    
-# Storage:Scion       6   2529.6     421.6  749  0.52203    
-# Site:Storage:Scion 12   5334.6     444.6 1709  0.45114    
+# Storage             1    764.2     764.2  561  0.15152    
+# Site:Storage        2   2484.2    1242.1 1660  0.07289 .  
+# Scion               6   1188.1     198.0  138  1.00000    
+# Site:Scion         12   2027.8     169.0  496  0.98185    
+# Storage:Scion       6   2529.6     421.6 1000  0.51300    
+# Site:Storage:Scion 12   5334.6     444.6 2222  0.42799    
 # Residuals          39  17014.0     436.3                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -1680,8 +1682,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 764.2007 </td>
    <td style="text-align:right;"> 764.2007 </td>
-   <td style="text-align:right;"> 668 </td>
-   <td style="text-align:right;"> 0.1302395 </td>
+   <td style="text-align:right;"> 561 </td>
+   <td style="text-align:right;"> 0.1515152 </td>
    <td style="text-align:right;"> 1.725837 </td>
   </tr>
   <tr>
@@ -1689,8 +1691,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 2484.2454 </td>
    <td style="text-align:right;"> 1242.1227 </td>
-   <td style="text-align:right;"> 1725 </td>
-   <td style="text-align:right;"> 0.0550725 </td>
+   <td style="text-align:right;"> 1660 </td>
+   <td style="text-align:right;"> 0.0728916 </td>
    <td style="text-align:right;"> 5.610310 </td>
   </tr>
   <tr>
@@ -1698,8 +1700,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 1188.0542 </td>
    <td style="text-align:right;"> 198.0090 </td>
-   <td style="text-align:right;"> 248 </td>
-   <td style="text-align:right;"> 0.7620968 </td>
+   <td style="text-align:right;"> 138 </td>
+   <td style="text-align:right;"> 1.0000000 </td>
    <td style="text-align:right;"> 2.683049 </td>
   </tr>
   <tr>
@@ -1707,8 +1709,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2027.7819 </td>
    <td style="text-align:right;"> 168.9818 </td>
-   <td style="text-align:right;"> 92 </td>
-   <td style="text-align:right;"> 1.0000000 </td>
+   <td style="text-align:right;"> 496 </td>
+   <td style="text-align:right;"> 0.9818548 </td>
    <td style="text-align:right;"> 4.579453 </td>
   </tr>
   <tr>
@@ -1716,8 +1718,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2529.5940 </td>
    <td style="text-align:right;"> 421.5990 </td>
-   <td style="text-align:right;"> 749 </td>
-   <td style="text-align:right;"> 0.5220294 </td>
+   <td style="text-align:right;"> 1000 </td>
+   <td style="text-align:right;"> 0.5130000 </td>
    <td style="text-align:right;"> 5.712724 </td>
   </tr>
   <tr>
@@ -1725,8 +1727,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 5334.6194 </td>
    <td style="text-align:right;"> 444.5516 </td>
-   <td style="text-align:right;"> 1709 </td>
-   <td style="text-align:right;"> 0.4511410 </td>
+   <td style="text-align:right;"> 2222 </td>
+   <td style="text-align:right;"> 0.4279928 </td>
    <td style="text-align:right;"> 12.047469 </td>
   </tr>
   <tr>
@@ -2540,18 +2542,20 @@ fun_cum_asv
 ``` r
 # Find the number of ASVs that account for 50%, 80%, and 99% of total reads
 cat(
-  "Number of ASVs that account for 50%, 80%, and 99% of total reads", "\n\n",
+  "Number of ASVs that account for 50%, 80%, 90%, and 99% of total reads", "\n\n",
   "50%:", sum(cumulative <= 50), "\n",
   "80%:", sum(cumulative <= 80), "\n",
+  "90%:", sum(cumulative <= 90), "\n",
   "99%:", sum(cumulative <= 99), "\n"
 )
 ```
 
 ```
-# Number of ASVs that account for 50%, 80%, and 99% of total reads 
+# Number of ASVs that account for 50%, 80%, 90%, and 99% of total reads 
 # 
 #  50%: 57 
 #  80%: 140 
+#  90%: 238 
 #  99%: 741
 ```
 
@@ -2608,7 +2612,7 @@ cat(
 #  500: 49
 ```
 
-### Filter top ASVs with mean read count > 100
+### Filter top ASVs with 95 % of reads
 
 
 ``` r
@@ -2616,7 +2620,10 @@ cat(
 # top_asvs <- asv_counts[order(rowSums(asv_counts), decreasing = T)[1:DIFFOTU], ]
 
 # Filter ASVs with mean read count > 100
-top_asvs <- asv_counts[rowMeans(asv_counts) > 100, ]
+# top_asvs <- asv_counts[rowMeans(asv_counts) > 100, ]
+
+# Filter top ASVs with 90% of reads
+top_asvs <- asv_counts[filter_otus(asv_counts, FUNASVFILTER), ]
 
 # Check that sample names match
 identical(names(top_asvs), rownames(colData))
@@ -2797,6 +2804,58 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 48.15 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV102 </td>
+   <td style="text-align:left;"> Hypocreales(o) </td>
+   <td style="text-align:right;"> 69 </td>
+   <td style="text-align:left;"> 64.95*** </td>
+   <td style="text-align:left;"> 3.17** </td>
+   <td style="text-align:left;"> 1.87 </td>
+   <td style="text-align:left;"> 9.47*** </td>
+   <td style="text-align:left;"> 2.39 </td>
+   <td style="text-align:left;"> 1.27 </td>
+   <td style="text-align:left;"> 4.48 </td>
+   <td style="text-align:left;"> 12.39 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV103 </td>
+   <td style="text-align:left;"> Sordariomycetes(c) </td>
+   <td style="text-align:right;"> 83 </td>
+   <td style="text-align:left;"> 6.73 </td>
+   <td style="text-align:left;"> 1.57 </td>
+   <td style="text-align:left;"> 5.85 </td>
+   <td style="text-align:left;"> 3.76 </td>
+   <td style="text-align:left;"> 7.25 </td>
+   <td style="text-align:left;"> 6.78 </td>
+   <td style="text-align:left;"> 20.11 </td>
+   <td style="text-align:left;"> 47.94 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV104 </td>
+   <td style="text-align:left;"> Trichoderma(g) </td>
+   <td style="text-align:right;"> 53 </td>
+   <td style="text-align:left;"> 32.03*** </td>
+   <td style="text-align:left;"> 0.17 </td>
+   <td style="text-align:left;"> 3.45 </td>
+   <td style="text-align:left;"> 6.81 </td>
+   <td style="text-align:left;"> 5.08 </td>
+   <td style="text-align:left;"> 3.28 </td>
+   <td style="text-align:left;"> 6.52 </td>
+   <td style="text-align:left;"> 42.66 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV105 </td>
+   <td style="text-align:left;"> Saitozyma podzolica(s) </td>
+   <td style="text-align:right;"> 62 </td>
+   <td style="text-align:left;"> 69.26*** </td>
+   <td style="text-align:left;"> 1.04 </td>
+   <td style="text-align:left;"> 1.25 </td>
+   <td style="text-align:left;"> 4.3** </td>
+   <td style="text-align:left;"> 4.16 </td>
+   <td style="text-align:left;"> 1.01 </td>
+   <td style="text-align:left;"> 4.47 </td>
+   <td style="text-align:left;"> 14.51 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV106 </td>
    <td style="text-align:left;"> Pleosporales(o) </td>
    <td style="text-align:right;"> 140 </td>
@@ -2888,6 +2947,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 12.87 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV111 </td>
+   <td style="text-align:left;"> Mrakia gelida(s) </td>
+   <td style="text-align:right;"> 73 </td>
+   <td style="text-align:left;"> 40.78*** </td>
+   <td style="text-align:left;"> 0.46 </td>
+   <td style="text-align:left;"> 6.94 </td>
+   <td style="text-align:left;"> 2.9 </td>
+   <td style="text-align:left;"> 6.32 </td>
+   <td style="text-align:left;"> 4.63 </td>
+   <td style="text-align:left;"> 12.04 </td>
+   <td style="text-align:left;"> 25.92 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV112 </td>
    <td style="text-align:left;"> Helotiales(o) </td>
    <td style="text-align:right;"> 199 </td>
@@ -2914,6 +2986,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 49.7 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV114 </td>
+   <td style="text-align:left;"> Gibellulopsis nigrescens(s) </td>
+   <td style="text-align:right;"> 53 </td>
+   <td style="text-align:left;"> 12.8** </td>
+   <td style="text-align:left;"> 1.51 </td>
+   <td style="text-align:left;"> 1.3 </td>
+   <td style="text-align:left;"> 2.19 </td>
+   <td style="text-align:left;"> 18.62 </td>
+   <td style="text-align:left;"> 4.83 </td>
+   <td style="text-align:left;"> 13.84 </td>
+   <td style="text-align:left;"> 44.92 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV115 </td>
    <td style="text-align:left;"> Chaetomium globosum(s) </td>
    <td style="text-align:right;"> 205 </td>
@@ -2927,6 +3012,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 12.71 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV116 </td>
+   <td style="text-align:left;"> Solicoccozyma terrea(s) </td>
+   <td style="text-align:right;"> 66 </td>
+   <td style="text-align:left;"> 54.43*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 2.64 </td>
+   <td style="text-align:left;"> 8.51** </td>
+   <td style="text-align:left;"> 3.56 </td>
+   <td style="text-align:left;"> 2.79 </td>
+   <td style="text-align:left;"> 5.63 </td>
+   <td style="text-align:left;"> 22.44 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV117 </td>
    <td style="text-align:left;"> Candolleomyces candolleanus(s) </td>
    <td style="text-align:right;"> 230 </td>
@@ -2938,6 +3036,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 2.3 </td>
    <td style="text-align:left;"> 9.34 </td>
    <td style="text-align:left;"> 33.21 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV118 </td>
+   <td style="text-align:left;"> Tausonia pullulans(s) </td>
+   <td style="text-align:right;"> 62 </td>
+   <td style="text-align:left;"> 18.8*** </td>
+   <td style="text-align:left;"> 5.16** </td>
+   <td style="text-align:left;"> 6.13 </td>
+   <td style="text-align:left;"> 19.71*** </td>
+   <td style="text-align:left;"> 7.8 </td>
+   <td style="text-align:left;"> 7.65 </td>
+   <td style="text-align:left;"> 11.9 </td>
+   <td style="text-align:left;"> 22.85 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV119 </td>
@@ -2979,6 +3090,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 35.61 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV121 </td>
+   <td style="text-align:left;"> Fusarium(g) </td>
+   <td style="text-align:right;"> 45 </td>
+   <td style="text-align:left;"> 27.05*** </td>
+   <td style="text-align:left;"> 0.69 </td>
+   <td style="text-align:left;"> 2.95 </td>
+   <td style="text-align:left;"> 1.19 </td>
+   <td style="text-align:left;"> 8.59 </td>
+   <td style="text-align:left;"> 4.22 </td>
+   <td style="text-align:left;"> 11.1 </td>
+   <td style="text-align:left;"> 44.21 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV122 </td>
    <td style="text-align:left;"> Keithomyces carneus(s) </td>
    <td style="text-align:right;"> 120 </td>
@@ -3016,6 +3140,32 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 3 </td>
    <td style="text-align:left;"> 10.04 </td>
    <td style="text-align:left;"> 23.66 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV125 </td>
+   <td style="text-align:left;"> Ascomycota(p) </td>
+   <td style="text-align:right;"> 55 </td>
+   <td style="text-align:left;"> 55.61*** </td>
+   <td style="text-align:left;"> 0.02 </td>
+   <td style="text-align:left;"> 2.53 </td>
+   <td style="text-align:left;"> 3.3 </td>
+   <td style="text-align:left;"> 5.99 </td>
+   <td style="text-align:left;"> 1.41 </td>
+   <td style="text-align:left;"> 4.11 </td>
+   <td style="text-align:left;"> 27.04 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV126 </td>
+   <td style="text-align:left;"> Valsaceae(f) </td>
+   <td style="text-align:right;"> 76 </td>
+   <td style="text-align:left;"> 5.67 </td>
+   <td style="text-align:left;"> 1.54 </td>
+   <td style="text-align:left;"> 4.86 </td>
+   <td style="text-align:left;"> 2.79 </td>
+   <td style="text-align:left;"> 8.58 </td>
+   <td style="text-align:left;"> 12.36 </td>
+   <td style="text-align:left;"> 8.44 </td>
+   <td style="text-align:left;"> 55.77 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV127 </td>
@@ -3070,6 +3220,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 31.25 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV130 </td>
+   <td style="text-align:left;"> Leotiomycetes(c) </td>
+   <td style="text-align:right;"> 66 </td>
+   <td style="text-align:left;"> 73.61*** </td>
+   <td style="text-align:left;"> 0.66 </td>
+   <td style="text-align:left;"> 1.84 </td>
+   <td style="text-align:left;"> 6.04*** </td>
+   <td style="text-align:left;"> 3.45 </td>
+   <td style="text-align:left;"> 0.57 </td>
+   <td style="text-align:left;"> 3.79 </td>
+   <td style="text-align:left;"> 10.04 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV131 </td>
    <td style="text-align:left;"> Venturiaceae(f) </td>
    <td style="text-align:right;"> 651 </td>
@@ -3081,6 +3244,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 2.52 </td>
    <td style="text-align:left;"> 7.62 </td>
    <td style="text-align:left;"> 41 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV132 </td>
+   <td style="text-align:left;"> Sordariales(o) </td>
+   <td style="text-align:right;"> 94 </td>
+   <td style="text-align:left;"> 78.81*** </td>
+   <td style="text-align:left;"> 0.19 </td>
+   <td style="text-align:left;"> 1.52 </td>
+   <td style="text-align:left;"> 2.47* </td>
+   <td style="text-align:left;"> 2.3 </td>
+   <td style="text-align:left;"> 1.59 </td>
+   <td style="text-align:left;"> 1.92 </td>
+   <td style="text-align:left;"> 11.19 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV133 </td>
@@ -3122,6 +3298,32 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 16.49 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV135 </td>
+   <td style="text-align:left;"> Thelonectria veuillotiana(s) </td>
+   <td style="text-align:right;"> 58 </td>
+   <td style="text-align:left;"> 61.21*** </td>
+   <td style="text-align:left;"> 0.23 </td>
+   <td style="text-align:left;"> 2.3 </td>
+   <td style="text-align:left;"> 5.11** </td>
+   <td style="text-align:left;"> 3.78 </td>
+   <td style="text-align:left;"> 1.61 </td>
+   <td style="text-align:left;"> 6.87 </td>
+   <td style="text-align:left;"> 18.9 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV136 </td>
+   <td style="text-align:left;"> Pochonia chlamydosporia(s) </td>
+   <td style="text-align:right;"> 91 </td>
+   <td style="text-align:left;"> 51.03*** </td>
+   <td style="text-align:left;"> 0.57 </td>
+   <td style="text-align:left;"> 3.42 </td>
+   <td style="text-align:left;"> 1.65 </td>
+   <td style="text-align:left;"> 4.01 </td>
+   <td style="text-align:left;"> 4.37 </td>
+   <td style="text-align:left;"> 4.84 </td>
+   <td style="text-align:left;"> 30.12 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV137 </td>
    <td style="text-align:left;"> Pleotrichocladium opacum(s) </td>
    <td style="text-align:right;"> 109 </td>
@@ -3146,6 +3348,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 2.2 </td>
    <td style="text-align:left;"> 2.89 </td>
    <td style="text-align:left;"> 8.72 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV139 </td>
+   <td style="text-align:left;"> Beauveria brongniartii(s) </td>
+   <td style="text-align:right;"> 46 </td>
+   <td style="text-align:left;"> 2.62 </td>
+   <td style="text-align:left;"> 2.08 </td>
+   <td style="text-align:left;"> 3.41 </td>
+   <td style="text-align:left;"> 4.93 </td>
+   <td style="text-align:left;"> 9.15 </td>
+   <td style="text-align:left;"> 5.93 </td>
+   <td style="text-align:left;"> 17.13 </td>
+   <td style="text-align:left;"> 54.77 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV14 </td>
@@ -3174,6 +3389,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 15.5 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV142 </td>
+   <td style="text-align:left;"> Linnemannia elongata(s) </td>
+   <td style="text-align:right;"> 78 </td>
+   <td style="text-align:left;"> 46.12*** </td>
+   <td style="text-align:left;"> 1.77 </td>
+   <td style="text-align:left;"> 6.53 </td>
+   <td style="text-align:left;"> 6.02* </td>
+   <td style="text-align:left;"> 2.88 </td>
+   <td style="text-align:left;"> 1.73 </td>
+   <td style="text-align:left;"> 2.9 </td>
+   <td style="text-align:left;"> 32.07 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV143 </td>
    <td style="text-align:left;"> Tetracladium setigerum(s) </td>
    <td style="text-align:right;"> 156 </td>
@@ -3185,6 +3413,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 1.96 </td>
    <td style="text-align:left;"> 7.41 </td>
    <td style="text-align:left;"> 34.04 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV144 </td>
+   <td style="text-align:left;"> Rhodotorula babjevae(s) </td>
+   <td style="text-align:right;"> 93 </td>
+   <td style="text-align:left;"> 47.8*** </td>
+   <td style="text-align:left;"> 0.84 </td>
+   <td style="text-align:left;"> 3.3 </td>
+   <td style="text-align:left;"> 0.43 </td>
+   <td style="text-align:left;"> 8.9 </td>
+   <td style="text-align:left;"> 1.51 </td>
+   <td style="text-align:left;"> 3.83 </td>
+   <td style="text-align:left;"> 33.39 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV145 </td>
@@ -3200,6 +3441,32 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 56.03 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV146 </td>
+   <td style="text-align:left;"> Tetracladium(g) </td>
+   <td style="text-align:right;"> 64 </td>
+   <td style="text-align:left;"> 2.51 </td>
+   <td style="text-align:left;"> 0.76 </td>
+   <td style="text-align:left;"> 3.98 </td>
+   <td style="text-align:left;"> 4.09 </td>
+   <td style="text-align:left;"> 22.55 </td>
+   <td style="text-align:left;"> 2.06 </td>
+   <td style="text-align:left;"> 20.33 </td>
+   <td style="text-align:left;"> 43.73 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV147 </td>
+   <td style="text-align:left;"> Hypocreales(o) </td>
+   <td style="text-align:right;"> 74 </td>
+   <td style="text-align:left;"> 18.26*** </td>
+   <td style="text-align:left;"> 2.67 </td>
+   <td style="text-align:left;"> 4.35 </td>
+   <td style="text-align:left;"> 5.52 </td>
+   <td style="text-align:left;"> 5.88 </td>
+   <td style="text-align:left;"> 4.92 </td>
+   <td style="text-align:left;"> 17.79 </td>
+   <td style="text-align:left;"> 40.61 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV148 </td>
    <td style="text-align:left;"> Trichoderma ovalisporum(s) </td>
    <td style="text-align:right;"> 152 </td>
@@ -3213,6 +3480,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 32.44 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV149 </td>
+   <td style="text-align:left;"> Helotiales(o) </td>
+   <td style="text-align:right;"> 38 </td>
+   <td style="text-align:left;"> 55.01*** </td>
+   <td style="text-align:left;"> 1.15 </td>
+   <td style="text-align:left;"> 1.9 </td>
+   <td style="text-align:left;"> 1.43 </td>
+   <td style="text-align:left;"> 4.29 </td>
+   <td style="text-align:left;"> 2.69 </td>
+   <td style="text-align:left;"> 9.39 </td>
+   <td style="text-align:left;"> 24.15 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV15 </td>
    <td style="text-align:left;"> Dactylonectria(g) </td>
    <td style="text-align:right;"> 1372 </td>
@@ -3224,6 +3504,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 6.15 </td>
    <td style="text-align:left;"> 19.43 </td>
    <td style="text-align:left;"> 40.96 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV150 </td>
+   <td style="text-align:left;"> Dokmaia monthadangii(s) </td>
+   <td style="text-align:right;"> 76 </td>
+   <td style="text-align:left;"> 44.02*** </td>
+   <td style="text-align:left;"> 0.94 </td>
+   <td style="text-align:left;"> 1.82 </td>
+   <td style="text-align:left;"> 6.43* </td>
+   <td style="text-align:left;"> 5.65 </td>
+   <td style="text-align:left;"> 4.87 </td>
+   <td style="text-align:left;"> 5.07 </td>
+   <td style="text-align:left;"> 31.2 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV151 </td>
@@ -3252,6 +3545,84 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 17.26 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV154 </td>
+   <td style="text-align:left;"> Epicoccum nigrum(s) </td>
+   <td style="text-align:right;"> 89 </td>
+   <td style="text-align:left;"> 22.63*** </td>
+   <td style="text-align:left;"> 2.47 </td>
+   <td style="text-align:left;"> 2.21 </td>
+   <td style="text-align:left;"> 11.2* </td>
+   <td style="text-align:left;"> 6.49 </td>
+   <td style="text-align:left;"> 6.66 </td>
+   <td style="text-align:left;"> 5.86 </td>
+   <td style="text-align:left;"> 42.48 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV155 </td>
+   <td style="text-align:left;"> Didymella(g) </td>
+   <td style="text-align:right;"> 44 </td>
+   <td style="text-align:left;"> 10.47** </td>
+   <td style="text-align:left;"> 0.47 </td>
+   <td style="text-align:left;"> 5.39 </td>
+   <td style="text-align:left;"> 3.47 </td>
+   <td style="text-align:left;"> 12.3 </td>
+   <td style="text-align:left;"> 15.73* </td>
+   <td style="text-align:left;"> 14.93 </td>
+   <td style="text-align:left;"> 37.25 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV156 </td>
+   <td style="text-align:left;"> Venturiaceae(f) </td>
+   <td style="text-align:right;"> 97 </td>
+   <td style="text-align:left;"> 41.69*** </td>
+   <td style="text-align:left;"> 0.12 </td>
+   <td style="text-align:left;"> 2.71 </td>
+   <td style="text-align:left;"> 3.28 </td>
+   <td style="text-align:left;"> 10.24 </td>
+   <td style="text-align:left;"> 3.79 </td>
+   <td style="text-align:left;"> 7.41 </td>
+   <td style="text-align:left;"> 30.77 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV157 </td>
+   <td style="text-align:left;"> Sordariomycetes(c) </td>
+   <td style="text-align:right;"> 90 </td>
+   <td style="text-align:left;"> 78.32*** </td>
+   <td style="text-align:left;"> 0.06 </td>
+   <td style="text-align:left;"> 2.43 </td>
+   <td style="text-align:left;"> 1.39 </td>
+   <td style="text-align:left;"> 1.79 </td>
+   <td style="text-align:left;"> 1.82 </td>
+   <td style="text-align:left;"> 4.75 </td>
+   <td style="text-align:left;"> 9.44 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV158 </td>
+   <td style="text-align:left;"> Ascomycota(p) </td>
+   <td style="text-align:right;"> 74 </td>
+   <td style="text-align:left;"> 84.38*** </td>
+   <td style="text-align:left;"> 0.04 </td>
+   <td style="text-align:left;"> 0.68 </td>
+   <td style="text-align:left;"> 0.7 </td>
+   <td style="text-align:left;"> 1.97 </td>
+   <td style="text-align:left;"> 1.18 </td>
+   <td style="text-align:left;"> 2.34 </td>
+   <td style="text-align:left;"> 8.71 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV159 </td>
+   <td style="text-align:left;"> Pleosporales(o) </td>
+   <td style="text-align:right;"> 63 </td>
+   <td style="text-align:left;"> 45.52*** </td>
+   <td style="text-align:left;"> 3.29* </td>
+   <td style="text-align:left;"> 3.11 </td>
+   <td style="text-align:left;"> 4.57* </td>
+   <td style="text-align:left;"> 9.04 </td>
+   <td style="text-align:left;"> 2.82 </td>
+   <td style="text-align:left;"> 12.56* </td>
+   <td style="text-align:left;"> 19.08 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV16 </td>
    <td style="text-align:left;"> Plectosphaerella(g) </td>
    <td style="text-align:right;"> 1271 </td>
@@ -3263,6 +3634,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 8.63 </td>
    <td style="text-align:left;"> 21.42 </td>
    <td style="text-align:left;"> 39.69 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV160 </td>
+   <td style="text-align:left;"> Dokmaia monthadangii(s) </td>
+   <td style="text-align:right;"> 65 </td>
+   <td style="text-align:left;"> 69.5*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 2.37 </td>
+   <td style="text-align:left;"> 1.07 </td>
+   <td style="text-align:left;"> 3.35 </td>
+   <td style="text-align:left;"> 3.58 </td>
+   <td style="text-align:left;"> 5.06 </td>
+   <td style="text-align:left;"> 15.06 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV164 </td>
@@ -3278,6 +3662,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 22.89 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV165 </td>
+   <td style="text-align:left;"> Paraphaeosphaeria(g) </td>
+   <td style="text-align:right;"> 57 </td>
+   <td style="text-align:left;"> 33.08*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 4.57 </td>
+   <td style="text-align:left;"> 1.77 </td>
+   <td style="text-align:left;"> 5.29 </td>
+   <td style="text-align:left;"> 6.76 </td>
+   <td style="text-align:left;"> 16.18 </td>
+   <td style="text-align:left;"> 32.34 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV166 </td>
    <td style="text-align:left;"> Cephalotrichum stemonitis(s) </td>
    <td style="text-align:right;"> 287 </td>
@@ -3289,6 +3686,45 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 1.6 </td>
    <td style="text-align:left;"> 3.42 </td>
    <td style="text-align:left;"> 9.81 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV167 </td>
+   <td style="text-align:left;"> Aspergillus glaucus(s) </td>
+   <td style="text-align:right;"> 74 </td>
+   <td style="text-align:left;"> 28.07*** </td>
+   <td style="text-align:left;"> 0.02 </td>
+   <td style="text-align:left;"> 1.97 </td>
+   <td style="text-align:left;"> 0.12 </td>
+   <td style="text-align:left;"> 7.11 </td>
+   <td style="text-align:left;"> 6.25 </td>
+   <td style="text-align:left;"> 12.98 </td>
+   <td style="text-align:left;"> 43.49 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV168 </td>
+   <td style="text-align:left;"> Apiotrichum loubieri(s) </td>
+   <td style="text-align:right;"> 55 </td>
+   <td style="text-align:left;"> 16.59*** </td>
+   <td style="text-align:left;"> 6.57** </td>
+   <td style="text-align:left;"> 4.7 </td>
+   <td style="text-align:left;"> 10.12** </td>
+   <td style="text-align:left;"> 11.86 </td>
+   <td style="text-align:left;"> 8.31 </td>
+   <td style="text-align:left;"> 10.36 </td>
+   <td style="text-align:left;"> 31.49 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV169 </td>
+   <td style="text-align:left;"> Ascomycota(p) </td>
+   <td style="text-align:right;"> 52 </td>
+   <td style="text-align:left;"> 62.48*** </td>
+   <td style="text-align:left;"> 1.59 </td>
+   <td style="text-align:left;"> 2.69 </td>
+   <td style="text-align:left;"> 3.58* </td>
+   <td style="text-align:left;"> 2.26 </td>
+   <td style="text-align:left;"> 1.98 </td>
+   <td style="text-align:left;"> 5.71 </td>
+   <td style="text-align:left;"> 19.7 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV17 </td>
@@ -3304,6 +3740,110 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 43.13 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV170 </td>
+   <td style="text-align:left;"> Hypocreales(o) </td>
+   <td style="text-align:right;"> 81 </td>
+   <td style="text-align:left;"> 56.84*** </td>
+   <td style="text-align:left;"> 0.99 </td>
+   <td style="text-align:left;"> 4.6 </td>
+   <td style="text-align:left;"> 4.08* </td>
+   <td style="text-align:left;"> 2.24 </td>
+   <td style="text-align:left;"> 2.58 </td>
+   <td style="text-align:left;"> 8.23 </td>
+   <td style="text-align:left;"> 20.45 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV171 </td>
+   <td style="text-align:left;"> Exophiala(g) </td>
+   <td style="text-align:right;"> 86 </td>
+   <td style="text-align:left;"> 56.29*** </td>
+   <td style="text-align:left;"> 0.64 </td>
+   <td style="text-align:left;"> 2.36 </td>
+   <td style="text-align:left;"> 0.06 </td>
+   <td style="text-align:left;"> 7.4 </td>
+   <td style="text-align:left;"> 2.16 </td>
+   <td style="text-align:left;"> 11.27 </td>
+   <td style="text-align:left;"> 19.81 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV172 </td>
+   <td style="text-align:left;"> Sordariomycetes(c) </td>
+   <td style="text-align:right;"> 76 </td>
+   <td style="text-align:left;"> 52.3*** </td>
+   <td style="text-align:left;"> 0.01 </td>
+   <td style="text-align:left;"> 2.85 </td>
+   <td style="text-align:left;"> 1.1 </td>
+   <td style="text-align:left;"> 6.14 </td>
+   <td style="text-align:left;"> 4.43 </td>
+   <td style="text-align:left;"> 9.53 </td>
+   <td style="text-align:left;"> 23.62 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV173 </td>
+   <td style="text-align:left;"> Clonostachys rosea(s) </td>
+   <td style="text-align:right;"> 52 </td>
+   <td style="text-align:left;"> 16.97** </td>
+   <td style="text-align:left;"> 0.22 </td>
+   <td style="text-align:left;"> 4.55 </td>
+   <td style="text-align:left;"> 1.28 </td>
+   <td style="text-align:left;"> 8.44 </td>
+   <td style="text-align:left;"> 7.66 </td>
+   <td style="text-align:left;"> 16.22 </td>
+   <td style="text-align:left;"> 44.66 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV174 </td>
+   <td style="text-align:left;"> Cladosporium ramotenellum(s) </td>
+   <td style="text-align:right;"> 49 </td>
+   <td style="text-align:left;"> 21.25*** </td>
+   <td style="text-align:left;"> 0.02 </td>
+   <td style="text-align:left;"> 4.63 </td>
+   <td style="text-align:left;"> 9.61* </td>
+   <td style="text-align:left;"> 15.78 </td>
+   <td style="text-align:left;"> 5.58 </td>
+   <td style="text-align:left;"> 6.38 </td>
+   <td style="text-align:left;"> 36.74 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV175 </td>
+   <td style="text-align:left;"> Leotiales(o) </td>
+   <td style="text-align:right;"> 44 </td>
+   <td style="text-align:left;"> 39.31*** </td>
+   <td style="text-align:left;"> 0.21 </td>
+   <td style="text-align:left;"> 6.59 </td>
+   <td style="text-align:left;"> 2.84 </td>
+   <td style="text-align:left;"> 6.55 </td>
+   <td style="text-align:left;"> 1.33 </td>
+   <td style="text-align:left;"> 5.37 </td>
+   <td style="text-align:left;"> 37.82 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV176 </td>
+   <td style="text-align:left;"> Volutella ciliata(s) </td>
+   <td style="text-align:right;"> 41 </td>
+   <td style="text-align:left;"> 64.36*** </td>
+   <td style="text-align:left;"> 0.39 </td>
+   <td style="text-align:left;"> 2.99 </td>
+   <td style="text-align:left;"> 0.43 </td>
+   <td style="text-align:left;"> 5.41 </td>
+   <td style="text-align:left;"> 1.34 </td>
+   <td style="text-align:left;"> 10.3* </td>
+   <td style="text-align:left;"> 14.77 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV177 </td>
+   <td style="text-align:left;"> Tetracladium setigerum(s) </td>
+   <td style="text-align:right;"> 68 </td>
+   <td style="text-align:left;"> 13.95** </td>
+   <td style="text-align:left;"> 0.93 </td>
+   <td style="text-align:left;"> 5.1 </td>
+   <td style="text-align:left;"> 4.12 </td>
+   <td style="text-align:left;"> 16.83 </td>
+   <td style="text-align:left;"> 4.79 </td>
+   <td style="text-align:left;"> 11.32 </td>
+   <td style="text-align:left;"> 42.96 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV178 </td>
    <td style="text-align:left;"> Venturiaceae(f) </td>
    <td style="text-align:right;"> 106 </td>
@@ -3315,6 +3855,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 4.68 </td>
    <td style="text-align:left;"> 9.27 </td>
    <td style="text-align:left;"> 39.9 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV179 </td>
+   <td style="text-align:left;"> Cadophora luteo-olivacea(s) </td>
+   <td style="text-align:right;"> 60 </td>
+   <td style="text-align:left;"> 37.91*** </td>
+   <td style="text-align:left;"> 10.72*** </td>
+   <td style="text-align:left;"> 2.57 </td>
+   <td style="text-align:left;"> 8.5*** </td>
+   <td style="text-align:left;"> 9.95 </td>
+   <td style="text-align:left;"> 2.54 </td>
+   <td style="text-align:left;"> 9.6 </td>
+   <td style="text-align:left;"> 18.22 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV18 </td>
@@ -3330,6 +3883,110 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 25.25 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV180 </td>
+   <td style="text-align:left;"> Tetracladium(g) </td>
+   <td style="text-align:right;"> 51 </td>
+   <td style="text-align:left;"> 4.43 </td>
+   <td style="text-align:left;"> 0.06 </td>
+   <td style="text-align:left;"> 8.04 </td>
+   <td style="text-align:left;"> 2.67 </td>
+   <td style="text-align:left;"> 17.57 </td>
+   <td style="text-align:left;"> 5.13 </td>
+   <td style="text-align:left;"> 15.55 </td>
+   <td style="text-align:left;"> 46.56 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV181 </td>
+   <td style="text-align:left;"> Sordariomycetes(c) </td>
+   <td style="text-align:right;"> 45 </td>
+   <td style="text-align:left;"> 48.99*** </td>
+   <td style="text-align:left;"> 1.54 </td>
+   <td style="text-align:left;"> 1.88 </td>
+   <td style="text-align:left;"> 9.95** </td>
+   <td style="text-align:left;"> 7.01 </td>
+   <td style="text-align:left;"> 1.82 </td>
+   <td style="text-align:left;"> 4.6 </td>
+   <td style="text-align:left;"> 24.21 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV182 </td>
+   <td style="text-align:left;"> Fungi(k) </td>
+   <td style="text-align:right;"> 60 </td>
+   <td style="text-align:left;"> 21.58*** </td>
+   <td style="text-align:left;"> 1.73 </td>
+   <td style="text-align:left;"> 3.64 </td>
+   <td style="text-align:left;"> 2.13 </td>
+   <td style="text-align:left;"> 13.46 </td>
+   <td style="text-align:left;"> 3.77 </td>
+   <td style="text-align:left;"> 15.39 </td>
+   <td style="text-align:left;"> 38.29 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV183 </td>
+   <td style="text-align:left;"> Sordariomycetes(c) </td>
+   <td style="text-align:right;"> 78 </td>
+   <td style="text-align:left;"> 64.28*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 3.28 </td>
+   <td style="text-align:left;"> 2.14 </td>
+   <td style="text-align:left;"> 2.14 </td>
+   <td style="text-align:left;"> 0.9 </td>
+   <td style="text-align:left;"> 4.06 </td>
+   <td style="text-align:left;"> 23.21 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV184 </td>
+   <td style="text-align:left;"> Crinipellis scabella(s) </td>
+   <td style="text-align:right;"> 41 </td>
+   <td style="text-align:left;"> 17.94** </td>
+   <td style="text-align:left;"> 4.06 </td>
+   <td style="text-align:left;"> 2.43 </td>
+   <td style="text-align:left;"> 2.39 </td>
+   <td style="text-align:left;"> 9.21 </td>
+   <td style="text-align:left;"> 7.64 </td>
+   <td style="text-align:left;"> 7.4 </td>
+   <td style="text-align:left;"> 48.93 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV185 </td>
+   <td style="text-align:left;"> Fungi(k) </td>
+   <td style="text-align:right;"> 98 </td>
+   <td style="text-align:left;"> 18.9** </td>
+   <td style="text-align:left;"> 0.54 </td>
+   <td style="text-align:left;"> 2.22 </td>
+   <td style="text-align:left;"> 8.35* </td>
+   <td style="text-align:left;"> 10.77 </td>
+   <td style="text-align:left;"> 1.69 </td>
+   <td style="text-align:left;"> 9.49 </td>
+   <td style="text-align:left;"> 48.05 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV187 </td>
+   <td style="text-align:left;"> Fusarium(g) </td>
+   <td style="text-align:right;"> 39 </td>
+   <td style="text-align:left;"> 36.87*** </td>
+   <td style="text-align:left;"> 0.06 </td>
+   <td style="text-align:left;"> 0.09 </td>
+   <td style="text-align:left;"> 3.6 </td>
+   <td style="text-align:left;"> 11.42 </td>
+   <td style="text-align:left;"> 1.63 </td>
+   <td style="text-align:left;"> 10.74 </td>
+   <td style="text-align:left;"> 35.58 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV188 </td>
+   <td style="text-align:left;"> Tricladium terrestre(s) </td>
+   <td style="text-align:right;"> 37 </td>
+   <td style="text-align:left;"> 18.92*** </td>
+   <td style="text-align:left;"> 1.31 </td>
+   <td style="text-align:left;"> 6.17 </td>
+   <td style="text-align:left;"> 1.08 </td>
+   <td style="text-align:left;"> 18.28 </td>
+   <td style="text-align:left;"> 7.95 </td>
+   <td style="text-align:left;"> 13.17 </td>
+   <td style="text-align:left;"> 33.13 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV19 </td>
    <td style="text-align:left;"> Boeremia exigua(s) </td>
    <td style="text-align:right;"> 1314 </td>
@@ -3341,6 +3998,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 2.47 </td>
    <td style="text-align:left;"> 9.96 </td>
    <td style="text-align:left;"> 42.73 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV191 </td>
+   <td style="text-align:left;"> Candolleomyces candolleanus(s) </td>
+   <td style="text-align:right;"> 62 </td>
+   <td style="text-align:left;"> 11.71* </td>
+   <td style="text-align:left;"> 1.08 </td>
+   <td style="text-align:left;"> 3.68 </td>
+   <td style="text-align:left;"> 3.94 </td>
+   <td style="text-align:left;"> 8.16 </td>
+   <td style="text-align:left;"> 6.87 </td>
+   <td style="text-align:left;"> 8.66 </td>
+   <td style="text-align:left;"> 55.89 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV192 </td>
@@ -3369,6 +4039,32 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 37.87 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV194 </td>
+   <td style="text-align:left;"> Agaricomycetes(c) </td>
+   <td style="text-align:right;"> 36 </td>
+   <td style="text-align:left;"> 15.36* </td>
+   <td style="text-align:left;"> 3.05 </td>
+   <td style="text-align:left;"> 5.7 </td>
+   <td style="text-align:left;"> 1.12 </td>
+   <td style="text-align:left;"> 2.55 </td>
+   <td style="text-align:left;"> 1.99 </td>
+   <td style="text-align:left;"> 8.34 </td>
+   <td style="text-align:left;"> 61.9 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV195 </td>
+   <td style="text-align:left;"> Trichoderma(g) </td>
+   <td style="text-align:right;"> 88 </td>
+   <td style="text-align:left;"> 66.98*** </td>
+   <td style="text-align:left;"> 0.02 </td>
+   <td style="text-align:left;"> 1.83 </td>
+   <td style="text-align:left;"> 0.97 </td>
+   <td style="text-align:left;"> 4.01 </td>
+   <td style="text-align:left;"> 2.22 </td>
+   <td style="text-align:left;"> 2.55 </td>
+   <td style="text-align:left;"> 21.42 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV196 </td>
    <td style="text-align:left;"> Sordariaceae(f) </td>
    <td style="text-align:right;"> 159 </td>
@@ -3380,6 +4076,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 2.09 </td>
    <td style="text-align:left;"> 5.48 </td>
    <td style="text-align:left;"> 12.49 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV197 </td>
+   <td style="text-align:left;"> Agaricales(o) </td>
+   <td style="text-align:right;"> 57 </td>
+   <td style="text-align:left;"> 38.37*** </td>
+   <td style="text-align:left;"> 0.14 </td>
+   <td style="text-align:left;"> 2.15 </td>
+   <td style="text-align:left;"> 6.13 </td>
+   <td style="text-align:left;"> 2.86 </td>
+   <td style="text-align:left;"> 1.88 </td>
+   <td style="text-align:left;"> 4.77 </td>
+   <td style="text-align:left;"> 43.69 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV198 </td>
@@ -3434,6 +4143,58 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 55.61 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV200 </td>
+   <td style="text-align:left;"> Ceratobasidium albasitensis(s) </td>
+   <td style="text-align:right;"> 47 </td>
+   <td style="text-align:left;"> 25.22*** </td>
+   <td style="text-align:left;"> 1.2 </td>
+   <td style="text-align:left;"> 4.39 </td>
+   <td style="text-align:left;"> 8.5** </td>
+   <td style="text-align:left;"> 17.31* </td>
+   <td style="text-align:left;"> 9.14 </td>
+   <td style="text-align:left;"> 6.43 </td>
+   <td style="text-align:left;"> 27.81 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV202 </td>
+   <td style="text-align:left;"> Flagelloscypha minutissima(s) </td>
+   <td style="text-align:right;"> 61 </td>
+   <td style="text-align:left;"> 14.03** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 3.96 </td>
+   <td style="text-align:left;"> 5.94 </td>
+   <td style="text-align:left;"> 7.77 </td>
+   <td style="text-align:left;"> 12.36 </td>
+   <td style="text-align:left;"> 16.35 </td>
+   <td style="text-align:left;"> 39.57 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV203 </td>
+   <td style="text-align:left;"> Leotiomycetes(c) </td>
+   <td style="text-align:right;"> 37 </td>
+   <td style="text-align:left;"> 47.53*** </td>
+   <td style="text-align:left;"> 0.55 </td>
+   <td style="text-align:left;"> 3.66 </td>
+   <td style="text-align:left;"> 0.47 </td>
+   <td style="text-align:left;"> 8.14 </td>
+   <td style="text-align:left;"> 2.59 </td>
+   <td style="text-align:left;"> 8.99 </td>
+   <td style="text-align:left;"> 28.07 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV204 </td>
+   <td style="text-align:left;"> Diaporthe rudis(s) </td>
+   <td style="text-align:right;"> 91 </td>
+   <td style="text-align:left;"> 0.88 </td>
+   <td style="text-align:left;"> 0.28 </td>
+   <td style="text-align:left;"> 2.99 </td>
+   <td style="text-align:left;"> 9.24 </td>
+   <td style="text-align:left;"> 4.66 </td>
+   <td style="text-align:left;"> 7.31 </td>
+   <td style="text-align:left;"> 10.65 </td>
+   <td style="text-align:left;"> 63.98 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV205 </td>
    <td style="text-align:left;"> Minutisphaera fimbriatispora(s) </td>
    <td style="text-align:right;"> 134 </td>
@@ -3445,6 +4206,45 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 7.82 </td>
    <td style="text-align:left;"> 13.19 </td>
    <td style="text-align:left;"> 49.56 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV206 </td>
+   <td style="text-align:left;"> Agaricales(o) </td>
+   <td style="text-align:right;"> 59 </td>
+   <td style="text-align:left;"> 36.23*** </td>
+   <td style="text-align:left;"> 0.15 </td>
+   <td style="text-align:left;"> 0.92 </td>
+   <td style="text-align:left;"> 11.06** </td>
+   <td style="text-align:left;"> 3.26 </td>
+   <td style="text-align:left;"> 1.58 </td>
+   <td style="text-align:left;"> 6.54 </td>
+   <td style="text-align:left;"> 40.26 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV208 </td>
+   <td style="text-align:left;"> Basidiomycota(p) </td>
+   <td style="text-align:right;"> 95 </td>
+   <td style="text-align:left;"> 39.18*** </td>
+   <td style="text-align:left;"> 0.3 </td>
+   <td style="text-align:left;"> 1.2 </td>
+   <td style="text-align:left;"> 7.25* </td>
+   <td style="text-align:left;"> 5.77 </td>
+   <td style="text-align:left;"> 2.79 </td>
+   <td style="text-align:left;"> 8.32 </td>
+   <td style="text-align:left;"> 35.2 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV209 </td>
+   <td style="text-align:left;"> Helotiales(o) </td>
+   <td style="text-align:right;"> 87 </td>
+   <td style="text-align:left;"> 19.18** </td>
+   <td style="text-align:left;"> 0.29 </td>
+   <td style="text-align:left;"> 2.38 </td>
+   <td style="text-align:left;"> 11.42* </td>
+   <td style="text-align:left;"> 5.88 </td>
+   <td style="text-align:left;"> 1.78 </td>
+   <td style="text-align:left;"> 4.76 </td>
+   <td style="text-align:left;"> 54.3 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV21 </td>
@@ -3460,6 +4260,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 51.93 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV211 </td>
+   <td style="text-align:left;"> Nectriaceae(f) </td>
+   <td style="text-align:right;"> 40 </td>
+   <td style="text-align:left;"> 53.83*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 0.81 </td>
+   <td style="text-align:left;"> 1.49 </td>
+   <td style="text-align:left;"> 10.55 </td>
+   <td style="text-align:left;"> 2.83 </td>
+   <td style="text-align:left;"> 8.41 </td>
+   <td style="text-align:left;"> 22.08 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV213 </td>
    <td style="text-align:left;"> Leucoagaricus leucothites(s) </td>
    <td style="text-align:right;"> 155 </td>
@@ -3471,6 +4284,58 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 6.92 </td>
    <td style="text-align:left;"> 7.83 </td>
    <td style="text-align:left;"> 39.46 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV216 </td>
+   <td style="text-align:left;"> Linnemannia(g) </td>
+   <td style="text-align:right;"> 53 </td>
+   <td style="text-align:left;"> 24.24*** </td>
+   <td style="text-align:left;"> 2.28 </td>
+   <td style="text-align:left;"> 4.08 </td>
+   <td style="text-align:left;"> 1.72 </td>
+   <td style="text-align:left;"> 11.28 </td>
+   <td style="text-align:left;"> 11.52 </td>
+   <td style="text-align:left;"> 6.13 </td>
+   <td style="text-align:left;"> 38.74 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV217 </td>
+   <td style="text-align:left;"> Sordariales(o) </td>
+   <td style="text-align:right;"> 47 </td>
+   <td style="text-align:left;"> 67.7*** </td>
+   <td style="text-align:left;"> 1.28 </td>
+   <td style="text-align:left;"> 3.11 </td>
+   <td style="text-align:left;"> 5.03** </td>
+   <td style="text-align:left;"> 3.8 </td>
+   <td style="text-align:left;"> 1.96 </td>
+   <td style="text-align:left;"> 4.87 </td>
+   <td style="text-align:left;"> 12.25 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV218 </td>
+   <td style="text-align:left;"> Sordariomycetes(c) </td>
+   <td style="text-align:right;"> 45 </td>
+   <td style="text-align:left;"> 82.38*** </td>
+   <td style="text-align:left;"> 0.01 </td>
+   <td style="text-align:left;"> 1.75 </td>
+   <td style="text-align:left;"> 1.53 </td>
+   <td style="text-align:left;"> 1.02 </td>
+   <td style="text-align:left;"> 0.89 </td>
+   <td style="text-align:left;"> 2.58 </td>
+   <td style="text-align:left;"> 9.84 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV219 </td>
+   <td style="text-align:left;"> Ascomycota(p) </td>
+   <td style="text-align:right;"> 76 </td>
+   <td style="text-align:left;"> 70.52*** </td>
+   <td style="text-align:left;"> 0.91 </td>
+   <td style="text-align:left;"> 1.44 </td>
+   <td style="text-align:left;"> 3.57* </td>
+   <td style="text-align:left;"> 4.8 </td>
+   <td style="text-align:left;"> 1.81 </td>
+   <td style="text-align:left;"> 3.49 </td>
+   <td style="text-align:left;"> 13.45 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV22 </td>
@@ -3512,6 +4377,45 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 49.39 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV225 </td>
+   <td style="text-align:left;"> Trichosporon asteroides(s) </td>
+   <td style="text-align:right;"> 48 </td>
+   <td style="text-align:left;"> 29.83*** </td>
+   <td style="text-align:left;"> 0.86 </td>
+   <td style="text-align:left;"> 0.81 </td>
+   <td style="text-align:left;"> 9.19* </td>
+   <td style="text-align:left;"> 9.92 </td>
+   <td style="text-align:left;"> 3.11 </td>
+   <td style="text-align:left;"> 4.13 </td>
+   <td style="text-align:left;"> 42.15 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV226 </td>
+   <td style="text-align:left;"> Sordariales(o) </td>
+   <td style="text-align:right;"> 48 </td>
+   <td style="text-align:left;"> 81.1*** </td>
+   <td style="text-align:left;"> 0.05 </td>
+   <td style="text-align:left;"> 0.98 </td>
+   <td style="text-align:left;"> 1.88* </td>
+   <td style="text-align:left;"> 2.62 </td>
+   <td style="text-align:left;"> 1.75 </td>
+   <td style="text-align:left;"> 2.86 </td>
+   <td style="text-align:left;"> 8.76 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV228 </td>
+   <td style="text-align:left;"> Apiospora arundinis(s) </td>
+   <td style="text-align:right;"> 42 </td>
+   <td style="text-align:left;"> 44.47*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 1.86 </td>
+   <td style="text-align:left;"> 0.72 </td>
+   <td style="text-align:left;"> 6.96 </td>
+   <td style="text-align:left;"> 6.86 </td>
+   <td style="text-align:left;"> 9.74 </td>
+   <td style="text-align:left;"> 29.38 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV23 </td>
    <td style="text-align:left;"> Tetracladium maxilliforme(s) </td>
    <td style="text-align:right;"> 1026 </td>
@@ -3525,6 +4429,84 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 30.35 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV232 </td>
+   <td style="text-align:left;"> Agaricales(o) </td>
+   <td style="text-align:right;"> 46 </td>
+   <td style="text-align:left;"> 5.38 </td>
+   <td style="text-align:left;"> 3.72 </td>
+   <td style="text-align:left;"> 5.46 </td>
+   <td style="text-align:left;"> 3.44 </td>
+   <td style="text-align:left;"> 14.45 </td>
+   <td style="text-align:left;"> 4.07 </td>
+   <td style="text-align:left;"> 16.15 </td>
+   <td style="text-align:left;"> 47.31 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV233 </td>
+   <td style="text-align:left;"> Trichoderma(g) </td>
+   <td style="text-align:right;"> 64 </td>
+   <td style="text-align:left;"> 65.33*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 3.49 </td>
+   <td style="text-align:left;"> 1.4 </td>
+   <td style="text-align:left;"> 2.36 </td>
+   <td style="text-align:left;"> 3.69 </td>
+   <td style="text-align:left;"> 4.35 </td>
+   <td style="text-align:left;"> 19.39 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV234 </td>
+   <td style="text-align:left;"> Thermomyces lanuginosus(s) </td>
+   <td style="text-align:right;"> 48 </td>
+   <td style="text-align:left;"> 80.52*** </td>
+   <td style="text-align:left;"> 0.27 </td>
+   <td style="text-align:left;"> 0.74 </td>
+   <td style="text-align:left;"> 1.83* </td>
+   <td style="text-align:left;"> 2.19 </td>
+   <td style="text-align:left;"> 1.84 </td>
+   <td style="text-align:left;"> 2.56 </td>
+   <td style="text-align:left;"> 10.06 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV236 </td>
+   <td style="text-align:left;"> Slooffia cresolica(s) </td>
+   <td style="text-align:right;"> 78 </td>
+   <td style="text-align:left;"> 35.47*** </td>
+   <td style="text-align:left;"> 2.03 </td>
+   <td style="text-align:left;"> 2.77 </td>
+   <td style="text-align:left;"> 9.44** </td>
+   <td style="text-align:left;"> 6.31 </td>
+   <td style="text-align:left;"> 5.61 </td>
+   <td style="text-align:left;"> 5.39 </td>
+   <td style="text-align:left;"> 32.98 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV238 </td>
+   <td style="text-align:left;"> Helotiales(o) </td>
+   <td style="text-align:right;"> 100 </td>
+   <td style="text-align:left;"> 9.1* </td>
+   <td style="text-align:left;"> 1.64 </td>
+   <td style="text-align:left;"> 7.41 </td>
+   <td style="text-align:left;"> 2.59 </td>
+   <td style="text-align:left;"> 9.17 </td>
+   <td style="text-align:left;"> 2.22 </td>
+   <td style="text-align:left;"> 14.94 </td>
+   <td style="text-align:left;"> 52.93 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV239 </td>
+   <td style="text-align:left;"> Sordariomycetes(c) </td>
+   <td style="text-align:right;"> 82 </td>
+   <td style="text-align:left;"> 17.81** </td>
+   <td style="text-align:left;"> 0.15 </td>
+   <td style="text-align:left;"> 4.68 </td>
+   <td style="text-align:left;"> 11.33* </td>
+   <td style="text-align:left;"> 8.53 </td>
+   <td style="text-align:left;"> 3.59 </td>
+   <td style="text-align:left;"> 9.63 </td>
+   <td style="text-align:left;"> 44.27 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV24 </td>
    <td style="text-align:left;"> Herpotrichia juniperi(s) </td>
    <td style="text-align:right;"> 772 </td>
@@ -3536,6 +4518,71 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 1.69 </td>
    <td style="text-align:left;"> 4.04 </td>
    <td style="text-align:left;"> 8.97 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV240 </td>
+   <td style="text-align:left;"> Mortierellaceae(f) </td>
+   <td style="text-align:right;"> 82 </td>
+   <td style="text-align:left;"> 10.71* </td>
+   <td style="text-align:left;"> 4.33 </td>
+   <td style="text-align:left;"> 0.81 </td>
+   <td style="text-align:left;"> 2.91 </td>
+   <td style="text-align:left;"> 14.03 </td>
+   <td style="text-align:left;"> 7.26 </td>
+   <td style="text-align:left;"> 9.12 </td>
+   <td style="text-align:left;"> 50.81 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV241 </td>
+   <td style="text-align:left;"> Penicillium(g) </td>
+   <td style="text-align:right;"> 45 </td>
+   <td style="text-align:left;"> 52.06*** </td>
+   <td style="text-align:left;"> 0.5 </td>
+   <td style="text-align:left;"> 0.66 </td>
+   <td style="text-align:left;"> 0.19 </td>
+   <td style="text-align:left;"> 6.57 </td>
+   <td style="text-align:left;"> 2.52 </td>
+   <td style="text-align:left;"> 8.08 </td>
+   <td style="text-align:left;"> 29.41 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV242 </td>
+   <td style="text-align:left;"> Flagelloscypha minutissima(s) </td>
+   <td style="text-align:right;"> 50 </td>
+   <td style="text-align:left;"> 8.03 </td>
+   <td style="text-align:left;"> 0.04 </td>
+   <td style="text-align:left;"> 2.53 </td>
+   <td style="text-align:left;"> 2.72 </td>
+   <td style="text-align:left;"> 19.33 </td>
+   <td style="text-align:left;"> 8.75 </td>
+   <td style="text-align:left;"> 9.18 </td>
+   <td style="text-align:left;"> 49.42 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV245 </td>
+   <td style="text-align:left;"> Microdochium phragmitis(s) </td>
+   <td style="text-align:right;"> 59 </td>
+   <td style="text-align:left;"> 63.31*** </td>
+   <td style="text-align:left;"> 0.55 </td>
+   <td style="text-align:left;"> 1.19 </td>
+   <td style="text-align:left;"> 10.51*** </td>
+   <td style="text-align:left;"> 3.39 </td>
+   <td style="text-align:left;"> 1.65 </td>
+   <td style="text-align:left;"> 5.19 </td>
+   <td style="text-align:left;"> 14.22 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV247 </td>
+   <td style="text-align:left;"> Fungi(k) </td>
+   <td style="text-align:right;"> 86 </td>
+   <td style="text-align:left;"> 75.1*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 1.95 </td>
+   <td style="text-align:left;"> 0.81 </td>
+   <td style="text-align:left;"> 5.48 </td>
+   <td style="text-align:left;"> 3.13 </td>
+   <td style="text-align:left;"> 4.12 </td>
+   <td style="text-align:left;"> 9.41 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV249 </td>
@@ -3564,6 +4611,32 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 43.3 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV252 </td>
+   <td style="text-align:left;"> Dothideomycetes(c) </td>
+   <td style="text-align:right;"> 62 </td>
+   <td style="text-align:left;"> 33.41*** </td>
+   <td style="text-align:left;"> 6.52** </td>
+   <td style="text-align:left;"> 4.75 </td>
+   <td style="text-align:left;"> 4.28* </td>
+   <td style="text-align:left;"> 6.25 </td>
+   <td style="text-align:left;"> 4.58 </td>
+   <td style="text-align:left;"> 14.4 </td>
+   <td style="text-align:left;"> 25.8 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV254 </td>
+   <td style="text-align:left;"> Fungi(k) </td>
+   <td style="text-align:right;"> 53 </td>
+   <td style="text-align:left;"> 27.81*** </td>
+   <td style="text-align:left;"> 0.06 </td>
+   <td style="text-align:left;"> 4.95 </td>
+   <td style="text-align:left;"> 8.36* </td>
+   <td style="text-align:left;"> 10.38 </td>
+   <td style="text-align:left;"> 4.9 </td>
+   <td style="text-align:left;"> 8.18 </td>
+   <td style="text-align:left;"> 35.36 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV255 </td>
    <td style="text-align:left;"> Paraphoma radicina(s) </td>
    <td style="text-align:right;"> 126 </td>
@@ -3575,6 +4648,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 1.97 </td>
    <td style="text-align:left;"> 8.12** </td>
    <td style="text-align:left;"> 9.73 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV259 </td>
+   <td style="text-align:left;"> Ascomycota(p) </td>
+   <td style="text-align:right;"> 59 </td>
+   <td style="text-align:left;"> 45.39*** </td>
+   <td style="text-align:left;"> 0.03 </td>
+   <td style="text-align:left;"> 3.64 </td>
+   <td style="text-align:left;"> 1.6 </td>
+   <td style="text-align:left;"> 9.47 </td>
+   <td style="text-align:left;"> 6.36 </td>
+   <td style="text-align:left;"> 3.11 </td>
+   <td style="text-align:left;"> 30.4 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV26 </td>
@@ -3629,6 +4715,32 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 8.31 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV267 </td>
+   <td style="text-align:left;"> Hypocreales(o) </td>
+   <td style="text-align:right;"> 82 </td>
+   <td style="text-align:left;"> 45.36*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 5.64 </td>
+   <td style="text-align:left;"> 5.28* </td>
+   <td style="text-align:left;"> 5.44 </td>
+   <td style="text-align:left;"> 6.07 </td>
+   <td style="text-align:left;"> 9.26 </td>
+   <td style="text-align:left;"> 22.94 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV269 </td>
+   <td style="text-align:left;"> Helotiales(o) </td>
+   <td style="text-align:right;"> 41 </td>
+   <td style="text-align:left;"> 16.04*** </td>
+   <td style="text-align:left;"> 7.11** </td>
+   <td style="text-align:left;"> 2.46 </td>
+   <td style="text-align:left;"> 20.9*** </td>
+   <td style="text-align:left;"> 9.23 </td>
+   <td style="text-align:left;"> 5.32 </td>
+   <td style="text-align:left;"> 13.41 </td>
+   <td style="text-align:left;"> 25.51 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV27 </td>
    <td style="text-align:left;"> Pleosporales(o) </td>
    <td style="text-align:right;"> 549 </td>
@@ -3640,6 +4752,45 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 1.19 </td>
    <td style="text-align:left;"> 3.61 </td>
    <td style="text-align:left;"> 15.06 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV274 </td>
+   <td style="text-align:left;"> Linnemannia(g) </td>
+   <td style="text-align:right;"> 45 </td>
+   <td style="text-align:left;"> 58.64*** </td>
+   <td style="text-align:left;"> 0.75 </td>
+   <td style="text-align:left;"> 3.05 </td>
+   <td style="text-align:left;"> 1.97 </td>
+   <td style="text-align:left;"> 4.88 </td>
+   <td style="text-align:left;"> 3.35 </td>
+   <td style="text-align:left;"> 5.49 </td>
+   <td style="text-align:left;"> 21.86 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV275 </td>
+   <td style="text-align:left;"> Sordariomycetes(c) </td>
+   <td style="text-align:right;"> 38 </td>
+   <td style="text-align:left;"> 41.87*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 3.18 </td>
+   <td style="text-align:left;"> 5.56* </td>
+   <td style="text-align:left;"> 6.74 </td>
+   <td style="text-align:left;"> 3.13 </td>
+   <td style="text-align:left;"> 6.63 </td>
+   <td style="text-align:left;"> 32.87 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV279 </td>
+   <td style="text-align:left;"> Ascomycota(p) </td>
+   <td style="text-align:right;"> 76 </td>
+   <td style="text-align:left;"> 72.66*** </td>
+   <td style="text-align:left;"> 0.37 </td>
+   <td style="text-align:left;"> 3.11 </td>
+   <td style="text-align:left;"> 1.26 </td>
+   <td style="text-align:left;"> 1.63 </td>
+   <td style="text-align:left;"> 2.03 </td>
+   <td style="text-align:left;"> 3.52 </td>
+   <td style="text-align:left;"> 15.43 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV28 </td>
@@ -3655,6 +4806,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 16.09 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV280 </td>
+   <td style="text-align:left;"> Microascaceae(f) </td>
+   <td style="text-align:right;"> 37 </td>
+   <td style="text-align:left;"> 80.02*** </td>
+   <td style="text-align:left;"> 0.08 </td>
+   <td style="text-align:left;"> 2.4 </td>
+   <td style="text-align:left;"> 1.92* </td>
+   <td style="text-align:left;"> 2.36 </td>
+   <td style="text-align:left;"> 2.02 </td>
+   <td style="text-align:left;"> 3.81 </td>
+   <td style="text-align:left;"> 7.38 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV281 </td>
    <td style="text-align:left;"> Pezizomycetes(c) </td>
    <td style="text-align:right;"> 106 </td>
@@ -3668,6 +4832,32 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 40.43 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV287 </td>
+   <td style="text-align:left;"> Ascomycota(p) </td>
+   <td style="text-align:right;"> 46 </td>
+   <td style="text-align:left;"> 51.34*** </td>
+   <td style="text-align:left;"> 3.04* </td>
+   <td style="text-align:left;"> 0.8 </td>
+   <td style="text-align:left;"> 14.91*** </td>
+   <td style="text-align:left;"> 4.53 </td>
+   <td style="text-align:left;"> 2.01 </td>
+   <td style="text-align:left;"> 5.6 </td>
+   <td style="text-align:left;"> 17.77 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV289 </td>
+   <td style="text-align:left;"> Flagelloscypha minutissima(s) </td>
+   <td style="text-align:right;"> 60 </td>
+   <td style="text-align:left;"> 38.88*** </td>
+   <td style="text-align:left;"> 0.11 </td>
+   <td style="text-align:left;"> 0.96 </td>
+   <td style="text-align:left;"> 2.94 </td>
+   <td style="text-align:left;"> 6.02 </td>
+   <td style="text-align:left;"> 0.54 </td>
+   <td style="text-align:left;"> 9.42 </td>
+   <td style="text-align:left;"> 41.13 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV29 </td>
    <td style="text-align:left;"> Helotiales(o) </td>
    <td style="text-align:right;"> 973 </td>
@@ -3679,6 +4869,58 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 0.45 </td>
    <td style="text-align:left;"> 4.59 </td>
    <td style="text-align:left;"> 18.17 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV294 </td>
+   <td style="text-align:left;"> Cadophora(g) </td>
+   <td style="text-align:right;"> 46 </td>
+   <td style="text-align:left;"> 32.44*** </td>
+   <td style="text-align:left;"> 2.21 </td>
+   <td style="text-align:left;"> 8.46 </td>
+   <td style="text-align:left;"> 0.62 </td>
+   <td style="text-align:left;"> 6.6 </td>
+   <td style="text-align:left;"> 7.85 </td>
+   <td style="text-align:left;"> 9.69 </td>
+   <td style="text-align:left;"> 32.13 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV295 </td>
+   <td style="text-align:left;"> Herpotrichiellaceae(f) </td>
+   <td style="text-align:right;"> 70 </td>
+   <td style="text-align:left;"> 54.17*** </td>
+   <td style="text-align:left;"> 0.11 </td>
+   <td style="text-align:left;"> 1.71 </td>
+   <td style="text-align:left;"> 0.24 </td>
+   <td style="text-align:left;"> 5.65 </td>
+   <td style="text-align:left;"> 2.38 </td>
+   <td style="text-align:left;"> 6.47 </td>
+   <td style="text-align:left;"> 29.26 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV296 </td>
+   <td style="text-align:left;"> Sordariomycetes(c) </td>
+   <td style="text-align:right;"> 82 </td>
+   <td style="text-align:left;"> 37.9*** </td>
+   <td style="text-align:left;"> 0.59 </td>
+   <td style="text-align:left;"> 3.41 </td>
+   <td style="text-align:left;"> 4.7 </td>
+   <td style="text-align:left;"> 6.47 </td>
+   <td style="text-align:left;"> 8.43 </td>
+   <td style="text-align:left;"> 7.69 </td>
+   <td style="text-align:left;"> 30.8 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV297 </td>
+   <td style="text-align:left;"> Fungi(k) </td>
+   <td style="text-align:right;"> 76 </td>
+   <td style="text-align:left;"> 10.96* </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 1.54 </td>
+   <td style="text-align:left;"> 20.48** </td>
+   <td style="text-align:left;"> 5.54 </td>
+   <td style="text-align:left;"> 1.74 </td>
+   <td style="text-align:left;"> 3.53 </td>
+   <td style="text-align:left;"> 56.2 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV298 </td>
@@ -3720,6 +4962,45 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 55.79 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV304 </td>
+   <td style="text-align:left;"> Fungi(k) </td>
+   <td style="text-align:right;"> 58 </td>
+   <td style="text-align:left;"> 16.29** </td>
+   <td style="text-align:left;"> 0.04 </td>
+   <td style="text-align:left;"> 9.54 </td>
+   <td style="text-align:left;"> 1.34 </td>
+   <td style="text-align:left;"> 7.54 </td>
+   <td style="text-align:left;"> 18.67* </td>
+   <td style="text-align:left;"> 7.69 </td>
+   <td style="text-align:left;"> 38.9 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV305 </td>
+   <td style="text-align:left;"> Flagelloscypha minutissima(s) </td>
+   <td style="text-align:right;"> 57 </td>
+   <td style="text-align:left;"> 16.9** </td>
+   <td style="text-align:left;"> 3.03 </td>
+   <td style="text-align:left;"> 5.69 </td>
+   <td style="text-align:left;"> 2.29 </td>
+   <td style="text-align:left;"> 9.69 </td>
+   <td style="text-align:left;"> 3.39 </td>
+   <td style="text-align:left;"> 12.56 </td>
+   <td style="text-align:left;"> 46.45 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV307 </td>
+   <td style="text-align:left;"> Flagelloscypha minutissima(s) </td>
+   <td style="text-align:right;"> 36 </td>
+   <td style="text-align:left;"> 9.98* </td>
+   <td style="text-align:left;"> 0.22 </td>
+   <td style="text-align:left;"> 6.22 </td>
+   <td style="text-align:left;"> 0.91 </td>
+   <td style="text-align:left;"> 5.86 </td>
+   <td style="text-align:left;"> 7.19 </td>
+   <td style="text-align:left;"> 15.93 </td>
+   <td style="text-align:left;"> 53.69 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV31 </td>
    <td style="text-align:left;"> Thelonectria lucida(s) </td>
    <td style="text-align:right;"> 811 </td>
@@ -3731,6 +5012,32 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 10.63 </td>
    <td style="text-align:left;"> 11.63 </td>
    <td style="text-align:left;"> 48.54 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV310 </td>
+   <td style="text-align:left;"> Ascomycota(p) </td>
+   <td style="text-align:right;"> 36 </td>
+   <td style="text-align:left;"> 44.95*** </td>
+   <td style="text-align:left;"> 0.68 </td>
+   <td style="text-align:left;"> 2.02 </td>
+   <td style="text-align:left;"> 1.16 </td>
+   <td style="text-align:left;"> 9.67 </td>
+   <td style="text-align:left;"> 4.35 </td>
+   <td style="text-align:left;"> 7.51 </td>
+   <td style="text-align:left;"> 29.65 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV311 </td>
+   <td style="text-align:left;"> Leucosporidium fragarium(s) </td>
+   <td style="text-align:right;"> 42 </td>
+   <td style="text-align:left;"> 49.04*** </td>
+   <td style="text-align:left;"> 0.23 </td>
+   <td style="text-align:left;"> 5.51 </td>
+   <td style="text-align:left;"> 0.8 </td>
+   <td style="text-align:left;"> 2.9 </td>
+   <td style="text-align:left;"> 7.25 </td>
+   <td style="text-align:left;"> 10.1 </td>
+   <td style="text-align:left;"> 24.18 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV32 </td>
@@ -3746,6 +5053,58 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 27.89 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV320 </td>
+   <td style="text-align:left;"> Chaetomium globosum(s) </td>
+   <td style="text-align:right;"> 69 </td>
+   <td style="text-align:left;"> 64.06*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 3.3 </td>
+   <td style="text-align:left;"> 5.27** </td>
+   <td style="text-align:left;"> 2.28 </td>
+   <td style="text-align:left;"> 2.05 </td>
+   <td style="text-align:left;"> 6.37 </td>
+   <td style="text-align:left;"> 16.67 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV321 </td>
+   <td style="text-align:left;"> Rhizophagus(g) </td>
+   <td style="text-align:right;"> 42 </td>
+   <td style="text-align:left;"> 24.01*** </td>
+   <td style="text-align:left;"> 4.1* </td>
+   <td style="text-align:left;"> 10.82 </td>
+   <td style="text-align:left;"> 2.79 </td>
+   <td style="text-align:left;"> 7.13 </td>
+   <td style="text-align:left;"> 4.85 </td>
+   <td style="text-align:left;"> 11.94 </td>
+   <td style="text-align:left;"> 34.36 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV324 </td>
+   <td style="text-align:left;"> Hypocreales(o) </td>
+   <td style="text-align:right;"> 53 </td>
+   <td style="text-align:left;"> 55.95*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 0.77 </td>
+   <td style="text-align:left;"> 0.41 </td>
+   <td style="text-align:left;"> 1.43 </td>
+   <td style="text-align:left;"> 3.19 </td>
+   <td style="text-align:left;"> 7.63 </td>
+   <td style="text-align:left;"> 30.61 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV327 </td>
+   <td style="text-align:left;"> Exophiala salmonis(s) </td>
+   <td style="text-align:right;"> 51 </td>
+   <td style="text-align:left;"> 48.68*** </td>
+   <td style="text-align:left;"> 0.02 </td>
+   <td style="text-align:left;"> 3.84 </td>
+   <td style="text-align:left;"> 3.02 </td>
+   <td style="text-align:left;"> 11.83 </td>
+   <td style="text-align:left;"> 3.04 </td>
+   <td style="text-align:left;"> 10.05 </td>
+   <td style="text-align:left;"> 19.53 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV33 </td>
    <td style="text-align:left;"> Vishniacozyma victoriae(s) </td>
    <td style="text-align:right;"> 1150 </td>
@@ -3757,6 +5116,32 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 4.96 </td>
    <td style="text-align:left;"> 2.91 </td>
    <td style="text-align:left;"> 24.54 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV335 </td>
+   <td style="text-align:left;"> Fungi(k) </td>
+   <td style="text-align:right;"> 38 </td>
+   <td style="text-align:left;"> 74.92*** </td>
+   <td style="text-align:left;"> 0.18 </td>
+   <td style="text-align:left;"> 2.45 </td>
+   <td style="text-align:left;"> 1.95* </td>
+   <td style="text-align:left;"> 6.06 </td>
+   <td style="text-align:left;"> 2.11 </td>
+   <td style="text-align:left;"> 2.01 </td>
+   <td style="text-align:left;"> 10.32 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV338 </td>
+   <td style="text-align:left;"> Basidiomycota(p) </td>
+   <td style="text-align:right;"> 44 </td>
+   <td style="text-align:left;"> 53.72*** </td>
+   <td style="text-align:left;"> 1.6 </td>
+   <td style="text-align:left;"> 0.63 </td>
+   <td style="text-align:left;"> 12.32*** </td>
+   <td style="text-align:left;"> 2.19 </td>
+   <td style="text-align:left;"> 3.88 </td>
+   <td style="text-align:left;"> 9.07 </td>
+   <td style="text-align:left;"> 16.59 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV34 </td>
@@ -3772,6 +5157,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 23.92 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV342 </td>
+   <td style="text-align:left;"> Linnemannia elongata(s) </td>
+   <td style="text-align:right;"> 63 </td>
+   <td style="text-align:left;"> 17.46** </td>
+   <td style="text-align:left;"> 2.23 </td>
+   <td style="text-align:left;"> 4.36 </td>
+   <td style="text-align:left;"> 3.16 </td>
+   <td style="text-align:left;"> 11.74 </td>
+   <td style="text-align:left;"> 4.79 </td>
+   <td style="text-align:left;"> 14.33 </td>
+   <td style="text-align:left;"> 41.92 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV35 </td>
    <td style="text-align:left;"> Fusarium(g) </td>
    <td style="text-align:right;"> 507 </td>
@@ -3783,6 +5181,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 6.31 </td>
    <td style="text-align:left;"> 11.9 </td>
    <td style="text-align:left;"> 50.46 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV351 </td>
+   <td style="text-align:left;"> Agaricomycetes(c) </td>
+   <td style="text-align:right;"> 40 </td>
+   <td style="text-align:left;"> 82.98*** </td>
+   <td style="text-align:left;"> 0.02 </td>
+   <td style="text-align:left;"> 2.27* </td>
+   <td style="text-align:left;"> 0.72 </td>
+   <td style="text-align:left;"> 3.32 </td>
+   <td style="text-align:left;"> 1.25 </td>
+   <td style="text-align:left;"> 3.55 </td>
+   <td style="text-align:left;"> 5.89 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV36 </td>
@@ -3798,6 +5209,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 34.33 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV369 </td>
+   <td style="text-align:left;"> Flagelloscypha minutissima(s) </td>
+   <td style="text-align:right;"> 44 </td>
+   <td style="text-align:left;"> 8.63 </td>
+   <td style="text-align:left;"> 3.57 </td>
+   <td style="text-align:left;"> 5.26 </td>
+   <td style="text-align:left;"> 1.98 </td>
+   <td style="text-align:left;"> 4.69 </td>
+   <td style="text-align:left;"> 4.1 </td>
+   <td style="text-align:left;"> 10.34 </td>
+   <td style="text-align:left;"> 61.43 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV37 </td>
    <td style="text-align:left;"> Hypocreales(o) </td>
    <td style="text-align:right;"> 1030 </td>
@@ -3809,6 +5233,32 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 1.55 </td>
    <td style="text-align:left;"> 4.27 </td>
    <td style="text-align:left;"> 15.65 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV370 </td>
+   <td style="text-align:left;"> Basidiomycota(p) </td>
+   <td style="text-align:right;"> 45 </td>
+   <td style="text-align:left;"> 34.62*** </td>
+   <td style="text-align:left;"> 0.31 </td>
+   <td style="text-align:left;"> 2.36 </td>
+   <td style="text-align:left;"> 0.33 </td>
+   <td style="text-align:left;"> 7.59 </td>
+   <td style="text-align:left;"> 3.05 </td>
+   <td style="text-align:left;"> 9.78 </td>
+   <td style="text-align:left;"> 41.97 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV373 </td>
+   <td style="text-align:left;"> Trichoderma lixii(s) </td>
+   <td style="text-align:right;"> 54 </td>
+   <td style="text-align:left;"> 58.52*** </td>
+   <td style="text-align:left;"> 0.45 </td>
+   <td style="text-align:left;"> 1.99 </td>
+   <td style="text-align:left;"> 2.01 </td>
+   <td style="text-align:left;"> 4.47 </td>
+   <td style="text-align:left;"> 2.32 </td>
+   <td style="text-align:left;"> 5.54 </td>
+   <td style="text-align:left;"> 24.69 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV38 </td>
@@ -3824,6 +5274,32 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 30.62 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV383 </td>
+   <td style="text-align:left;"> Agaricomycetes(c) </td>
+   <td style="text-align:right;"> 37 </td>
+   <td style="text-align:left;"> 56.08*** </td>
+   <td style="text-align:left;"> 1.11 </td>
+   <td style="text-align:left;"> 2.06 </td>
+   <td style="text-align:left;"> 9.47*** </td>
+   <td style="text-align:left;"> 6.63 </td>
+   <td style="text-align:left;"> 2.7 </td>
+   <td style="text-align:left;"> 10.43** </td>
+   <td style="text-align:left;"> 11.53 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV384 </td>
+   <td style="text-align:left;"> Leotiomycetes(c) </td>
+   <td style="text-align:right;"> 50 </td>
+   <td style="text-align:left;"> 34.53*** </td>
+   <td style="text-align:left;"> 0.74 </td>
+   <td style="text-align:left;"> 1.04 </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 8.77 </td>
+   <td style="text-align:left;"> 5.98 </td>
+   <td style="text-align:left;"> 7.36 </td>
+   <td style="text-align:left;"> 41.58 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV39 </td>
    <td style="text-align:left;"> Pleosporales(o) </td>
    <td style="text-align:right;"> 919 </td>
@@ -3835,6 +5311,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 3.45 </td>
    <td style="text-align:left;"> 4.84 </td>
    <td style="text-align:left;"> 17.64 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV391 </td>
+   <td style="text-align:left;"> Sordariomycetes(c) </td>
+   <td style="text-align:right;"> 75 </td>
+   <td style="text-align:left;"> 5.43 </td>
+   <td style="text-align:left;"> 2.12 </td>
+   <td style="text-align:left;"> 4.26 </td>
+   <td style="text-align:left;"> 5.99 </td>
+   <td style="text-align:left;"> 12.76 </td>
+   <td style="text-align:left;"> 6.72 </td>
+   <td style="text-align:left;"> 11.61 </td>
+   <td style="text-align:left;"> 51.1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV395 </td>
@@ -3876,6 +5365,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 46.89 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV400 </td>
+   <td style="text-align:left;"> Dothideomycetes(c) </td>
+   <td style="text-align:right;"> 54 </td>
+   <td style="text-align:left;"> 46.29*** </td>
+   <td style="text-align:left;"> 3.98* </td>
+   <td style="text-align:left;"> 3.87 </td>
+   <td style="text-align:left;"> 2.53 </td>
+   <td style="text-align:left;"> 3.64 </td>
+   <td style="text-align:left;"> 7.06 </td>
+   <td style="text-align:left;"> 7.07 </td>
+   <td style="text-align:left;"> 25.56 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV41 </td>
    <td style="text-align:left;"> Tetracladium furcatum(s) </td>
    <td style="text-align:right;"> 633 </td>
@@ -3887,6 +5389,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 1.77 </td>
    <td style="text-align:left;"> 7.94 </td>
    <td style="text-align:left;"> 23.05 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV410 </td>
+   <td style="text-align:left;"> Basidiomycota(p) </td>
+   <td style="text-align:right;"> 40 </td>
+   <td style="text-align:left;"> 26.21*** </td>
+   <td style="text-align:left;"> 0.04 </td>
+   <td style="text-align:left;"> 8.47 </td>
+   <td style="text-align:left;"> 4.11 </td>
+   <td style="text-align:left;"> 12.12 </td>
+   <td style="text-align:left;"> 8.74 </td>
+   <td style="text-align:left;"> 7.66 </td>
+   <td style="text-align:left;"> 32.64 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV42 </td>
@@ -3941,6 +5456,32 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 27.18 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV452 </td>
+   <td style="text-align:left;"> Flagelloscypha minutissima(s) </td>
+   <td style="text-align:right;"> 61 </td>
+   <td style="text-align:left;"> 14.85** </td>
+   <td style="text-align:left;"> 0.66 </td>
+   <td style="text-align:left;"> 4.27 </td>
+   <td style="text-align:left;"> 3.29 </td>
+   <td style="text-align:left;"> 8.19 </td>
+   <td style="text-align:left;"> 3.01 </td>
+   <td style="text-align:left;"> 16.88 </td>
+   <td style="text-align:left;"> 48.84 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV457 </td>
+   <td style="text-align:left;"> Paraphoma radicina(s) </td>
+   <td style="text-align:right;"> 63 </td>
+   <td style="text-align:left;"> 67.48*** </td>
+   <td style="text-align:left;"> 0.44 </td>
+   <td style="text-align:left;"> 1.76 </td>
+   <td style="text-align:left;"> 11.61*** </td>
+   <td style="text-align:left;"> 2.27 </td>
+   <td style="text-align:left;"> 0.73 </td>
+   <td style="text-align:left;"> 5.46 </td>
+   <td style="text-align:left;"> 10.25 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV46 </td>
    <td style="text-align:left;"> Linnemannia elongata(s) </td>
    <td style="text-align:right;"> 564 </td>
@@ -3952,6 +5493,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 5.1 </td>
    <td style="text-align:left;"> 4.24 </td>
    <td style="text-align:left;"> 43.83 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV460 </td>
+   <td style="text-align:left;"> Sordariaceae(f) </td>
+   <td style="text-align:right;"> 42 </td>
+   <td style="text-align:left;"> 62.73*** </td>
+   <td style="text-align:left;"> 0.48 </td>
+   <td style="text-align:left;"> 6.02 </td>
+   <td style="text-align:left;"> 0.2 </td>
+   <td style="text-align:left;"> 2.69 </td>
+   <td style="text-align:left;"> 3.87 </td>
+   <td style="text-align:left;"> 2.71 </td>
+   <td style="text-align:left;"> 21.3 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV47 </td>
@@ -3978,6 +5532,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 3.09 </td>
    <td style="text-align:left;"> 7.74 </td>
    <td style="text-align:left;"> 38.12 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV484 </td>
+   <td style="text-align:left;"> Basidiomycota(p) </td>
+   <td style="text-align:right;"> 39 </td>
+   <td style="text-align:left;"> 22.4*** </td>
+   <td style="text-align:left;"> 2.67 </td>
+   <td style="text-align:left;"> 2.16 </td>
+   <td style="text-align:left;"> 19.32*** </td>
+   <td style="text-align:left;"> 6.62 </td>
+   <td style="text-align:left;"> 2.29 </td>
+   <td style="text-align:left;"> 8.61 </td>
+   <td style="text-align:left;"> 35.92 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV49 </td>
@@ -4056,6 +5623,32 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 2.77 </td>
    <td style="text-align:left;"> 6.25 </td>
    <td style="text-align:left;"> 40.68 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV531 </td>
+   <td style="text-align:left;"> Flagelloscypha minutissima(s) </td>
+   <td style="text-align:right;"> 38 </td>
+   <td style="text-align:left;"> 11.59* </td>
+   <td style="text-align:left;"> 0.11 </td>
+   <td style="text-align:left;"> 2.55 </td>
+   <td style="text-align:left;"> 15.64** </td>
+   <td style="text-align:left;"> 8.8 </td>
+   <td style="text-align:left;"> 5.57 </td>
+   <td style="text-align:left;"> 8.25 </td>
+   <td style="text-align:left;"> 47.49 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV538 </td>
+   <td style="text-align:left;"> Sordariales(o) </td>
+   <td style="text-align:right;"> 77 </td>
+   <td style="text-align:left;"> 39.22*** </td>
+   <td style="text-align:left;"> 0.92 </td>
+   <td style="text-align:left;"> 0.62 </td>
+   <td style="text-align:left;"> 9.13* </td>
+   <td style="text-align:left;"> 8.43 </td>
+   <td style="text-align:left;"> 1.59 </td>
+   <td style="text-align:left;"> 3.97 </td>
+   <td style="text-align:left;"> 36.12 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV54 </td>
@@ -4173,6 +5766,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 2.6 </td>
    <td style="text-align:left;"> 10.45 </td>
    <td style="text-align:left;"> 21.49 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV62 </td>
+   <td style="text-align:left;"> Leotiomycetes(c) </td>
+   <td style="text-align:right;"> 80 </td>
+   <td style="text-align:left;"> 45.78*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 1.19 </td>
+   <td style="text-align:left;"> 1.37 </td>
+   <td style="text-align:left;"> 4.79 </td>
+   <td style="text-align:left;"> 3.45 </td>
+   <td style="text-align:left;"> 3.33 </td>
+   <td style="text-align:left;"> 40.1 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV63 </td>
@@ -4461,6 +6067,45 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 51.9 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV824 </td>
+   <td style="text-align:left;"> Hypocreales(o) </td>
+   <td style="text-align:right;"> 45 </td>
+   <td style="text-align:left;"> 63.15*** </td>
+   <td style="text-align:left;"> 0.37 </td>
+   <td style="text-align:left;"> 1.72 </td>
+   <td style="text-align:left;"> 2.14 </td>
+   <td style="text-align:left;"> 3.02 </td>
+   <td style="text-align:left;"> 5.51 </td>
+   <td style="text-align:left;"> 5.34 </td>
+   <td style="text-align:left;"> 18.74 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV83 </td>
+   <td style="text-align:left;"> Fusarium equiseti(s) </td>
+   <td style="text-align:right;"> 80 </td>
+   <td style="text-align:left;"> 32.77*** </td>
+   <td style="text-align:left;"> 1.5 </td>
+   <td style="text-align:left;"> 0.4 </td>
+   <td style="text-align:left;"> 3.83 </td>
+   <td style="text-align:left;"> 10.25 </td>
+   <td style="text-align:left;"> 5.78 </td>
+   <td style="text-align:left;"> 6.76 </td>
+   <td style="text-align:left;"> 38.71 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV84 </td>
+   <td style="text-align:left;"> Saccharomycetes(c) </td>
+   <td style="text-align:right;"> 91 </td>
+   <td style="text-align:left;"> 37.17*** </td>
+   <td style="text-align:left;"> 0.15 </td>
+   <td style="text-align:left;"> 5.83 </td>
+   <td style="text-align:left;"> 4.22 </td>
+   <td style="text-align:left;"> 8.71 </td>
+   <td style="text-align:left;"> 4.23 </td>
+   <td style="text-align:left;"> 7.34 </td>
+   <td style="text-align:left;"> 32.36 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV85 </td>
    <td style="text-align:left;"> Ascomycota(p) </td>
    <td style="text-align:right;"> 583 </td>
@@ -4565,6 +6210,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 18.26 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV92 </td>
+   <td style="text-align:left;"> Gibellulopsis(g) </td>
+   <td style="text-align:right;"> 99 </td>
+   <td style="text-align:left;"> 6.64 </td>
+   <td style="text-align:left;"> 1.89 </td>
+   <td style="text-align:left;"> 5.11 </td>
+   <td style="text-align:left;"> 2.13 </td>
+   <td style="text-align:left;"> 17.12 </td>
+   <td style="text-align:left;"> 3.07 </td>
+   <td style="text-align:left;"> 17.38 </td>
+   <td style="text-align:left;"> 46.67 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV93 </td>
    <td style="text-align:left;"> Mrakia aquatica(s) </td>
    <td style="text-align:right;"> 209 </td>
@@ -4643,6 +6301,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 37.6 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV980 </td>
+   <td style="text-align:left;"> Sordariales(o) </td>
+   <td style="text-align:right;"> 88 </td>
+   <td style="text-align:left;"> 39.31*** </td>
+   <td style="text-align:left;"> 1.24 </td>
+   <td style="text-align:left;"> 0.78 </td>
+   <td style="text-align:left;"> 8.5* </td>
+   <td style="text-align:left;"> 8.4 </td>
+   <td style="text-align:left;"> 1.23 </td>
+   <td style="text-align:left;"> 3.83 </td>
+   <td style="text-align:left;"> 36.71 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV99 </td>
    <td style="text-align:left;"> Fusarium sp.(s) </td>
    <td style="text-align:right;"> 116 </td>
@@ -4675,15 +6346,15 @@ cat(
 ```
 # Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values 
 # 
-#  Site: 126 
-#  Storage: 5 
+#  Site: 235 
+#  Storage: 11 
 #  Scion: 0 
-#  Site:Storage: 31 
+#  Site:Storage: 52 
 #  Site:Scion: 0 
 #  Storage:Scion: 0 
-#  Site:Storage:Scion: 0 
+#  Site:Storage:Scion: 1 
 # 
-#  Total ASVs: 147
+#  Total ASVs: 275
 ```
 
 ``` r
@@ -4715,7 +6386,19 @@ scion_asvs %>%
  </thead>
 <tbody>
   <tr>
-
+   <td style="text-align:right;"> 12 </td>
+   <td style="text-align:right;"> 23.36199 </td>
+   <td style="text-align:right;"> 1.946833 </td>
+   <td style="text-align:right;"> 2.939447 </td>
+   <td style="text-align:right;"> 0.0053729 </td>
+   <td style="text-align:left;"> ASV383 </td>
+   <td style="text-align:left;"> Agaricomycetes(c) </td>
+   <td style="text-align:right;"> 37 </td>
+   <td style="text-align:left;"> Site:Storage:Scion </td>
+   <td style="text-align:right;"> 10.42884 </td>
+   <td style="text-align:left;"> ** </td>
+   <td style="text-align:left;"> 10.43** </td>
+   <td style="text-align:right;"> 0.0361636 </td>
   </tr>
 </tbody>
 </table>
@@ -4728,7 +6411,7 @@ cat(
 ```
 
 ```
-# 0 ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Scion and its interactions.
+# 1 ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Scion and its interactions.
 ```
 
 ``` r
@@ -4756,7 +6439,17 @@ top_asvs_anova_summary[ASV %in% scion_asvs$ASV, ] %>%
  </thead>
 <tbody>
   <tr>
-
+   <td style="text-align:left;"> ASV383 </td>
+   <td style="text-align:left;"> Agaricomycetes(c) </td>
+   <td style="text-align:right;"> 37 </td>
+   <td style="text-align:left;"> 56.08*** </td>
+   <td style="text-align:left;"> 1.11 </td>
+   <td style="text-align:left;"> 2.06 </td>
+   <td style="text-align:left;"> 9.47*** </td>
+   <td style="text-align:left;"> 6.63 </td>
+   <td style="text-align:left;"> 2.7 </td>
+   <td style="text-align:left;"> 10.43** </td>
+   <td style="text-align:left;"> 11.53 </td>
   </tr>
 </tbody>
 </table>
@@ -4914,7 +6607,7 @@ cat(
 ```
 
 ```
-# 0 of 147 ASVs have statistically significant (*P* < 0.05) adjusted p-values
+# 0 of 275 ASVs have statistically significant (*P* < 0.05) adjusted p-values
 ```
 
 ``` r
@@ -4927,15 +6620,19 @@ if(nrow(asv_canker_results[p_adjusted < 0.05, ]) > 0) {
 
 #### Effect of ASV abundance on canker count per site
 
+Filter top ASVs with 95 % of reads per site
+and test the effect of ASV abundance on canker count per site.
+
 
 ``` r
-# For each site, select ASVs with mean abundance > 100
+# For each site, select top ASVs with 90% of reads
 top_asvs_per_site <- lapply(
   unique(colData$Site),
   function(site) {
     samples <- filter(colData, Site == site)
     top_asv_data <- select(asv_counts, rownames(samples))
-    top_asvs <- filter(top_asv_data, rowMeans(top_asv_data) > 100)
+    # top_asvs <- filter(top_asv_data, rowMeans(top_asv_data) > 100)
+    top_asvs <- top_asv_data[filter_otus(top_asv_data, FUNASVFILTER), ]
     top_asv_ids <- rownames(top_asvs)
     top_asvs <- data.frame(t(top_asvs)) %>% merge(samples, by = 0) %>% column_to_rownames("Row.names")
     top_asvs <- top_asvs[complete.cases(top_asvs$Cankers), ]
@@ -4971,30 +6668,30 @@ data.table(
 <tbody>
   <tr>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 111 </td>
+   <td style="text-align:right;"> 169 </td>
    <td style="text-align:right;"> 820 </td>
-   <td style="text-align:right;"> 1847045 </td>
+   <td style="text-align:right;"> 1916195 </td>
    <td style="text-align:right;"> 2024873 </td>
-   <td style="text-align:right;"> 14 </td>
-   <td style="text-align:right;"> 91 </td>
+   <td style="text-align:right;"> 21 </td>
+   <td style="text-align:right;"> 95 </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 163 </td>
+   <td style="text-align:right;"> 195 </td>
    <td style="text-align:right;"> 915 </td>
-   <td style="text-align:right;"> 5716207 </td>
+   <td style="text-align:right;"> 5788114 </td>
    <td style="text-align:right;"> 6092025 </td>
-   <td style="text-align:right;"> 18 </td>
-   <td style="text-align:right;"> 94 </td>
+   <td style="text-align:right;"> 21 </td>
+   <td style="text-align:right;"> 95 </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 3 </td>
-   <td style="text-align:right;"> 101 </td>
+   <td style="text-align:right;"> 187 </td>
    <td style="text-align:right;"> 822 </td>
-   <td style="text-align:right;"> 2728361 </td>
+   <td style="text-align:right;"> 2856669 </td>
    <td style="text-align:right;"> 2989425 </td>
-   <td style="text-align:right;"> 12 </td>
-   <td style="text-align:right;"> 91 </td>
+   <td style="text-align:right;"> 23 </td>
+   <td style="text-align:right;"> 96 </td>
   </tr>
 </tbody>
 </table>
@@ -5032,20 +6729,41 @@ asv_canker_site_results <- lapply(
 # Significant ASVs
 significant_asvs <- asv_canker_site_results[p_adjusted < 0.05 & is.na(warning), ]
 
-significant_asvs[, c("Site", "ASV", "Taxonomy", "Abundance", "coef", "var", "p_adjusted")] %>%
-  kbl("html", digits = 3) %>%
-  kable_styling("striped", full_width = T) %>%
-  column_spec(3, extra_css = "word-wrap: break-all; white-space: normal; width: 10cm;") %>%
-  save_kable("tables/FUN_canker_site_asvs.html")
+significant_asvs[, c("Site", "ASV", "Taxonomy", "Abundance", "coef", "var", "p_adjusted")]
+```
+
+```
+#      Site    ASV     Taxonomy Abundance   coef    var   p_adjusted
+#     <int> <list>       <list>    <list> <list> <list>        <num>
+#  1:     1   ASV8  Fusarium(g)      1734  2.583  0.381 0.0014809221
+#  2:     1  ASV16 Plectosp....       671  1.554  0.008 0.0245626470
+#  3:     1  ASV42 Alternar....       144  2.037  0.497 0.0037921607
+#  4:     1 ASV304     Fungi(k)       143  0.686 24.393 0.0357161554
+#  5:     1 ASV400 Dothideo....       129  0.761  5.348 0.0426416274
+#  6:     1 ASV178 Venturia....       135  0.677  5.884 0.0357161554
+#  7:     1  ASV56 Mortiere....       123  0.819 14.676 0.0001252866
+#  8:     1  ASV89 Sordaria....        63  0.629  3.285 0.0426416274
+#  9:     1 ASV210 Nectriac....        65  1.041 10.404 0.0357161554
+# 10:     3  ASV38 Clonosta....      1131 -0.895  5.156 0.0375316865
+# 11:     3  ASV14 Leotiomy....         1  2.368  1.942 0.0268358033
+```
+
+``` r
+  # kbl("html", digits = 3) %>%
+  # kable_styling("striped", full_width = T) %>%
+  # column_spec(3, extra_css = "word-wrap: break-all; white-space: normal; width: 10cm;") %>%
+  # save_kable("tables/FUN_canker_site_asvs.html")
 
 significant_asvs$Taxonomy %>% unlist
 ```
 
 ```
-# [1] "Plectosphaerella(g)"     "Venturiaceae(f)"        
-# [3] "Fungi(k)"                "Dothideomycetes(c)"     
-# [5] "Alternaria alternata(s)" "Mortierella alpina(s)"  
-# [7] "Fusarium(g)"             "Clonostachys rosea(s)"
+#  [1] "Fusarium(g)"             "Plectosphaerella(g)"    
+#  [3] "Alternaria alternata(s)" "Fungi(k)"               
+#  [5] "Dothideomycetes(c)"      "Venturiaceae(f)"        
+#  [7] "Mortierella alpina(s)"   "Sordariales(o)"         
+#  [9] "Nectriaceae(f)"          "Clonostachys rosea(s)"  
+# [11] "Leotiomycetes(c)"
 ```
 
 
@@ -7437,18 +9155,20 @@ bac_cum_asv
 ``` r
 # Find the number of ASVs that account for 50%, 80%, and 99% of total reads
 cat(
-  "Number of ASVs that account for 50%, 80%, and 99% of total reads", "\n\n",
+  "Number of ASVs that account for 50%, 80%, 90%, and 99% of total reads", "\n\n",
   "50%:", sum(cumulative <= 50), "\n",
   "80%:", sum(cumulative <= 80), "\n",
+  "90%:", sum(cumulative <= 90), "\n",
   "99%:", sum(cumulative <= 99), "\n"
 )
 ```
 
 ```
-# Number of ASVs that account for 50%, 80%, and 99% of total reads 
+# Number of ASVs that account for 50%, 80%, 90%, and 99% of total reads 
 # 
 #  50%: 205 
 #  80%: 1055 
+#  90%: 2036 
 #  99%: 5037
 ```
 
@@ -7505,7 +9225,7 @@ cat(
 #  500: 8
 ```
 
-### Filter top ASVs with mean read count > 100
+### Filter top ASVs with 50 % of reads
 
 
 ``` r
@@ -7513,7 +9233,10 @@ cat(
 # top_asvs <- asv_counts[order(rowSums(asv_counts), decreasing = T)[1:DIFFOTU], ]
 
 # Filter ASVs with mean read count > 100
-top_asvs <- asv_counts[rowMeans(asv_counts) > 100, ]
+# top_asvs <- asv_counts[rowMeans(asv_counts) > 100, ]
+
+# Filter top ASVs with 90% of reads
+top_asvs <- asv_counts[filter_otus(asv_counts, BACASVFILTER), ]
 
 # Check that sample names match
 identical(names(top_asvs), rownames(colData))
@@ -7622,6 +9345,45 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 34.89 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV101 </td>
+   <td style="text-align:left;"> Paraburkholderia(g) </td>
+   <td style="text-align:right;"> 64 </td>
+   <td style="text-align:left;"> 46.53*** </td>
+   <td style="text-align:left;"> 0.24 </td>
+   <td style="text-align:left;"> 3.13 </td>
+   <td style="text-align:left;"> 3.18 </td>
+   <td style="text-align:left;"> 10.89 </td>
+   <td style="text-align:left;"> 5.51 </td>
+   <td style="text-align:left;"> 3.68 </td>
+   <td style="text-align:left;"> 26.84 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV103 </td>
+   <td style="text-align:left;"> Amycolatopsis(g) </td>
+   <td style="text-align:right;"> 73 </td>
+   <td style="text-align:left;"> 51.02*** </td>
+   <td style="text-align:left;"> 0.01 </td>
+   <td style="text-align:left;"> 8.74** </td>
+   <td style="text-align:left;"> 9.83*** </td>
+   <td style="text-align:left;"> 9.05* </td>
+   <td style="text-align:left;"> 2.33 </td>
+   <td style="text-align:left;"> 5.67 </td>
+   <td style="text-align:left;"> 13.36 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV104 </td>
+   <td style="text-align:left;"> Thermomonosporaceae(f) </td>
+   <td style="text-align:right;"> 81 </td>
+   <td style="text-align:left;"> 63.83*** </td>
+   <td style="text-align:left;"> 1.08 </td>
+   <td style="text-align:left;"> 3.3 </td>
+   <td style="text-align:left;"> 2.34 </td>
+   <td style="text-align:left;"> 6.95 </td>
+   <td style="text-align:left;"> 1.07 </td>
+   <td style="text-align:left;"> 4.3 </td>
+   <td style="text-align:left;"> 17.12 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV1043 </td>
    <td style="text-align:left;"> Streptomyces(g) </td>
    <td style="text-align:right;"> 146 </td>
@@ -7633,6 +9395,58 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 6.83 </td>
    <td style="text-align:left;"> 6.12 </td>
    <td style="text-align:left;"> 34.02 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV105 </td>
+   <td style="text-align:left;"> Neorhizobium(g) </td>
+   <td style="text-align:right;"> 69 </td>
+   <td style="text-align:left;"> 52.14*** </td>
+   <td style="text-align:left;"> 1.49* </td>
+   <td style="text-align:left;"> 12.69*** </td>
+   <td style="text-align:left;"> 2.96* </td>
+   <td style="text-align:left;"> 8.59* </td>
+   <td style="text-align:left;"> 1 </td>
+   <td style="text-align:left;"> 6.92 </td>
+   <td style="text-align:left;"> 14.22 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV106 </td>
+   <td style="text-align:left;"> Phyllobacterium(g) </td>
+   <td style="text-align:right;"> 59 </td>
+   <td style="text-align:left;"> 33.48*** </td>
+   <td style="text-align:left;"> 0.62 </td>
+   <td style="text-align:left;"> 9.02 </td>
+   <td style="text-align:left;"> 9.49** </td>
+   <td style="text-align:left;"> 12.08 </td>
+   <td style="text-align:left;"> 5.54 </td>
+   <td style="text-align:left;"> 3.87 </td>
+   <td style="text-align:left;"> 25.9 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV108 </td>
+   <td style="text-align:left;"> Solirubrobacter(g) </td>
+   <td style="text-align:right;"> 65 </td>
+   <td style="text-align:left;"> 38.84*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 12.58* </td>
+   <td style="text-align:left;"> 2.81 </td>
+   <td style="text-align:left;"> 6.08 </td>
+   <td style="text-align:left;"> 6.39 </td>
+   <td style="text-align:left;"> 5.08 </td>
+   <td style="text-align:left;"> 28.22 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV109 </td>
+   <td style="text-align:left;"> Nocardioides(g) </td>
+   <td style="text-align:right;"> 75 </td>
+   <td style="text-align:left;"> 53.47*** </td>
+   <td style="text-align:left;"> 0.33 </td>
+   <td style="text-align:left;"> 10.98** </td>
+   <td style="text-align:left;"> 4.08* </td>
+   <td style="text-align:left;"> 2.76 </td>
+   <td style="text-align:left;"> 4.73 </td>
+   <td style="text-align:left;"> 4.68 </td>
+   <td style="text-align:left;"> 18.97 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV11 </td>
@@ -7648,6 +9462,58 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 14.49 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV113 </td>
+   <td style="text-align:left;"> Rhizobium(g) </td>
+   <td style="text-align:right;"> 59 </td>
+   <td style="text-align:left;"> 42.46*** </td>
+   <td style="text-align:left;"> 0.02 </td>
+   <td style="text-align:left;"> 6.03 </td>
+   <td style="text-align:left;"> 0.76 </td>
+   <td style="text-align:left;"> 9.08 </td>
+   <td style="text-align:left;"> 9.9* </td>
+   <td style="text-align:left;"> 6.81 </td>
+   <td style="text-align:left;"> 24.94 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV115 </td>
+   <td style="text-align:left;"> Mesorhizobium(g) </td>
+   <td style="text-align:right;"> 59 </td>
+   <td style="text-align:left;"> 19.1*** </td>
+   <td style="text-align:left;"> 0.43 </td>
+   <td style="text-align:left;"> 9.66 </td>
+   <td style="text-align:left;"> 10.06** </td>
+   <td style="text-align:left;"> 14.63 </td>
+   <td style="text-align:left;"> 6.14 </td>
+   <td style="text-align:left;"> 10.47 </td>
+   <td style="text-align:left;"> 29.51 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV117 </td>
+   <td style="text-align:left;"> Phenylobacterium(g) </td>
+   <td style="text-align:right;"> 61 </td>
+   <td style="text-align:left;"> 37.33*** </td>
+   <td style="text-align:left;"> 0.04 </td>
+   <td style="text-align:left;"> 5.96 </td>
+   <td style="text-align:left;"> 0.22 </td>
+   <td style="text-align:left;"> 12.71 </td>
+   <td style="text-align:left;"> 6.02 </td>
+   <td style="text-align:left;"> 4.89 </td>
+   <td style="text-align:left;"> 32.83 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV1171 </td>
+   <td style="text-align:left;"> Actinobacteria(c) </td>
+   <td style="text-align:right;"> 65 </td>
+   <td style="text-align:left;"> 15.98*** </td>
+   <td style="text-align:left;"> 0.38 </td>
+   <td style="text-align:left;"> 4.9 </td>
+   <td style="text-align:left;"> 12.27** </td>
+   <td style="text-align:left;"> 11.93 </td>
+   <td style="text-align:left;"> 7.71 </td>
+   <td style="text-align:left;"> 10.54 </td>
+   <td style="text-align:left;"> 36.28 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV12 </td>
    <td style="text-align:left;"> Pseudomonas(g) </td>
    <td style="text-align:right;"> 344 </td>
@@ -7659,6 +9525,45 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 2.8 </td>
    <td style="text-align:left;"> 10.47 </td>
    <td style="text-align:left;"> 49.07 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV120 </td>
+   <td style="text-align:left;"> Kribbella(g) </td>
+   <td style="text-align:right;"> 74 </td>
+   <td style="text-align:left;"> 25.2*** </td>
+   <td style="text-align:left;"> 0.08 </td>
+   <td style="text-align:left;"> 12.03** </td>
+   <td style="text-align:left;"> 27*** </td>
+   <td style="text-align:left;"> 5.6 </td>
+   <td style="text-align:left;"> 3.43 </td>
+   <td style="text-align:left;"> 4.47 </td>
+   <td style="text-align:left;"> 22.18 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV122 </td>
+   <td style="text-align:left;"> Mycobacterium(g) </td>
+   <td style="text-align:right;"> 72 </td>
+   <td style="text-align:left;"> 79.81*** </td>
+   <td style="text-align:left;"> 0.03 </td>
+   <td style="text-align:left;"> 2.45 </td>
+   <td style="text-align:left;"> 0.58 </td>
+   <td style="text-align:left;"> 3.36 </td>
+   <td style="text-align:left;"> 1.08 </td>
+   <td style="text-align:left;"> 2.44 </td>
+   <td style="text-align:left;"> 10.25 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV123 </td>
+   <td style="text-align:left;"> Rhodanobacteraceae(f) </td>
+   <td style="text-align:right;"> 55 </td>
+   <td style="text-align:left;"> 60.98*** </td>
+   <td style="text-align:left;"> 0.76 </td>
+   <td style="text-align:left;"> 4.68 </td>
+   <td style="text-align:left;"> 2.97* </td>
+   <td style="text-align:left;"> 9.05 </td>
+   <td style="text-align:left;"> 2.39 </td>
+   <td style="text-align:left;"> 2.17 </td>
+   <td style="text-align:left;"> 17 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV124 </td>
@@ -7674,6 +9579,45 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 24.22 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV127 </td>
+   <td style="text-align:left;"> Rhodanobacter(g) </td>
+   <td style="text-align:right;"> 55 </td>
+   <td style="text-align:left;"> 27.54*** </td>
+   <td style="text-align:left;"> 0.02 </td>
+   <td style="text-align:left;"> 5.09 </td>
+   <td style="text-align:left;"> 3.41 </td>
+   <td style="text-align:left;"> 15.16 </td>
+   <td style="text-align:left;"> 3.83 </td>
+   <td style="text-align:left;"> 8.91 </td>
+   <td style="text-align:left;"> 36.05 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV128 </td>
+   <td style="text-align:left;"> Thermomonosporaceae(f) </td>
+   <td style="text-align:right;"> 85 </td>
+   <td style="text-align:left;"> 49.58*** </td>
+   <td style="text-align:left;"> 0.02 </td>
+   <td style="text-align:left;"> 4.89 </td>
+   <td style="text-align:left;"> 7.48** </td>
+   <td style="text-align:left;"> 7.12 </td>
+   <td style="text-align:left;"> 5.37 </td>
+   <td style="text-align:left;"> 4.05 </td>
+   <td style="text-align:left;"> 21.48 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV129 </td>
+   <td style="text-align:left;"> Mesorhizobium(g) </td>
+   <td style="text-align:right;"> 56 </td>
+   <td style="text-align:left;"> 26.04*** </td>
+   <td style="text-align:left;"> 0.01 </td>
+   <td style="text-align:left;"> 9.33 </td>
+   <td style="text-align:left;"> 3.25 </td>
+   <td style="text-align:left;"> 11.65 </td>
+   <td style="text-align:left;"> 5.41 </td>
+   <td style="text-align:left;"> 6.66 </td>
+   <td style="text-align:left;"> 37.66 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV13 </td>
    <td style="text-align:left;"> Gammaproteobacteria(c) </td>
    <td style="text-align:right;"> 401 </td>
@@ -7685,6 +9629,71 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 2.04 </td>
    <td style="text-align:left;"> 5.66 </td>
    <td style="text-align:left;"> 16.41 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV130 </td>
+   <td style="text-align:left;"> Actinobacteria(c) </td>
+   <td style="text-align:right;"> 71 </td>
+   <td style="text-align:left;"> 77.69*** </td>
+   <td style="text-align:left;"> 0.25 </td>
+   <td style="text-align:left;"> 1.11 </td>
+   <td style="text-align:left;"> 0.3 </td>
+   <td style="text-align:left;"> 6.02 </td>
+   <td style="text-align:left;"> 0.68 </td>
+   <td style="text-align:left;"> 2.14 </td>
+   <td style="text-align:left;"> 11.81 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV131 </td>
+   <td style="text-align:left;"> Terrabacter(g) </td>
+   <td style="text-align:right;"> 58 </td>
+   <td style="text-align:left;"> 28.43*** </td>
+   <td style="text-align:left;"> 0.24 </td>
+   <td style="text-align:left;"> 5.07 </td>
+   <td style="text-align:left;"> 0.19 </td>
+   <td style="text-align:left;"> 7.1 </td>
+   <td style="text-align:left;"> 3.94 </td>
+   <td style="text-align:left;"> 18.05 </td>
+   <td style="text-align:left;"> 36.97 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV133 </td>
+   <td style="text-align:left;"> Actinobacteria(p) </td>
+   <td style="text-align:right;"> 64 </td>
+   <td style="text-align:left;"> 72.86*** </td>
+   <td style="text-align:left;"> 0.02 </td>
+   <td style="text-align:left;"> 3.95 </td>
+   <td style="text-align:left;"> 0.88 </td>
+   <td style="text-align:left;"> 6.2 </td>
+   <td style="text-align:left;"> 1.01 </td>
+   <td style="text-align:left;"> 0.97 </td>
+   <td style="text-align:left;"> 14.1 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV134 </td>
+   <td style="text-align:left;"> Novosphingobium(g) </td>
+   <td style="text-align:right;"> 58 </td>
+   <td style="text-align:left;"> 34.72*** </td>
+   <td style="text-align:left;"> 0.26 </td>
+   <td style="text-align:left;"> 6.71 </td>
+   <td style="text-align:left;"> 4.31 </td>
+   <td style="text-align:left;"> 14.71 </td>
+   <td style="text-align:left;"> 3.5 </td>
+   <td style="text-align:left;"> 9.05 </td>
+   <td style="text-align:left;"> 26.73 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV138 </td>
+   <td style="text-align:left;"> Steroidobacter(g) </td>
+   <td style="text-align:right;"> 74 </td>
+   <td style="text-align:left;"> 46.86*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 5.74 </td>
+   <td style="text-align:left;"> 6.43** </td>
+   <td style="text-align:left;"> 7.3 </td>
+   <td style="text-align:left;"> 8.42* </td>
+   <td style="text-align:left;"> 4.13 </td>
+   <td style="text-align:left;"> 21.11 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV14 </td>
@@ -7700,6 +9709,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 16.1 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV144 </td>
+   <td style="text-align:left;"> Micromonosporaceae(f) </td>
+   <td style="text-align:right;"> 80 </td>
+   <td style="text-align:left;"> 60*** </td>
+   <td style="text-align:left;"> 0.12 </td>
+   <td style="text-align:left;"> 4.26 </td>
+   <td style="text-align:left;"> 10.69*** </td>
+   <td style="text-align:left;"> 3.67 </td>
+   <td style="text-align:left;"> 5.69* </td>
+   <td style="text-align:left;"> 2.45 </td>
+   <td style="text-align:left;"> 13.12 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV147 </td>
    <td style="text-align:left;"> Actinobacteria(c) </td>
    <td style="text-align:right;"> 114 </td>
@@ -7711,6 +9733,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 2.55 </td>
    <td style="text-align:left;"> 4.03 </td>
    <td style="text-align:left;"> 28.18 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV148 </td>
+   <td style="text-align:left;"> Mesorhizobium(g) </td>
+   <td style="text-align:right;"> 54 </td>
+   <td style="text-align:left;"> 22.18*** </td>
+   <td style="text-align:left;"> 0.32 </td>
+   <td style="text-align:left;"> 4.9 </td>
+   <td style="text-align:left;"> 5.67 </td>
+   <td style="text-align:left;"> 13.68 </td>
+   <td style="text-align:left;"> 5.77 </td>
+   <td style="text-align:left;"> 10.44 </td>
+   <td style="text-align:left;"> 37.04 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV15 </td>
@@ -7804,6 +9839,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 10.49 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV203 </td>
+   <td style="text-align:left;"> Actinobacteria(c) </td>
+   <td style="text-align:right;"> 85 </td>
+   <td style="text-align:left;"> 27.32*** </td>
+   <td style="text-align:left;"> 1.31 </td>
+   <td style="text-align:left;"> 10.39 </td>
+   <td style="text-align:left;"> 13.68** </td>
+   <td style="text-align:left;"> 5.54 </td>
+   <td style="text-align:left;"> 1.97 </td>
+   <td style="text-align:left;"> 5.41 </td>
+   <td style="text-align:left;"> 34.38 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV2064 </td>
    <td style="text-align:left;"> Actinocorallia(g) </td>
    <td style="text-align:right;"> 108 </td>
@@ -7856,6 +9904,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 29.13 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV226 </td>
+   <td style="text-align:left;"> Streptomyces(g) </td>
+   <td style="text-align:right;"> 89 </td>
+   <td style="text-align:left;"> 49.75*** </td>
+   <td style="text-align:left;"> 0.02 </td>
+   <td style="text-align:left;"> 3.1 </td>
+   <td style="text-align:left;"> 12.03*** </td>
+   <td style="text-align:left;"> 8.94 </td>
+   <td style="text-align:left;"> 2.59 </td>
+   <td style="text-align:left;"> 2.76 </td>
+   <td style="text-align:left;"> 20.83 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV23 </td>
    <td style="text-align:left;"> Mycobacterium(g) </td>
    <td style="text-align:right;"> 281 </td>
@@ -7867,6 +9928,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 4.33 </td>
    <td style="text-align:left;"> 6.1 </td>
    <td style="text-align:left;"> 19.62 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV232 </td>
+   <td style="text-align:left;"> Micromonosporales(o) </td>
+   <td style="text-align:right;"> 54 </td>
+   <td style="text-align:left;"> 47.96*** </td>
+   <td style="text-align:left;"> 0.03 </td>
+   <td style="text-align:left;"> 6.39 </td>
+   <td style="text-align:left;"> 11.54*** </td>
+   <td style="text-align:left;"> 6.84 </td>
+   <td style="text-align:left;"> 6.37 </td>
+   <td style="text-align:left;"> 1.86 </td>
+   <td style="text-align:left;"> 19.01 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV24 </td>
@@ -7882,6 +9956,32 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 26.58 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV242 </td>
+   <td style="text-align:left;"> Micromonosporaceae(f) </td>
+   <td style="text-align:right;"> 56 </td>
+   <td style="text-align:left;"> 53.65*** </td>
+   <td style="text-align:left;"> 0.24 </td>
+   <td style="text-align:left;"> 6.62 </td>
+   <td style="text-align:left;"> 8.8*** </td>
+   <td style="text-align:left;"> 5.43 </td>
+   <td style="text-align:left;"> 2.68 </td>
+   <td style="text-align:left;"> 2.07 </td>
+   <td style="text-align:left;"> 20.51 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV249 </td>
+   <td style="text-align:left;"> Actinobacteria(p) </td>
+   <td style="text-align:right;"> 58 </td>
+   <td style="text-align:left;"> 16.42*** </td>
+   <td style="text-align:left;"> 0.2 </td>
+   <td style="text-align:left;"> 11.07 </td>
+   <td style="text-align:left;"> 8.57* </td>
+   <td style="text-align:left;"> 15.42 </td>
+   <td style="text-align:left;"> 8.21 </td>
+   <td style="text-align:left;"> 4.45 </td>
+   <td style="text-align:left;"> 35.66 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV25 </td>
    <td style="text-align:left;"> Pseudomonas(g) </td>
    <td style="text-align:right;"> 287 </td>
@@ -7893,6 +9993,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 2.63 </td>
    <td style="text-align:left;"> 9.51 </td>
    <td style="text-align:left;"> 40.2 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV2506 </td>
+   <td style="text-align:left;"> Actinobacteria(c) </td>
+   <td style="text-align:right;"> 87 </td>
+   <td style="text-align:left;"> 23.31*** </td>
+   <td style="text-align:left;"> 1.21 </td>
+   <td style="text-align:left;"> 4.93 </td>
+   <td style="text-align:left;"> 11.35** </td>
+   <td style="text-align:left;"> 11.58 </td>
+   <td style="text-align:left;"> 4.6 </td>
+   <td style="text-align:left;"> 8.17 </td>
+   <td style="text-align:left;"> 34.85 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV26 </td>
@@ -7932,6 +10045,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 4.08 </td>
    <td style="text-align:left;"> 3.21 </td>
    <td style="text-align:left;"> 16.36 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV2888 </td>
+   <td style="text-align:left;"> Streptomycetaceae(f) </td>
+   <td style="text-align:right;"> 74 </td>
+   <td style="text-align:left;"> 20.13*** </td>
+   <td style="text-align:left;"> 0.53 </td>
+   <td style="text-align:left;"> 1.66 </td>
+   <td style="text-align:left;"> 18.84*** </td>
+   <td style="text-align:left;"> 18.48* </td>
+   <td style="text-align:left;"> 5.15 </td>
+   <td style="text-align:left;"> 6.25 </td>
+   <td style="text-align:left;"> 28.95 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV29 </td>
@@ -7999,6 +10125,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 24.36 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV3245 </td>
+   <td style="text-align:left;"> Actinobacteria(c) </td>
+   <td style="text-align:right;"> 58 </td>
+   <td style="text-align:left;"> 53.95*** </td>
+   <td style="text-align:left;"> 0.41 </td>
+   <td style="text-align:left;"> 6.92* </td>
+   <td style="text-align:left;"> 4.75** </td>
+   <td style="text-align:left;"> 8.49 </td>
+   <td style="text-align:left;"> 4.4 </td>
+   <td style="text-align:left;"> 3.14 </td>
+   <td style="text-align:left;"> 17.93 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV33 </td>
    <td style="text-align:left;"> Bradyrhizobium(g) </td>
    <td style="text-align:right;"> 215 </td>
@@ -8010,6 +10149,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 1.2 </td>
    <td style="text-align:left;"> 3.6 </td>
    <td style="text-align:left;"> 15.68 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV3339 </td>
+   <td style="text-align:left;"> Streptomyces(g) </td>
+   <td style="text-align:right;"> 80 </td>
+   <td style="text-align:left;"> 50.45*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 7.93 </td>
+   <td style="text-align:left;"> 1.71 </td>
+   <td style="text-align:left;"> 7.65 </td>
+   <td style="text-align:left;"> 2.52 </td>
+   <td style="text-align:left;"> 5.79 </td>
+   <td style="text-align:left;"> 23.95 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV34 </td>
@@ -8038,6 +10190,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 29.63 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV3475 </td>
+   <td style="text-align:left;"> Streptomycetales(o) </td>
+   <td style="text-align:right;"> 75 </td>
+   <td style="text-align:left;"> 42.03*** </td>
+   <td style="text-align:left;"> 0.32 </td>
+   <td style="text-align:left;"> 3.8 </td>
+   <td style="text-align:left;"> 14.8*** </td>
+   <td style="text-align:left;"> 12.12* </td>
+   <td style="text-align:left;"> 1.28 </td>
+   <td style="text-align:left;"> 5.82 </td>
+   <td style="text-align:left;"> 19.83 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV3482 </td>
    <td style="text-align:left;"> Streptomyces(g) </td>
    <td style="text-align:right;"> 113 </td>
@@ -8062,6 +10227,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 4.58 </td>
    <td style="text-align:left;"> 8.04 </td>
    <td style="text-align:left;"> 42.53 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV3546 </td>
+   <td style="text-align:left;"> Actinobacteria(c) </td>
+   <td style="text-align:right;"> 56 </td>
+   <td style="text-align:left;"> 50.95*** </td>
+   <td style="text-align:left;"> 0.02 </td>
+   <td style="text-align:left;"> 8.77* </td>
+   <td style="text-align:left;"> 2.52 </td>
+   <td style="text-align:left;"> 10.6 </td>
+   <td style="text-align:left;"> 2 </td>
+   <td style="text-align:left;"> 4.17 </td>
+   <td style="text-align:left;"> 20.98 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV36 </td>
@@ -8090,6 +10268,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 35.17 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV3727 </td>
+   <td style="text-align:left;"> Streptomyces(g) </td>
+   <td style="text-align:right;"> 92 </td>
+   <td style="text-align:left;"> 38.87*** </td>
+   <td style="text-align:left;"> 0.02 </td>
+   <td style="text-align:left;"> 4.89 </td>
+   <td style="text-align:left;"> 8.48** </td>
+   <td style="text-align:left;"> 10.2 </td>
+   <td style="text-align:left;"> 5.22 </td>
+   <td style="text-align:left;"> 7.27 </td>
+   <td style="text-align:left;"> 25.05 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV38 </td>
    <td style="text-align:left;"> Mycobacterium(g) </td>
    <td style="text-align:right;"> 160 </td>
@@ -8114,6 +10305,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 3.89 </td>
    <td style="text-align:left;"> 6.17 </td>
    <td style="text-align:left;"> 26.47 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV3912 </td>
+   <td style="text-align:left;"> Streptosporangiales(o) </td>
+   <td style="text-align:right;"> 74 </td>
+   <td style="text-align:left;"> 62.65*** </td>
+   <td style="text-align:left;"> 0.04 </td>
+   <td style="text-align:left;"> 3.23 </td>
+   <td style="text-align:left;"> 4.2* </td>
+   <td style="text-align:left;"> 3.81 </td>
+   <td style="text-align:left;"> 2.86 </td>
+   <td style="text-align:left;"> 3.19 </td>
+   <td style="text-align:left;"> 20.02 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV4 </td>
@@ -8168,6 +10372,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 35.57 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV4247 </td>
+   <td style="text-align:left;"> Actinobacteria(c) </td>
+   <td style="text-align:right;"> 77 </td>
+   <td style="text-align:left;"> 37.4*** </td>
+   <td style="text-align:left;"> 0.33 </td>
+   <td style="text-align:left;"> 13.68* </td>
+   <td style="text-align:left;"> 2.57 </td>
+   <td style="text-align:left;"> 6.59 </td>
+   <td style="text-align:left;"> 4.8 </td>
+   <td style="text-align:left;"> 4.92 </td>
+   <td style="text-align:left;"> 29.71 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV43 </td>
    <td style="text-align:left;"> Solirubrobacterales(o) </td>
    <td style="text-align:right;"> 156 </td>
@@ -8192,6 +10409,32 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 5.91 </td>
    <td style="text-align:left;"> 4.29 </td>
    <td style="text-align:left;"> 27.08 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV4480 </td>
+   <td style="text-align:left;"> Streptomycetaceae(f) </td>
+   <td style="text-align:right;"> 84 </td>
+   <td style="text-align:left;"> 49.08*** </td>
+   <td style="text-align:left;"> 0.08 </td>
+   <td style="text-align:left;"> 5.72 </td>
+   <td style="text-align:left;"> 4.69* </td>
+   <td style="text-align:left;"> 8.05 </td>
+   <td style="text-align:left;"> 2.39 </td>
+   <td style="text-align:left;"> 2.04 </td>
+   <td style="text-align:left;"> 27.95 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV45 </td>
+   <td style="text-align:left;"> Comamonadaceae(f) </td>
+   <td style="text-align:right;"> 83 </td>
+   <td style="text-align:left;"> 71.05*** </td>
+   <td style="text-align:left;"> 1.22 </td>
+   <td style="text-align:left;"> 0.89 </td>
+   <td style="text-align:left;"> 3.61** </td>
+   <td style="text-align:left;"> 6.53 </td>
+   <td style="text-align:left;"> 1.3 </td>
+   <td style="text-align:left;"> 2.32 </td>
+   <td style="text-align:left;"> 13.07 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV46 </td>
@@ -8285,6 +10528,45 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 41.85 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV52 </td>
+   <td style="text-align:left;"> Actinobacteria(c) </td>
+   <td style="text-align:right;"> 88 </td>
+   <td style="text-align:left;"> 14.56** </td>
+   <td style="text-align:left;"> 0.02 </td>
+   <td style="text-align:left;"> 15.81* </td>
+   <td style="text-align:left;"> 10.52** </td>
+   <td style="text-align:left;"> 14.63 </td>
+   <td style="text-align:left;"> 3.72 </td>
+   <td style="text-align:left;"> 3.27 </td>
+   <td style="text-align:left;"> 37.48 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV53 </td>
+   <td style="text-align:left;"> Steroidobacteraceae(f) </td>
+   <td style="text-align:right;"> 96 </td>
+   <td style="text-align:left;"> 3.97 </td>
+   <td style="text-align:left;"> 1.84 </td>
+   <td style="text-align:left;"> 11.18 </td>
+   <td style="text-align:left;"> 15.87** </td>
+   <td style="text-align:left;"> 18.57 </td>
+   <td style="text-align:left;"> 2.84 </td>
+   <td style="text-align:left;"> 6.28 </td>
+   <td style="text-align:left;"> 39.45 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV5363 </td>
+   <td style="text-align:left;"> Streptomycetales(o) </td>
+   <td style="text-align:right;"> 62 </td>
+   <td style="text-align:left;"> 38.84*** </td>
+   <td style="text-align:left;"> 0.01 </td>
+   <td style="text-align:left;"> 3.85 </td>
+   <td style="text-align:left;"> 15.45*** </td>
+   <td style="text-align:left;"> 5.28 </td>
+   <td style="text-align:left;"> 6.56 </td>
+   <td style="text-align:left;"> 9.41 </td>
+   <td style="text-align:left;"> 20.58 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV54 </td>
    <td style="text-align:left;"> Comamonadaceae(f) </td>
    <td style="text-align:right;"> 122 </td>
@@ -8311,6 +10593,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 17.19 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV5548 </td>
+   <td style="text-align:left;"> Actinobacteria(c) </td>
+   <td style="text-align:right;"> 57 </td>
+   <td style="text-align:left;"> 72.29*** </td>
+   <td style="text-align:left;"> 0.45 </td>
+   <td style="text-align:left;"> 3.04 </td>
+   <td style="text-align:left;"> 0.48 </td>
+   <td style="text-align:left;"> 6.78 </td>
+   <td style="text-align:left;"> 1.09 </td>
+   <td style="text-align:left;"> 2.37 </td>
+   <td style="text-align:left;"> 13.5 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV56 </td>
    <td style="text-align:left;"> Gammaproteobacteria(c) </td>
    <td style="text-align:right;"> 119 </td>
@@ -8324,6 +10619,32 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 32.99 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV57 </td>
+   <td style="text-align:left;"> Pseudomonas(g) </td>
+   <td style="text-align:right;"> 88 </td>
+   <td style="text-align:left;"> 13.72** </td>
+   <td style="text-align:left;"> 4.51 </td>
+   <td style="text-align:left;"> 12.42 </td>
+   <td style="text-align:left;"> 1.01 </td>
+   <td style="text-align:left;"> 5.5 </td>
+   <td style="text-align:left;"> 6.92 </td>
+   <td style="text-align:left;"> 6.45 </td>
+   <td style="text-align:left;"> 49.46 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV5732 </td>
+   <td style="text-align:left;"> Streptomyces(g) </td>
+   <td style="text-align:right;"> 83 </td>
+   <td style="text-align:left;"> 49.15*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 5.24 </td>
+   <td style="text-align:left;"> 9.74** </td>
+   <td style="text-align:left;"> 7.59 </td>
+   <td style="text-align:left;"> 1.6 </td>
+   <td style="text-align:left;"> 2.13 </td>
+   <td style="text-align:left;"> 24.54 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV58 </td>
    <td style="text-align:left;"> Thermomonosporaceae(f) </td>
    <td style="text-align:right;"> 119 </td>
@@ -8335,6 +10656,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 4.53 </td>
    <td style="text-align:left;"> 7.24 </td>
    <td style="text-align:left;"> 14.8 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV5845 </td>
+   <td style="text-align:left;"> Actinobacteria(p) </td>
+   <td style="text-align:right;"> 70 </td>
+   <td style="text-align:left;"> 22.41*** </td>
+   <td style="text-align:left;"> 2.75 </td>
+   <td style="text-align:left;"> 15.44* </td>
+   <td style="text-align:left;"> 9.06* </td>
+   <td style="text-align:left;"> 6.95 </td>
+   <td style="text-align:left;"> 4.98 </td>
+   <td style="text-align:left;"> 2.81 </td>
+   <td style="text-align:left;"> 35.6 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV59 </td>
@@ -8376,6 +10710,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 20.59 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV60 </td>
+   <td style="text-align:left;"> Methylophilaceae(f) </td>
+   <td style="text-align:right;"> 68 </td>
+   <td style="text-align:left;"> 72.22*** </td>
+   <td style="text-align:left;"> 1.42* </td>
+   <td style="text-align:left;"> 1.59 </td>
+   <td style="text-align:left;"> 5.12*** </td>
+   <td style="text-align:left;"> 6.68* </td>
+   <td style="text-align:left;"> 1.14 </td>
+   <td style="text-align:left;"> 2.98 </td>
+   <td style="text-align:left;"> 8.85 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV61 </td>
    <td style="text-align:left;"> Kribbella(g) </td>
    <td style="text-align:right;"> 101 </td>
@@ -8387,6 +10734,58 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 7.94 </td>
    <td style="text-align:left;"> 3.97 </td>
    <td style="text-align:left;"> 23.42 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV6133 </td>
+   <td style="text-align:left;"> Actinobacteria(c) </td>
+   <td style="text-align:right;"> 58 </td>
+   <td style="text-align:left;"> 37.51*** </td>
+   <td style="text-align:left;"> 1.54 </td>
+   <td style="text-align:left;"> 11.08* </td>
+   <td style="text-align:left;"> 3.62 </td>
+   <td style="text-align:left;"> 6.8 </td>
+   <td style="text-align:left;"> 3.34 </td>
+   <td style="text-align:left;"> 7.38 </td>
+   <td style="text-align:left;"> 28.74 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV6156 </td>
+   <td style="text-align:left;"> Streptomycetales(o) </td>
+   <td style="text-align:right;"> 59 </td>
+   <td style="text-align:left;"> 54.3*** </td>
+   <td style="text-align:left;"> 0.6 </td>
+   <td style="text-align:left;"> 5.74 </td>
+   <td style="text-align:left;"> 3.44* </td>
+   <td style="text-align:left;"> 10.93 </td>
+   <td style="text-align:left;"> 1.72 </td>
+   <td style="text-align:left;"> 3.1 </td>
+   <td style="text-align:left;"> 20.18 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV6189 </td>
+   <td style="text-align:left;"> Proteobacteria(p) </td>
+   <td style="text-align:right;"> 94 </td>
+   <td style="text-align:left;"> 24.76*** </td>
+   <td style="text-align:left;"> 0.73 </td>
+   <td style="text-align:left;"> 9.02 </td>
+   <td style="text-align:left;"> 9.44** </td>
+   <td style="text-align:left;"> 9.58 </td>
+   <td style="text-align:left;"> 2.96 </td>
+   <td style="text-align:left;"> 10.09 </td>
+   <td style="text-align:left;"> 33.41 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV62 </td>
+   <td style="text-align:left;"> Rhizobiaceae(f) </td>
+   <td style="text-align:right;"> 79 </td>
+   <td style="text-align:left;"> 21.06*** </td>
+   <td style="text-align:left;"> 4.98* </td>
+   <td style="text-align:left;"> 9.55 </td>
+   <td style="text-align:left;"> 2.88 </td>
+   <td style="text-align:left;"> 9.27 </td>
+   <td style="text-align:left;"> 2.51 </td>
+   <td style="text-align:left;"> 13.1 </td>
+   <td style="text-align:left;"> 36.65 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV63 </td>
@@ -8402,6 +10801,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 30.94 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV633 </td>
+   <td style="text-align:left;"> Streptomyces(g) </td>
+   <td style="text-align:right;"> 86 </td>
+   <td style="text-align:left;"> 28.58*** </td>
+   <td style="text-align:left;"> 0.03 </td>
+   <td style="text-align:left;"> 4.21 </td>
+   <td style="text-align:left;"> 11.73** </td>
+   <td style="text-align:left;"> 9.03 </td>
+   <td style="text-align:left;"> 6.17 </td>
+   <td style="text-align:left;"> 5.9 </td>
+   <td style="text-align:left;"> 34.35 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV64 </td>
    <td style="text-align:left;"> Actinobacteria(c) </td>
    <td style="text-align:right;"> 393 </td>
@@ -8415,6 +10827,19 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 40.36 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV6433 </td>
+   <td style="text-align:left;"> Actinobacteria(c) </td>
+   <td style="text-align:right;"> 72 </td>
+   <td style="text-align:left;"> 43.27*** </td>
+   <td style="text-align:left;"> 0.06 </td>
+   <td style="text-align:left;"> 9.16 </td>
+   <td style="text-align:left;"> 3.11 </td>
+   <td style="text-align:left;"> 8.06 </td>
+   <td style="text-align:left;"> 4.42 </td>
+   <td style="text-align:left;"> 4.52 </td>
+   <td style="text-align:left;"> 27.4 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV65 </td>
    <td style="text-align:left;"> Nocardia(g) </td>
    <td style="text-align:right;"> 100 </td>
@@ -8426,6 +10851,71 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 4.92 </td>
    <td style="text-align:left;"> 4.74 </td>
    <td style="text-align:left;"> 19.16 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV66 </td>
+   <td style="text-align:left;"> Solirubrobacterales(o) </td>
+   <td style="text-align:right;"> 79 </td>
+   <td style="text-align:left;"> 22.17*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 14.16* </td>
+   <td style="text-align:left;"> 1.15 </td>
+   <td style="text-align:left;"> 10.02 </td>
+   <td style="text-align:left;"> 6.68 </td>
+   <td style="text-align:left;"> 6.58 </td>
+   <td style="text-align:left;"> 39.23 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV67 </td>
+   <td style="text-align:left;"> Rhizobacter(g) </td>
+   <td style="text-align:right;"> 72 </td>
+   <td style="text-align:left;"> 43.89*** </td>
+   <td style="text-align:left;"> 0.04 </td>
+   <td style="text-align:left;"> 4.36 </td>
+   <td style="text-align:left;"> 6.6** </td>
+   <td style="text-align:left;"> 4.85 </td>
+   <td style="text-align:left;"> 9.14* </td>
+   <td style="text-align:left;"> 6.03 </td>
+   <td style="text-align:left;"> 25.08 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV68 </td>
+   <td style="text-align:left;"> Pseudoxanthomonas(g) </td>
+   <td style="text-align:right;"> 73 </td>
+   <td style="text-align:left;"> 31.96*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 7.23 </td>
+   <td style="text-align:left;"> 3.65 </td>
+   <td style="text-align:left;"> 9.57 </td>
+   <td style="text-align:left;"> 5.52 </td>
+   <td style="text-align:left;"> 9.13 </td>
+   <td style="text-align:left;"> 32.93 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV69 </td>
+   <td style="text-align:left;"> Comamonadaceae(f) </td>
+   <td style="text-align:right;"> 81 </td>
+   <td style="text-align:left;"> 9.06* </td>
+   <td style="text-align:left;"> 3.89 </td>
+   <td style="text-align:left;"> 8.79 </td>
+   <td style="text-align:left;"> 1.28 </td>
+   <td style="text-align:left;"> 16.55 </td>
+   <td style="text-align:left;"> 5.96 </td>
+   <td style="text-align:left;"> 8.96 </td>
+   <td style="text-align:left;"> 45.51 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV6943 </td>
+   <td style="text-align:left;"> Streptomycetales(o) </td>
+   <td style="text-align:right;"> 58 </td>
+   <td style="text-align:left;"> 63.96*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 4.87 </td>
+   <td style="text-align:left;"> 7.77*** </td>
+   <td style="text-align:left;"> 4.55 </td>
+   <td style="text-align:left;"> 1.43 </td>
+   <td style="text-align:left;"> 1.43 </td>
+   <td style="text-align:left;"> 15.99 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV7 </td>
@@ -8454,6 +10944,149 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 18.38 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV7068 </td>
+   <td style="text-align:left;"> Streptomyces(g) </td>
+   <td style="text-align:right;"> 83 </td>
+   <td style="text-align:left;"> 48.16*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 5 </td>
+   <td style="text-align:left;"> 11.89*** </td>
+   <td style="text-align:left;"> 9.46 </td>
+   <td style="text-align:left;"> 2.62 </td>
+   <td style="text-align:left;"> 4.49 </td>
+   <td style="text-align:left;"> 18.37 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV71 </td>
+   <td style="text-align:left;"> Bradyrhizobiaceae(f) </td>
+   <td style="text-align:right;"> 96 </td>
+   <td style="text-align:left;"> 53.38*** </td>
+   <td style="text-align:left;"> 0.21 </td>
+   <td style="text-align:left;"> 5.04 </td>
+   <td style="text-align:left;"> 4.03* </td>
+   <td style="text-align:left;"> 8.81 </td>
+   <td style="text-align:left;"> 0.22 </td>
+   <td style="text-align:left;"> 4.88 </td>
+   <td style="text-align:left;"> 23.43 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV7112 </td>
+   <td style="text-align:left;"> Bradyrhizobium(g) </td>
+   <td style="text-align:right;"> 71 </td>
+   <td style="text-align:left;"> 22.85*** </td>
+   <td style="text-align:left;"> 2.34 </td>
+   <td style="text-align:left;"> 6.1 </td>
+   <td style="text-align:left;"> 20.27*** </td>
+   <td style="text-align:left;"> 12.55 </td>
+   <td style="text-align:left;"> 6.14 </td>
+   <td style="text-align:left;"> 4.19 </td>
+   <td style="text-align:left;"> 25.57 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV7183 </td>
+   <td style="text-align:left;"> Streptomycetaceae(f) </td>
+   <td style="text-align:right;"> 57 </td>
+   <td style="text-align:left;"> 54.93*** </td>
+   <td style="text-align:left;"> 0.54 </td>
+   <td style="text-align:left;"> 5.74 </td>
+   <td style="text-align:left;"> 8.38*** </td>
+   <td style="text-align:left;"> 6.76 </td>
+   <td style="text-align:left;"> 3.85 </td>
+   <td style="text-align:left;"> 1.02 </td>
+   <td style="text-align:left;"> 18.79 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV72 </td>
+   <td style="text-align:left;"> Actinobacteria(p) </td>
+   <td style="text-align:right;"> 97 </td>
+   <td style="text-align:left;"> 54.27*** </td>
+   <td style="text-align:left;"> 0.78 </td>
+   <td style="text-align:left;"> 11.64*** </td>
+   <td style="text-align:left;"> 3.98* </td>
+   <td style="text-align:left;"> 5.08 </td>
+   <td style="text-align:left;"> 4.53 </td>
+   <td style="text-align:left;"> 4.01 </td>
+   <td style="text-align:left;"> 15.69 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV73 </td>
+   <td style="text-align:left;"> Micrococcaceae(f) </td>
+   <td style="text-align:right;"> 75 </td>
+   <td style="text-align:left;"> 21.14*** </td>
+   <td style="text-align:left;"> 1.11 </td>
+   <td style="text-align:left;"> 8.03 </td>
+   <td style="text-align:left;"> 7.07* </td>
+   <td style="text-align:left;"> 9.22 </td>
+   <td style="text-align:left;"> 3.48 </td>
+   <td style="text-align:left;"> 10.78 </td>
+   <td style="text-align:left;"> 39.18 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV74 </td>
+   <td style="text-align:left;"> Streptomyces(g) </td>
+   <td style="text-align:right;"> 87 </td>
+   <td style="text-align:left;"> 41.63*** </td>
+   <td style="text-align:left;"> 1.16 </td>
+   <td style="text-align:left;"> 4.03 </td>
+   <td style="text-align:left;"> 5.35* </td>
+   <td style="text-align:left;"> 7.73 </td>
+   <td style="text-align:left;"> 4.51 </td>
+   <td style="text-align:left;"> 5.4 </td>
+   <td style="text-align:left;"> 30.2 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV75 </td>
+   <td style="text-align:left;"> Actinobacteria(p) </td>
+   <td style="text-align:right;"> 75 </td>
+   <td style="text-align:left;"> 27.58*** </td>
+   <td style="text-align:left;"> 1.07 </td>
+   <td style="text-align:left;"> 15.59* </td>
+   <td style="text-align:left;"> 0.22 </td>
+   <td style="text-align:left;"> 11.37 </td>
+   <td style="text-align:left;"> 1.21 </td>
+   <td style="text-align:left;"> 9.02 </td>
+   <td style="text-align:left;"> 33.95 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV76 </td>
+   <td style="text-align:left;"> Bradyrhizobium(g) </td>
+   <td style="text-align:right;"> 71 </td>
+   <td style="text-align:left;"> 26.88*** </td>
+   <td style="text-align:left;"> 0.05 </td>
+   <td style="text-align:left;"> 16.73** </td>
+   <td style="text-align:left;"> 11.4** </td>
+   <td style="text-align:left;"> 9.97 </td>
+   <td style="text-align:left;"> 3.55 </td>
+   <td style="text-align:left;"> 3.53 </td>
+   <td style="text-align:left;"> 27.9 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV77 </td>
+   <td style="text-align:left;"> Rhizobiaceae(f) </td>
+   <td style="text-align:right;"> 63 </td>
+   <td style="text-align:left;"> 56.09*** </td>
+   <td style="text-align:left;"> 0.24 </td>
+   <td style="text-align:left;"> 2.13 </td>
+   <td style="text-align:left;"> 1.59 </td>
+   <td style="text-align:left;"> 11.44 </td>
+   <td style="text-align:left;"> 2.85 </td>
+   <td style="text-align:left;"> 5.99 </td>
+   <td style="text-align:left;"> 19.68 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV79 </td>
+   <td style="text-align:left;"> Polaromonas(g) </td>
+   <td style="text-align:right;"> 73 </td>
+   <td style="text-align:left;"> 24.64*** </td>
+   <td style="text-align:left;"> 0.87 </td>
+   <td style="text-align:left;"> 12 </td>
+   <td style="text-align:left;"> 4.07 </td>
+   <td style="text-align:left;"> 10.16 </td>
+   <td style="text-align:left;"> 4.38 </td>
+   <td style="text-align:left;"> 5.31 </td>
+   <td style="text-align:left;"> 38.56 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV8 </td>
    <td style="text-align:left;"> Actinoplanes(g) </td>
    <td style="text-align:right;"> 604 </td>
@@ -8467,6 +11100,32 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 9.13 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV81 </td>
+   <td style="text-align:left;"> Steroidobacteraceae(f) </td>
+   <td style="text-align:right;"> 73 </td>
+   <td style="text-align:left;"> 56.21*** </td>
+   <td style="text-align:left;"> 2.15** </td>
+   <td style="text-align:left;"> 1.27 </td>
+   <td style="text-align:left;"> 9.71*** </td>
+   <td style="text-align:left;"> 12.22** </td>
+   <td style="text-align:left;"> 2.72 </td>
+   <td style="text-align:left;"> 4.19 </td>
+   <td style="text-align:left;"> 11.53 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV82 </td>
+   <td style="text-align:left;"> Pseudomonas(g) </td>
+   <td style="text-align:right;"> 71 </td>
+   <td style="text-align:left;"> 21.8*** </td>
+   <td style="text-align:left;"> 6.41* </td>
+   <td style="text-align:left;"> 8.66 </td>
+   <td style="text-align:left;"> 2.74 </td>
+   <td style="text-align:left;"> 5.42 </td>
+   <td style="text-align:left;"> 8.38 </td>
+   <td style="text-align:left;"> 8.89 </td>
+   <td style="text-align:left;"> 37.7 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV83 </td>
    <td style="text-align:left;"> Steroidobacter(g) </td>
    <td style="text-align:right;"> 128 </td>
@@ -8478,6 +11137,45 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 9.19 </td>
    <td style="text-align:left;"> 5.77 </td>
    <td style="text-align:left;"> 34.58 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV84 </td>
+   <td style="text-align:left;"> Caulobacter(g) </td>
+   <td style="text-align:right;"> 65 </td>
+   <td style="text-align:left;"> 23.57*** </td>
+   <td style="text-align:left;"> 0.5 </td>
+   <td style="text-align:left;"> 8.41 </td>
+   <td style="text-align:left;"> 3.02 </td>
+   <td style="text-align:left;"> 9.94 </td>
+   <td style="text-align:left;"> 4.47 </td>
+   <td style="text-align:left;"> 13.58 </td>
+   <td style="text-align:left;"> 36.51 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV86 </td>
+   <td style="text-align:left;"> Xanthomonadales(o) </td>
+   <td style="text-align:right;"> 69 </td>
+   <td style="text-align:left;"> 30.09*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 10.7* </td>
+   <td style="text-align:left;"> 10.77** </td>
+   <td style="text-align:left;"> 10.5 </td>
+   <td style="text-align:left;"> 5.36 </td>
+   <td style="text-align:left;"> 4.31 </td>
+   <td style="text-align:left;"> 28.28 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV87 </td>
+   <td style="text-align:left;"> Gammaproteobacteria(c) </td>
+   <td style="text-align:right;"> 56 </td>
+   <td style="text-align:left;"> 55.41*** </td>
+   <td style="text-align:left;"> 0.67 </td>
+   <td style="text-align:left;"> 4.27 </td>
+   <td style="text-align:left;"> 9.18*** </td>
+   <td style="text-align:left;"> 10.73** </td>
+   <td style="text-align:left;"> 2.1 </td>
+   <td style="text-align:left;"> 4.65 </td>
+   <td style="text-align:left;"> 12.99 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV88 </td>
@@ -8506,6 +11204,58 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 38.04 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV90 </td>
+   <td style="text-align:left;"> Rhizobacter(g) </td>
+   <td style="text-align:right;"> 64 </td>
+   <td style="text-align:left;"> 45.46*** </td>
+   <td style="text-align:left;"> 0.21 </td>
+   <td style="text-align:left;"> 7.01 </td>
+   <td style="text-align:left;"> 5.53* </td>
+   <td style="text-align:left;"> 3.33 </td>
+   <td style="text-align:left;"> 4.06 </td>
+   <td style="text-align:left;"> 3.18 </td>
+   <td style="text-align:left;"> 31.21 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV91 </td>
+   <td style="text-align:left;"> Thermomonosporaceae(f) </td>
+   <td style="text-align:right;"> 58 </td>
+   <td style="text-align:left;"> 34.97*** </td>
+   <td style="text-align:left;"> 1.3 </td>
+   <td style="text-align:left;"> 5.21 </td>
+   <td style="text-align:left;"> 6.8* </td>
+   <td style="text-align:left;"> 11.76 </td>
+   <td style="text-align:left;"> 5.68 </td>
+   <td style="text-align:left;"> 3.19 </td>
+   <td style="text-align:left;"> 31.08 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV92 </td>
+   <td style="text-align:left;"> Tardiphaga(g) </td>
+   <td style="text-align:right;"> 72 </td>
+   <td style="text-align:left;"> 67.49*** </td>
+   <td style="text-align:left;"> 1.98* </td>
+   <td style="text-align:left;"> 4.53 </td>
+   <td style="text-align:left;"> 1.46 </td>
+   <td style="text-align:left;"> 0.73 </td>
+   <td style="text-align:left;"> 1.86 </td>
+   <td style="text-align:left;"> 3.65 </td>
+   <td style="text-align:left;"> 18.3 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV93 </td>
+   <td style="text-align:left;"> Rhizobacter(g) </td>
+   <td style="text-align:right;"> 54 </td>
+   <td style="text-align:left;"> 3.4 </td>
+   <td style="text-align:left;"> 0.66 </td>
+   <td style="text-align:left;"> 8.31 </td>
+   <td style="text-align:left;"> 12.51** </td>
+   <td style="text-align:left;"> 13.79 </td>
+   <td style="text-align:left;"> 5.78 </td>
+   <td style="text-align:left;"> 12.07 </td>
+   <td style="text-align:left;"> 43.48 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV944 </td>
    <td style="text-align:left;"> Streptomyces(g) </td>
    <td style="text-align:right;"> 126 </td>
@@ -8517,6 +11267,71 @@ top_asvs_anova_summary %>%
    <td style="text-align:left;"> 1.94 </td>
    <td style="text-align:left;"> 4.06 </td>
    <td style="text-align:left;"> 17.23 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV95 </td>
+   <td style="text-align:left;"> Frankia(g) </td>
+   <td style="text-align:right;"> 65 </td>
+   <td style="text-align:left;"> 28.73*** </td>
+   <td style="text-align:left;"> 0.25 </td>
+   <td style="text-align:left;"> 10.97* </td>
+   <td style="text-align:left;"> 9.52** </td>
+   <td style="text-align:left;"> 9.27 </td>
+   <td style="text-align:left;"> 8.54 </td>
+   <td style="text-align:left;"> 4.49 </td>
+   <td style="text-align:left;"> 28.24 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV96 </td>
+   <td style="text-align:left;"> Hyphomicrobium(g) </td>
+   <td style="text-align:right;"> 55 </td>
+   <td style="text-align:left;"> 49.18*** </td>
+   <td style="text-align:left;"> 0.1 </td>
+   <td style="text-align:left;"> 5.69 </td>
+   <td style="text-align:left;"> 1.37 </td>
+   <td style="text-align:left;"> 14.76** </td>
+   <td style="text-align:left;"> 4.35 </td>
+   <td style="text-align:left;"> 6.92 </td>
+   <td style="text-align:left;"> 17.64 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV97 </td>
+   <td style="text-align:left;"> Gammaproteobacteria(c) </td>
+   <td style="text-align:right;"> 66 </td>
+   <td style="text-align:left;"> 55.05*** </td>
+   <td style="text-align:left;"> 0.08 </td>
+   <td style="text-align:left;"> 4.05 </td>
+   <td style="text-align:left;"> 7.59** </td>
+   <td style="text-align:left;"> 6.95 </td>
+   <td style="text-align:left;"> 1 </td>
+   <td style="text-align:left;"> 5.84 </td>
+   <td style="text-align:left;"> 19.43 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV98 </td>
+   <td style="text-align:left;"> Thermoleophilia(c) </td>
+   <td style="text-align:right;"> 80 </td>
+   <td style="text-align:left;"> 67.69*** </td>
+   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 3.75 </td>
+   <td style="text-align:left;"> 3.03* </td>
+   <td style="text-align:left;"> 2.5 </td>
+   <td style="text-align:left;"> 3.89 </td>
+   <td style="text-align:left;"> 3.05 </td>
+   <td style="text-align:left;"> 16.08 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV99 </td>
+   <td style="text-align:left;"> Yinghuangia(g) </td>
+   <td style="text-align:right;"> 75 </td>
+   <td style="text-align:left;"> 73.5*** </td>
+   <td style="text-align:left;"> 0.04 </td>
+   <td style="text-align:left;"> 4.77* </td>
+   <td style="text-align:left;"> 4.07*** </td>
+   <td style="text-align:left;"> 2.73 </td>
+   <td style="text-align:left;"> 2 </td>
+   <td style="text-align:left;"> 3.16 </td>
+   <td style="text-align:left;"> 9.74 </td>
   </tr>
 </tbody>
 </table>
@@ -8538,15 +11353,15 @@ cat(
 ```
 # Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values 
 # 
-#  Site: 65 
-#  Storage: 1 
-#  Scion: 14 
-#  Site:Storage: 36 
-#  Site:Scion: 0 
+#  Site: 145 
+#  Storage: 2 
+#  Scion: 20 
+#  Site:Storage: 76 
+#  Site:Scion: 3 
 #  Storage:Scion: 1 
 #  Site:Storage:Scion: 0 
 # 
-#  Total ASVs: 71
+#  Total ASVs: 155
 ```
 
 ``` r
@@ -8579,68 +11394,8 @@ scion_asvs %>%
 <tbody>
   <tr>
    <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 6.462816 </td>
-   <td style="text-align:right;"> 1.077136 </td>
-   <td style="text-align:right;"> 3.632478 </td>
-   <td style="text-align:right;"> 0.0057001 </td>
-   <td style="text-align:left;"> ASV10 </td>
-   <td style="text-align:left;"> Acidimicrobiales(o) </td>
-   <td style="text-align:right;"> 349 </td>
-   <td style="text-align:left;"> Scion </td>
-   <td style="text-align:right;"> 19.008777 </td>
-   <td style="text-align:left;"> ** </td>
-   <td style="text-align:left;"> 19.01** </td>
-   <td style="text-align:right;"> 0.0272400 </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 10.164244 </td>
-   <td style="text-align:right;"> 1.694041 </td>
-   <td style="text-align:right;"> 4.038754 </td>
-   <td style="text-align:right;"> 0.0029568 </td>
-   <td style="text-align:left;"> ASV11 </td>
-   <td style="text-align:left;"> Actinoplanes(g) </td>
-   <td style="text-align:right;"> 363 </td>
-   <td style="text-align:left;"> Scion </td>
-   <td style="text-align:right;"> 8.779256 </td>
-   <td style="text-align:left;"> ** </td>
-   <td style="text-align:left;"> 8.78** </td>
-   <td style="text-align:right;"> 0.0151495 </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 13.711397 </td>
-   <td style="text-align:right;"> 2.285233 </td>
-   <td style="text-align:right;"> 3.205277 </td>
-   <td style="text-align:right;"> 0.0115314 </td>
-   <td style="text-align:left;"> ASV15 </td>
-   <td style="text-align:left;"> Actinocorallia(g) </td>
-   <td style="text-align:right;"> 346 </td>
-   <td style="text-align:left;"> Scion </td>
-   <td style="text-align:right;"> 6.948747 </td>
-   <td style="text-align:left;"> * </td>
-   <td style="text-align:left;"> 6.95* </td>
-   <td style="text-align:right;"> 0.0494062 </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 9.239304 </td>
-   <td style="text-align:right;"> 1.539884 </td>
-   <td style="text-align:right;"> 5.014190 </td>
-   <td style="text-align:right;"> 0.0006493 </td>
-   <td style="text-align:left;"> ASV17 </td>
-   <td style="text-align:left;"> Mycobacteriaceae(f) </td>
-   <td style="text-align:right;"> 337 </td>
-   <td style="text-align:left;"> Scion </td>
-   <td style="text-align:right;"> 8.075128 </td>
-   <td style="text-align:left;"> *** </td>
-   <td style="text-align:left;"> 8.08*** </td>
-   <td style="text-align:right;"> 0.0041374 </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 15.526618 </td>
-   <td style="text-align:right;"> 2.587770 </td>
+   <td style="text-align:right;"> 2.5877696 </td>
    <td style="text-align:right;"> 3.228422 </td>
    <td style="text-align:right;"> 0.0110957 </td>
    <td style="text-align:left;"> ASV2 </td>
@@ -8650,102 +11405,12 @@ scion_asvs %>%
    <td style="text-align:right;"> 19.217052 </td>
    <td style="text-align:left;"> * </td>
    <td style="text-align:left;"> 19.22* </td>
-   <td style="text-align:right;"> 0.0479624 </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 16.024984 </td>
-   <td style="text-align:right;"> 2.670831 </td>
-   <td style="text-align:right;"> 4.828893 </td>
-   <td style="text-align:right;"> 0.0008602 </td>
-   <td style="text-align:left;"> ASV28 </td>
-   <td style="text-align:left;"> Amycolatopsis(g) </td>
-   <td style="text-align:right;"> 305 </td>
-   <td style="text-align:left;"> Scion </td>
-   <td style="text-align:right;"> 11.853513 </td>
-   <td style="text-align:left;"> *** </td>
-   <td style="text-align:left;"> 11.85*** </td>
-   <td style="text-align:right;"> 0.0051511 </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 25.717650 </td>
-   <td style="text-align:right;"> 4.286275 </td>
-   <td style="text-align:right;"> 3.293104 </td>
-   <td style="text-align:right;"> 0.0099654 </td>
-   <td style="text-align:left;"> ASV36 </td>
-   <td style="text-align:left;"> Bacillaceae_1(f) </td>
-   <td style="text-align:right;"> 167 </td>
-   <td style="text-align:left;"> Scion </td>
-   <td style="text-align:right;"> 14.839456 </td>
-   <td style="text-align:left;"> ** </td>
-   <td style="text-align:left;"> 14.84** </td>
-   <td style="text-align:right;"> 0.0446197 </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 6.662841 </td>
-   <td style="text-align:right;"> 1.110473 </td>
-   <td style="text-align:right;"> 3.228302 </td>
-   <td style="text-align:right;"> 0.0110979 </td>
-   <td style="text-align:left;"> ASV43 </td>
-   <td style="text-align:left;"> Solirubrobacterales(o) </td>
-   <td style="text-align:right;"> 156 </td>
-   <td style="text-align:left;"> Scion </td>
-   <td style="text-align:right;"> 7.736463 </td>
-   <td style="text-align:left;"> * </td>
-   <td style="text-align:left;"> 7.74* </td>
-   <td style="text-align:right;"> 0.0479624 </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 6.477019 </td>
-   <td style="text-align:right;"> 1.079503 </td>
-   <td style="text-align:right;"> 3.404861 </td>
-   <td style="text-align:right;"> 0.0082828 </td>
-   <td style="text-align:left;"> ASV49 </td>
-   <td style="text-align:left;"> Novosphingobium(g) </td>
-   <td style="text-align:right;"> 140 </td>
-   <td style="text-align:left;"> Scion </td>
-   <td style="text-align:right;"> 13.074252 </td>
-   <td style="text-align:left;"> ** </td>
-   <td style="text-align:left;"> 13.07** </td>
-   <td style="text-align:right;"> 0.0388356 </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 11.385314 </td>
-   <td style="text-align:right;"> 1.897552 </td>
-   <td style="text-align:right;"> 3.266670 </td>
-   <td style="text-align:right;"> 0.0104123 </td>
-   <td style="text-align:left;"> ASV58 </td>
-   <td style="text-align:left;"> Thermomonosporaceae(f) </td>
-   <td style="text-align:right;"> 119 </td>
-   <td style="text-align:left;"> Scion </td>
-   <td style="text-align:right;"> 7.250910 </td>
-   <td style="text-align:left;"> * </td>
-   <td style="text-align:left;"> 7.25* </td>
-   <td style="text-align:right;"> 0.0457957 </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 10.646995 </td>
-   <td style="text-align:right;"> 1.774499 </td>
-   <td style="text-align:right;"> 3.380295 </td>
-   <td style="text-align:right;"> 0.0086258 </td>
-   <td style="text-align:left;"> ASV61 </td>
-   <td style="text-align:left;"> Kribbella(g) </td>
-   <td style="text-align:right;"> 101 </td>
-   <td style="text-align:left;"> Scion </td>
-   <td style="text-align:right;"> 11.875110 </td>
-   <td style="text-align:left;"> ** </td>
-   <td style="text-align:left;"> 11.88** </td>
-   <td style="text-align:right;"> 0.0396946 </td>
+   <td style="text-align:right;"> 0.0487501 </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 6.128484 </td>
-   <td style="text-align:right;"> 1.021414 </td>
+   <td style="text-align:right;"> 1.0214140 </td>
    <td style="text-align:right;"> 3.925699 </td>
    <td style="text-align:right;"> 0.0035442 </td>
    <td style="text-align:left;"> ASV7 </td>
@@ -8755,27 +11420,12 @@ scion_asvs %>%
    <td style="text-align:right;"> 18.278756 </td>
    <td style="text-align:left;"> ** </td>
    <td style="text-align:left;"> 18.28** </td>
-   <td style="text-align:right;"> 0.0179641 </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 8.955213 </td>
-   <td style="text-align:right;"> 1.492536 </td>
-   <td style="text-align:right;"> 4.056045 </td>
-   <td style="text-align:right;"> 0.0028762 </td>
-   <td style="text-align:left;"> ASV70 </td>
-   <td style="text-align:left;"> Kribbella(g) </td>
-   <td style="text-align:right;"> 103 </td>
-   <td style="text-align:left;"> Scion </td>
-   <td style="text-align:right;"> 11.179662 </td>
-   <td style="text-align:left;"> ** </td>
-   <td style="text-align:left;"> 11.18** </td>
-   <td style="text-align:right;"> 0.0148903 </td>
+   <td style="text-align:right;"> 0.0180184 </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 14.890921 </td>
-   <td style="text-align:right;"> 2.481820 </td>
+   <td style="text-align:right;"> 2.4818201 </td>
    <td style="text-align:right;"> 4.610217 </td>
    <td style="text-align:right;"> 0.0012038 </td>
    <td style="text-align:left;"> ASV8 </td>
@@ -8785,12 +11435,117 @@ scion_asvs %>%
    <td style="text-align:right;"> 6.314704 </td>
    <td style="text-align:left;"> ** </td>
    <td style="text-align:left;"> 6.31** </td>
-   <td style="text-align:right;"> 0.0070386 </td>
+   <td style="text-align:right;"> 0.0070600 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 10.164244 </td>
+   <td style="text-align:right;"> 1.6940407 </td>
+   <td style="text-align:right;"> 4.038754 </td>
+   <td style="text-align:right;"> 0.0029568 </td>
+   <td style="text-align:left;"> ASV11 </td>
+   <td style="text-align:left;"> Actinoplanes(g) </td>
+   <td style="text-align:right;"> 363 </td>
+   <td style="text-align:left;"> Scion </td>
+   <td style="text-align:right;"> 8.779256 </td>
+   <td style="text-align:left;"> ** </td>
+   <td style="text-align:left;"> 8.78** </td>
+   <td style="text-align:right;"> 0.0152765 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 6.462816 </td>
+   <td style="text-align:right;"> 1.0771361 </td>
+   <td style="text-align:right;"> 3.632478 </td>
+   <td style="text-align:right;"> 0.0057001 </td>
+   <td style="text-align:left;"> ASV10 </td>
+   <td style="text-align:left;"> Acidimicrobiales(o) </td>
+   <td style="text-align:right;"> 349 </td>
+   <td style="text-align:left;"> Scion </td>
+   <td style="text-align:right;"> 19.008777 </td>
+   <td style="text-align:left;"> ** </td>
+   <td style="text-align:left;"> 19.01** </td>
+   <td style="text-align:right;"> 0.0278587 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 9.239304 </td>
+   <td style="text-align:right;"> 1.5398841 </td>
+   <td style="text-align:right;"> 5.014190 </td>
+   <td style="text-align:right;"> 0.0006493 </td>
+   <td style="text-align:left;"> ASV17 </td>
+   <td style="text-align:left;"> Mycobacteriaceae(f) </td>
+   <td style="text-align:right;"> 337 </td>
+   <td style="text-align:left;"> Scion </td>
+   <td style="text-align:right;"> 8.075128 </td>
+   <td style="text-align:left;"> *** </td>
+   <td style="text-align:left;"> 8.08*** </td>
+   <td style="text-align:right;"> 0.0040961 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 16.024984 </td>
+   <td style="text-align:right;"> 2.6708306 </td>
+   <td style="text-align:right;"> 4.828893 </td>
+   <td style="text-align:right;"> 0.0008602 </td>
+   <td style="text-align:left;"> ASV28 </td>
+   <td style="text-align:left;"> Amycolatopsis(g) </td>
+   <td style="text-align:right;"> 305 </td>
+   <td style="text-align:left;"> Scion </td>
+   <td style="text-align:right;"> 11.853513 </td>
+   <td style="text-align:left;"> *** </td>
+   <td style="text-align:left;"> 11.85*** </td>
+   <td style="text-align:right;"> 0.0051854 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 25.717650 </td>
+   <td style="text-align:right;"> 4.2862749 </td>
+   <td style="text-align:right;"> 3.293104 </td>
+   <td style="text-align:right;"> 0.0099654 </td>
+   <td style="text-align:left;"> ASV36 </td>
+   <td style="text-align:left;"> Bacillaceae_1(f) </td>
+   <td style="text-align:right;"> 167 </td>
+   <td style="text-align:left;"> Scion </td>
+   <td style="text-align:right;"> 14.839456 </td>
+   <td style="text-align:left;"> ** </td>
+   <td style="text-align:left;"> 14.84** </td>
+   <td style="text-align:right;"> 0.0450517 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 6.662841 </td>
+   <td style="text-align:right;"> 1.1104735 </td>
+   <td style="text-align:right;"> 3.228302 </td>
+   <td style="text-align:right;"> 0.0110979 </td>
+   <td style="text-align:left;"> ASV43 </td>
+   <td style="text-align:left;"> Solirubrobacterales(o) </td>
+   <td style="text-align:right;"> 156 </td>
+   <td style="text-align:left;"> Scion </td>
+   <td style="text-align:right;"> 7.736463 </td>
+   <td style="text-align:left;"> * </td>
+   <td style="text-align:left;"> 7.74* </td>
+   <td style="text-align:right;"> 0.0487501 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 6.477019 </td>
+   <td style="text-align:right;"> 1.0795031 </td>
+   <td style="text-align:right;"> 3.404861 </td>
+   <td style="text-align:right;"> 0.0082828 </td>
+   <td style="text-align:left;"> ASV49 </td>
+   <td style="text-align:left;"> Novosphingobium(g) </td>
+   <td style="text-align:right;"> 140 </td>
+   <td style="text-align:left;"> Scion </td>
+   <td style="text-align:right;"> 13.074252 </td>
+   <td style="text-align:left;"> ** </td>
+   <td style="text-align:left;"> 13.07** </td>
+   <td style="text-align:right;"> 0.0387366 </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 14.755142 </td>
-   <td style="text-align:right;"> 2.459190 </td>
+   <td style="text-align:right;"> 2.4591903 </td>
    <td style="text-align:right;"> 4.950265 </td>
    <td style="text-align:right;"> 0.0007152 </td>
    <td style="text-align:left;"> ASV83 </td>
@@ -8800,7 +11555,202 @@ scion_asvs %>%
    <td style="text-align:right;"> 25.675544 </td>
    <td style="text-align:left;"> *** </td>
    <td style="text-align:left;"> 25.68*** </td>
-   <td style="text-align:right;"> 0.0044434 </td>
+   <td style="text-align:right;"> 0.0044345 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 11.385314 </td>
+   <td style="text-align:right;"> 1.8975523 </td>
+   <td style="text-align:right;"> 3.266670 </td>
+   <td style="text-align:right;"> 0.0104123 </td>
+   <td style="text-align:left;"> ASV58 </td>
+   <td style="text-align:left;"> Thermomonosporaceae(f) </td>
+   <td style="text-align:right;"> 119 </td>
+   <td style="text-align:left;"> Scion </td>
+   <td style="text-align:right;"> 7.250910 </td>
+   <td style="text-align:left;"> * </td>
+   <td style="text-align:left;"> 7.25* </td>
+   <td style="text-align:right;"> 0.0466833 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 8.955213 </td>
+   <td style="text-align:right;"> 1.4925356 </td>
+   <td style="text-align:right;"> 4.056045 </td>
+   <td style="text-align:right;"> 0.0028762 </td>
+   <td style="text-align:left;"> ASV70 </td>
+   <td style="text-align:left;"> Kribbella(g) </td>
+   <td style="text-align:right;"> 103 </td>
+   <td style="text-align:left;"> Scion </td>
+   <td style="text-align:right;"> 11.179662 </td>
+   <td style="text-align:left;"> ** </td>
+   <td style="text-align:left;"> 11.18** </td>
+   <td style="text-align:right;"> 0.0150758 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 10.646995 </td>
+   <td style="text-align:right;"> 1.7744992 </td>
+   <td style="text-align:right;"> 3.380295 </td>
+   <td style="text-align:right;"> 0.0086258 </td>
+   <td style="text-align:left;"> ASV61 </td>
+   <td style="text-align:left;"> Kribbella(g) </td>
+   <td style="text-align:right;"> 101 </td>
+   <td style="text-align:left;"> Scion </td>
+   <td style="text-align:right;"> 11.875110 </td>
+   <td style="text-align:left;"> ** </td>
+   <td style="text-align:left;"> 11.88** </td>
+   <td style="text-align:right;"> 0.0399956 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 7.699445 </td>
+   <td style="text-align:right;"> 1.2832409 </td>
+   <td style="text-align:right;"> 4.946148 </td>
+   <td style="text-align:right;"> 0.0007197 </td>
+   <td style="text-align:left;"> ASV72 </td>
+   <td style="text-align:left;"> Actinobacteria(p) </td>
+   <td style="text-align:right;"> 97 </td>
+   <td style="text-align:left;"> Scion </td>
+   <td style="text-align:right;"> 11.644118 </td>
+   <td style="text-align:left;"> *** </td>
+   <td style="text-align:left;"> 11.64*** </td>
+   <td style="text-align:right;"> 0.0044369 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 10.517620 </td>
+   <td style="text-align:right;"> 1.7529366 </td>
+   <td style="text-align:right;"> 3.856431 </td>
+   <td style="text-align:right;"> 0.0039627 </td>
+   <td style="text-align:left;"> ASV109 </td>
+   <td style="text-align:left;"> Nocardioides(g) </td>
+   <td style="text-align:right;"> 75 </td>
+   <td style="text-align:left;"> Scion </td>
+   <td style="text-align:right;"> 10.976077 </td>
+   <td style="text-align:left;"> ** </td>
+   <td style="text-align:left;"> 10.98** </td>
+   <td style="text-align:right;"> 0.0198133 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 15.651207 </td>
+   <td style="text-align:right;"> 2.6085345 </td>
+   <td style="text-align:right;"> 3.262562 </td>
+   <td style="text-align:right;"> 0.0104836 </td>
+   <td style="text-align:left;"> ASV99 </td>
+   <td style="text-align:left;"> Yinghuangia(g) </td>
+   <td style="text-align:right;"> 75 </td>
+   <td style="text-align:left;"> Scion </td>
+   <td style="text-align:right;"> 4.768690 </td>
+   <td style="text-align:left;"> * </td>
+   <td style="text-align:left;"> 4.77* </td>
+   <td style="text-align:right;"> 0.0468095 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 15.471677 </td>
+   <td style="text-align:right;"> 2.5786128 </td>
+   <td style="text-align:right;"> 3.616221 </td>
+   <td style="text-align:right;"> 0.0058535 </td>
+   <td style="text-align:left;"> ASV120 </td>
+   <td style="text-align:left;"> Kribbella(g) </td>
+   <td style="text-align:right;"> 74 </td>
+   <td style="text-align:left;"> Scion </td>
+   <td style="text-align:right;"> 12.032167 </td>
+   <td style="text-align:left;"> ** </td>
+   <td style="text-align:left;"> 12.03** </td>
+   <td style="text-align:right;"> 0.0284801 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 12 </td>
+   <td style="text-align:right;"> 28.234794 </td>
+   <td style="text-align:right;"> 2.3528995 </td>
+   <td style="text-align:right;"> 3.532379 </td>
+   <td style="text-align:right;"> 0.0012863 </td>
+   <td style="text-align:left;"> ASV81 </td>
+   <td style="text-align:left;"> Steroidobacteraceae(f) </td>
+   <td style="text-align:right;"> 73 </td>
+   <td style="text-align:left;"> Site:Scion </td>
+   <td style="text-align:right;"> 12.218329 </td>
+   <td style="text-align:left;"> ** </td>
+   <td style="text-align:left;"> 12.22** </td>
+   <td style="text-align:right;"> 0.0074238 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 8.473285 </td>
+   <td style="text-align:right;"> 1.4122141 </td>
+   <td style="text-align:right;"> 4.360011 </td>
+   <td style="text-align:right;"> 0.0017776 </td>
+   <td style="text-align:left;"> ASV103 </td>
+   <td style="text-align:left;"> Amycolatopsis(g) </td>
+   <td style="text-align:right;"> 73 </td>
+   <td style="text-align:left;"> Scion </td>
+   <td style="text-align:right;"> 8.735184 </td>
+   <td style="text-align:left;"> ** </td>
+   <td style="text-align:left;"> 8.74** </td>
+   <td style="text-align:right;"> 0.0098404 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 7.007314 </td>
+   <td style="text-align:right;"> 1.1678857 </td>
+   <td style="text-align:right;"> 3.996958 </td>
+   <td style="text-align:right;"> 0.0031612 </td>
+   <td style="text-align:left;"> ASV76 </td>
+   <td style="text-align:left;"> Bradyrhizobium(g) </td>
+   <td style="text-align:right;"> 71 </td>
+   <td style="text-align:left;"> Scion </td>
+   <td style="text-align:right;"> 16.725120 </td>
+   <td style="text-align:left;"> ** </td>
+   <td style="text-align:left;"> 16.73** </td>
+   <td style="text-align:right;"> 0.0161790 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 10.402672 </td>
+   <td style="text-align:right;"> 1.7337787 </td>
+   <td style="text-align:right;"> 5.950810 </td>
+   <td style="text-align:right;"> 0.0001643 </td>
+   <td style="text-align:left;"> ASV105 </td>
+   <td style="text-align:left;"> Neorhizobium(g) </td>
+   <td style="text-align:right;"> 69 </td>
+   <td style="text-align:left;"> Scion </td>
+   <td style="text-align:right;"> 12.690201 </td>
+   <td style="text-align:left;"> *** </td>
+   <td style="text-align:left;"> 12.69*** </td>
+   <td style="text-align:right;"> 0.0011577 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 12 </td>
+   <td style="text-align:right;"> 11.939809 </td>
+   <td style="text-align:right;"> 0.9949840 </td>
+   <td style="text-align:right;"> 2.753356 </td>
+   <td style="text-align:right;"> 0.0080746 </td>
+   <td style="text-align:left;"> ASV87 </td>
+   <td style="text-align:left;"> Gammaproteobacteria(c) </td>
+   <td style="text-align:right;"> 56 </td>
+   <td style="text-align:left;"> Site:Scion </td>
+   <td style="text-align:right;"> 10.732013 </td>
+   <td style="text-align:left;"> ** </td>
+   <td style="text-align:left;"> 10.73** </td>
+   <td style="text-align:right;"> 0.0379263 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 12 </td>
+   <td style="text-align:right;"> 10.675910 </td>
+   <td style="text-align:right;"> 0.8896591 </td>
+   <td style="text-align:right;"> 2.788887 </td>
+   <td style="text-align:right;"> 0.0074122 </td>
+   <td style="text-align:left;"> ASV96 </td>
+   <td style="text-align:left;"> Hyphomicrobium(g) </td>
+   <td style="text-align:right;"> 55 </td>
+   <td style="text-align:left;"> Site:Scion </td>
+   <td style="text-align:right;"> 14.757811 </td>
+   <td style="text-align:left;"> ** </td>
+   <td style="text-align:left;"> 14.76** </td>
+   <td style="text-align:right;"> 0.0352729 </td>
   </tr>
 </tbody>
 </table>
@@ -8813,7 +11763,7 @@ cat(
 ```
 
 ```
-# 15 ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Scion and its interactions.
+# 24 ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Scion and its interactions.
 ```
 
 ``` r
@@ -8854,6 +11804,45 @@ top_asvs_anova_summary[ASV %in% scion_asvs$ASV, ] %>%
    <td style="text-align:left;"> 34.89 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV103 </td>
+   <td style="text-align:left;"> Amycolatopsis(g) </td>
+   <td style="text-align:right;"> 73 </td>
+   <td style="text-align:left;"> 51.02*** </td>
+   <td style="text-align:left;"> 0.01 </td>
+   <td style="text-align:left;"> 8.74** </td>
+   <td style="text-align:left;"> 9.83*** </td>
+   <td style="text-align:left;"> 9.05* </td>
+   <td style="text-align:left;"> 2.33 </td>
+   <td style="text-align:left;"> 5.67 </td>
+   <td style="text-align:left;"> 13.36 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV105 </td>
+   <td style="text-align:left;"> Neorhizobium(g) </td>
+   <td style="text-align:right;"> 69 </td>
+   <td style="text-align:left;"> 52.14*** </td>
+   <td style="text-align:left;"> 1.49* </td>
+   <td style="text-align:left;"> 12.69*** </td>
+   <td style="text-align:left;"> 2.96* </td>
+   <td style="text-align:left;"> 8.59* </td>
+   <td style="text-align:left;"> 1 </td>
+   <td style="text-align:left;"> 6.92 </td>
+   <td style="text-align:left;"> 14.22 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV109 </td>
+   <td style="text-align:left;"> Nocardioides(g) </td>
+   <td style="text-align:right;"> 75 </td>
+   <td style="text-align:left;"> 53.47*** </td>
+   <td style="text-align:left;"> 0.33 </td>
+   <td style="text-align:left;"> 10.98** </td>
+   <td style="text-align:left;"> 4.08* </td>
+   <td style="text-align:left;"> 2.76 </td>
+   <td style="text-align:left;"> 4.73 </td>
+   <td style="text-align:left;"> 4.68 </td>
+   <td style="text-align:left;"> 18.97 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV11 </td>
    <td style="text-align:left;"> Actinoplanes(g) </td>
    <td style="text-align:right;"> 363 </td>
@@ -8867,17 +11856,17 @@ top_asvs_anova_summary[ASV %in% scion_asvs$ASV, ] %>%
    <td style="text-align:left;"> 14.49 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> ASV15 </td>
-   <td style="text-align:left;"> Actinocorallia(g) </td>
-   <td style="text-align:right;"> 346 </td>
-   <td style="text-align:left;"> 61.09*** </td>
-   <td style="text-align:left;"> 0.04 </td>
-   <td style="text-align:left;"> 6.95* </td>
-   <td style="text-align:left;"> 2.47* </td>
-   <td style="text-align:left;"> 6.54 </td>
-   <td style="text-align:left;"> 3.03 </td>
-   <td style="text-align:left;"> 5.42 </td>
-   <td style="text-align:left;"> 14.45 </td>
+   <td style="text-align:left;"> ASV120 </td>
+   <td style="text-align:left;"> Kribbella(g) </td>
+   <td style="text-align:right;"> 74 </td>
+   <td style="text-align:left;"> 25.2*** </td>
+   <td style="text-align:left;"> 0.08 </td>
+   <td style="text-align:left;"> 12.03** </td>
+   <td style="text-align:left;"> 27*** </td>
+   <td style="text-align:left;"> 5.6 </td>
+   <td style="text-align:left;"> 3.43 </td>
+   <td style="text-align:left;"> 4.47 </td>
+   <td style="text-align:left;"> 22.18 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ASV17 </td>
@@ -9010,6 +11999,32 @@ top_asvs_anova_summary[ASV %in% scion_asvs$ASV, ] %>%
    <td style="text-align:left;"> 18.38 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV72 </td>
+   <td style="text-align:left;"> Actinobacteria(p) </td>
+   <td style="text-align:right;"> 97 </td>
+   <td style="text-align:left;"> 54.27*** </td>
+   <td style="text-align:left;"> 0.78 </td>
+   <td style="text-align:left;"> 11.64*** </td>
+   <td style="text-align:left;"> 3.98* </td>
+   <td style="text-align:left;"> 5.08 </td>
+   <td style="text-align:left;"> 4.53 </td>
+   <td style="text-align:left;"> 4.01 </td>
+   <td style="text-align:left;"> 15.69 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV76 </td>
+   <td style="text-align:left;"> Bradyrhizobium(g) </td>
+   <td style="text-align:right;"> 71 </td>
+   <td style="text-align:left;"> 26.88*** </td>
+   <td style="text-align:left;"> 0.05 </td>
+   <td style="text-align:left;"> 16.73** </td>
+   <td style="text-align:left;"> 11.4** </td>
+   <td style="text-align:left;"> 9.97 </td>
+   <td style="text-align:left;"> 3.55 </td>
+   <td style="text-align:left;"> 3.53 </td>
+   <td style="text-align:left;"> 27.9 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV8 </td>
    <td style="text-align:left;"> Actinoplanes(g) </td>
    <td style="text-align:right;"> 604 </td>
@@ -9023,6 +12038,19 @@ top_asvs_anova_summary[ASV %in% scion_asvs$ASV, ] %>%
    <td style="text-align:left;"> 9.13 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> ASV81 </td>
+   <td style="text-align:left;"> Steroidobacteraceae(f) </td>
+   <td style="text-align:right;"> 73 </td>
+   <td style="text-align:left;"> 56.21*** </td>
+   <td style="text-align:left;"> 2.15** </td>
+   <td style="text-align:left;"> 1.27 </td>
+   <td style="text-align:left;"> 9.71*** </td>
+   <td style="text-align:left;"> 12.22** </td>
+   <td style="text-align:left;"> 2.72 </td>
+   <td style="text-align:left;"> 4.19 </td>
+   <td style="text-align:left;"> 11.53 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> ASV83 </td>
    <td style="text-align:left;"> Steroidobacter(g) </td>
    <td style="text-align:right;"> 128 </td>
@@ -9034,6 +12062,45 @@ top_asvs_anova_summary[ASV %in% scion_asvs$ASV, ] %>%
    <td style="text-align:left;"> 9.19 </td>
    <td style="text-align:left;"> 5.77 </td>
    <td style="text-align:left;"> 34.58 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV87 </td>
+   <td style="text-align:left;"> Gammaproteobacteria(c) </td>
+   <td style="text-align:right;"> 56 </td>
+   <td style="text-align:left;"> 55.41*** </td>
+   <td style="text-align:left;"> 0.67 </td>
+   <td style="text-align:left;"> 4.27 </td>
+   <td style="text-align:left;"> 9.18*** </td>
+   <td style="text-align:left;"> 10.73** </td>
+   <td style="text-align:left;"> 2.1 </td>
+   <td style="text-align:left;"> 4.65 </td>
+   <td style="text-align:left;"> 12.99 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV96 </td>
+   <td style="text-align:left;"> Hyphomicrobium(g) </td>
+   <td style="text-align:right;"> 55 </td>
+   <td style="text-align:left;"> 49.18*** </td>
+   <td style="text-align:left;"> 0.1 </td>
+   <td style="text-align:left;"> 5.69 </td>
+   <td style="text-align:left;"> 1.37 </td>
+   <td style="text-align:left;"> 14.76** </td>
+   <td style="text-align:left;"> 4.35 </td>
+   <td style="text-align:left;"> 6.92 </td>
+   <td style="text-align:left;"> 17.64 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV99 </td>
+   <td style="text-align:left;"> Yinghuangia(g) </td>
+   <td style="text-align:right;"> 75 </td>
+   <td style="text-align:left;"> 73.5*** </td>
+   <td style="text-align:left;"> 0.04 </td>
+   <td style="text-align:left;"> 4.77* </td>
+   <td style="text-align:left;"> 4.07*** </td>
+   <td style="text-align:left;"> 2.73 </td>
+   <td style="text-align:left;"> 2 </td>
+   <td style="text-align:left;"> 3.16 </td>
+   <td style="text-align:left;"> 9.74 </td>
   </tr>
 </tbody>
 </table>
@@ -9151,7 +12218,7 @@ cat(
 ```
 
 ```
-# 1 ASVs have statistically significant (*P* < 0.05) adjusted p-values
+# 4 ASVs have statistically significant (*P* < 0.05) adjusted p-values
 ```
 
 ``` r
@@ -9182,22 +12249,56 @@ asv_canker_results[p_adjusted < 0.05, ] %>%
    <td style="text-align:left;"> 1.07 </td>
    <td style="text-align:left;"> 0.000462.... </td>
    <td style="text-align:left;"> NA </td>
-   <td style="text-align:right;"> 0.0328079 </td>
+   <td style="text-align:right;"> 0.0238743 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV3475 </td>
+   <td style="text-align:left;"> Streptom.... </td>
+   <td style="text-align:left;"> 77 </td>
+   <td style="text-align:left;"> -0.638 </td>
+   <td style="text-align:left;"> 2.288 </td>
+   <td style="text-align:left;"> 0.000429.... </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:right;"> 0.0238743 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV60 </td>
+   <td style="text-align:left;"> Methylop.... </td>
+   <td style="text-align:left;"> 70 </td>
+   <td style="text-align:left;"> 1.211 </td>
+   <td style="text-align:left;"> 0.191 </td>
+   <td style="text-align:left;"> 1.941769.... </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:right;"> 0.0000003 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ASV134 </td>
+   <td style="text-align:left;"> Novosphi.... </td>
+   <td style="text-align:left;"> 55 </td>
+   <td style="text-align:left;"> -0.576 </td>
+   <td style="text-align:left;"> 2.803 </td>
+   <td style="text-align:left;"> 0.000987.... </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:right;"> 0.0382760 </td>
   </tr>
 </tbody>
 </table>
 
 #### Effect of ASV abundance on canker count per site
 
+Filter top ASVs with 50 % of reads per site
+and test the effect of ASV abundance on canker count per site.
+
 
 ``` r
-# For each site, select ASVs with mean abundance > 100
+# For each site, select top ASVs with 50% of reads
 top_asvs_per_site <- lapply(
   unique(colData$Site),
   function(site) {
     samples <- filter(colData, Site == site)
     top_asv_data <- select(asv_counts, rownames(samples))
-    top_asvs <- filter(top_asv_data, rowMeans(top_asv_data) > 100)
+    # top_asvs <- filter(top_asv_data, rowMeans(top_asv_data) > 100)
+    top_asvs <- top_asv_data[filter_otus(top_asv_data, BACASVFILTER), ]
     top_asv_ids <- rownames(top_asvs)
     top_asvs <- data.frame(t(top_asvs)) %>% merge(samples, by = 0) %>% column_to_rownames("Row.names")
     top_asvs <- top_asvs[complete.cases(top_asvs$Cankers), ]
@@ -9233,30 +12334,30 @@ data.table(
 <tbody>
   <tr>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 113 </td>
+   <td style="text-align:right;"> 117 </td>
    <td style="text-align:right;"> 5713 </td>
-   <td style="text-align:right;"> 879008.0 </td>
+   <td style="text-align:right;"> 888148.1 </td>
    <td style="text-align:right;"> 1801618 </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 49 </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 39 </td>
+   <td style="text-align:right;"> 162 </td>
    <td style="text-align:right;"> 5750 </td>
-   <td style="text-align:right;"> 240576.8 </td>
+   <td style="text-align:right;"> 409279.8 </td>
    <td style="text-align:right;"> 820971 </td>
-   <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 29 </td>
+   <td style="text-align:right;"> 3 </td>
+   <td style="text-align:right;"> 50 </td>
   </tr>
   <tr>
    <td style="text-align:right;"> 3 </td>
-   <td style="text-align:right;"> 78 </td>
+   <td style="text-align:right;"> 117 </td>
    <td style="text-align:right;"> 5587 </td>
-   <td style="text-align:right;"> 634626.6 </td>
+   <td style="text-align:right;"> 717716.4 </td>
    <td style="text-align:right;"> 1418274 </td>
-   <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 45 </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 51 </td>
   </tr>
 </tbody>
 </table>
@@ -9294,135 +12395,43 @@ asv_canker_site_results <- lapply(
 # Significant ASVs
 significant_asvs <- asv_canker_site_results[p_adjusted < 0.05 & is.na(warning), ]
 
-significant_asvs[, c("Site", "ASV", "Taxonomy", "Abundance", "coef", "var", "p_adjusted")] %>%
-  kbl("html", digits = 3) %>%
-  kable_styling("striped", full_width = T) %>%
-  column_spec(3, extra_css = "word-wrap: break-word;")
+significant_asvs[, c("Site", "ASV", "Taxonomy", "Abundance", "coef", "var", "p_adjusted")]
 ```
 
-<table class="table table-striped" style="margin-left: auto; margin-right: auto;">
- <thead>
-  <tr>
-   <th style="text-align:right;"> Site </th>
-   <th style="text-align:left;"> ASV </th>
-   <th style="text-align:left;"> Taxonomy </th>
-   <th style="text-align:left;"> Abundance </th>
-   <th style="text-align:left;"> coef </th>
-   <th style="text-align:left;"> var </th>
-   <th style="text-align:right;"> p_adjusted </th>
-  </tr>
- </thead>
-<tbody>
-  <tr>
-   <td style="text-align:right;"> 2 </td>
-   <td style="text-align:left;"> ASV2 </td>
-   <td style="text-align:left;word-wrap: break-word;"> Kineospo.... </td>
-   <td style="text-align:left;"> 671 </td>
-   <td style="text-align:left;"> 0.628 </td>
-   <td style="text-align:left;"> 6.997 </td>
-   <td style="text-align:right;"> 0.024 </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 2 </td>
-   <td style="text-align:left;"> ASV27 </td>
-   <td style="text-align:left;word-wrap: break-word;"> Micromon.... </td>
-   <td style="text-align:left;"> 320 </td>
-   <td style="text-align:left;"> 0.404 </td>
-   <td style="text-align:left;"> 2.947 </td>
-   <td style="text-align:right;"> 0.042 </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 2 </td>
-   <td style="text-align:left;"> ASV3 </td>
-   <td style="text-align:left;word-wrap: break-word;"> Kineospo.... </td>
-   <td style="text-align:left;"> 780 </td>
-   <td style="text-align:left;"> 0.622 </td>
-   <td style="text-align:left;"> 10.361 </td>
-   <td style="text-align:right;"> 0.024 </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 2 </td>
-   <td style="text-align:left;"> ASV4 </td>
-   <td style="text-align:left;word-wrap: break-word;"> Streptom.... </td>
-   <td style="text-align:left;"> 400 </td>
-   <td style="text-align:left;"> 0.945 </td>
-   <td style="text-align:left;"> 2.16 </td>
-   <td style="text-align:right;"> 0.001 </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 2 </td>
-   <td style="text-align:left;"> ASV7 </td>
-   <td style="text-align:left;word-wrap: break-word;"> Bradyrhi.... </td>
-   <td style="text-align:left;"> 459 </td>
-   <td style="text-align:left;"> 0.59 </td>
-   <td style="text-align:left;"> 3.74 </td>
-   <td style="text-align:right;"> 0.042 </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 2 </td>
-   <td style="text-align:left;"> ASV81 </td>
-   <td style="text-align:left;word-wrap: break-word;"> Steroido.... </td>
-   <td style="text-align:left;"> 103 </td>
-   <td style="text-align:left;"> 0.477 </td>
-   <td style="text-align:left;"> 3.93 </td>
-   <td style="text-align:right;"> 0.042 </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 3 </td>
-   <td style="text-align:left;"> ASV1043 </td>
-   <td style="text-align:left;word-wrap: break-word;"> Streptom.... </td>
-   <td style="text-align:left;"> 126 </td>
-   <td style="text-align:left;"> -1.625 </td>
-   <td style="text-align:left;"> 12.865 </td>
-   <td style="text-align:right;"> 0.006 </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 3 </td>
-   <td style="text-align:left;"> ASV124 </td>
-   <td style="text-align:left;word-wrap: break-word;"> Micromon.... </td>
-   <td style="text-align:left;"> 229 </td>
-   <td style="text-align:left;"> -1.12 </td>
-   <td style="text-align:left;"> 7.142 </td>
-   <td style="text-align:right;"> 0.014 </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 3 </td>
-   <td style="text-align:left;"> ASV226 </td>
-   <td style="text-align:left;word-wrap: break-word;"> Streptom.... </td>
-   <td style="text-align:left;"> 133 </td>
-   <td style="text-align:left;"> -0.891 </td>
-   <td style="text-align:left;"> 11.517 </td>
-   <td style="text-align:right;"> 0.028 </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 3 </td>
-   <td style="text-align:left;"> ASV26 </td>
-   <td style="text-align:left;word-wrap: break-word;"> Streptom.... </td>
-   <td style="text-align:left;"> 334 </td>
-   <td style="text-align:left;"> -1.176 </td>
-   <td style="text-align:left;"> 11.112 </td>
-   <td style="text-align:right;"> 0.039 </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 3 </td>
-   <td style="text-align:left;"> ASV497 </td>
-   <td style="text-align:left;word-wrap: break-word;"> Micromon.... </td>
-   <td style="text-align:left;"> 117 </td>
-   <td style="text-align:left;"> -2.339 </td>
-   <td style="text-align:left;"> 11.942 </td>
-   <td style="text-align:right;"> 0.000 </td>
-  </tr>
-  <tr>
-   <td style="text-align:right;"> 3 </td>
-   <td style="text-align:left;"> ASV5732 </td>
-   <td style="text-align:left;word-wrap: break-word;"> Streptom.... </td>
-   <td style="text-align:left;"> 108 </td>
-   <td style="text-align:left;"> -1.099 </td>
-   <td style="text-align:left;"> 14.367 </td>
-   <td style="text-align:right;"> 0.009 </td>
-  </tr>
-</tbody>
-</table>
+```
+#      Site     ASV     Taxonomy Abundance   coef    var  p_adjusted
+#     <int>  <list>       <list>    <list> <list> <list>       <num>
+#  1:     2    ASV3 Kineospo....       780  0.622 10.361 0.048829790
+#  2:     2    ASV4 Streptom....       400  0.945   2.16 0.003630144
+#  3:     2   ASV49 Novosphi....        85  0.671  14.21 0.048829790
+#  4:     2   ASV33 Bradyrhi....        36  0.912  7.528 0.026537635
+#  5:     3   ASV26 Streptom....       334 -1.176 11.112 0.040619223
+#  6:     3  ASV124 Micromon....       229  -1.12  7.142 0.016262805
+#  7:     3  ASV226 Streptom....       133 -0.891 11.517 0.033723369
+#  8:     3 ASV1043 Streptom....       126 -1.625 12.865 0.006232895
+#  9:     3  ASV497 Micromon....       117 -2.339 11.942 0.000424509
+# 10:     3 ASV5732 Streptom....       108 -1.099 14.367 0.010902315
+# 11:     3 ASV5363 Streptom....       103 -1.012   7.03 0.014544084
+# 12:     3  ASV241 Streptom....        89 -1.135  6.582 0.004246045
+# 13:     3  ASV227 Actinoal....        95 -1.122   4.38 0.042471563
+# 14:     3 ASV6529 Micromon....        78  -0.73  4.903 0.037514689
+```
+
+``` r
+  # kbl("html", digits = 3) %>%
+  # kable_styling("striped", full_width = T) %>%
+  # column_spec(3, extra_css = "word-wrap: break-word;")
+
+significant_asvs$Taxonomy %>% unlist()
+```
+
+```
+#  [1] "Kineosporiaceae(f)"    "Streptomyces(g)"       "Novosphingobium(g)"   
+#  [4] "Bradyrhizobium(g)"     "Streptomyces(g)"       "Micromonosporales(o)" 
+#  [7] "Streptomyces(g)"       "Streptomyces(g)"       "Micromonosporaceae(f)"
+# [10] "Streptomyces(g)"       "Streptomycetales(o)"   "Streptomyces(g)"      
+# [13] "Actinoallomurus(g)"    "Micromonosporaceae(f)"
+```
 
 
 ``` r
