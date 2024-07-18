@@ -2,7 +2,8 @@
 title: "Root endophyte analysis"
 output: 
   html_document:
-    keep_md: yes
+    keep_md: true
+    cache: true
 ---
 
 Built with R version  4.3.3.
@@ -1373,13 +1374,13 @@ summary(result)
 ```
 # Component 1 :
 #                    Df R Sum Sq R Mean Sq Iter Pr(Prob)    
-# Site                2  11554.5    5777.2 5000   <2e-16 ***
-# Storage             1   2056.4    2056.4 2513   0.0386 *  
-# Site:Storage        2    812.4     406.2  515   0.6000    
-# Scion               6    875.7     145.9   98   1.0000    
-# Site:Scion         12   2817.7     234.8  259   0.9228    
-# Storage:Scion       6   2046.5     341.1  862   0.6868    
-# Site:Storage:Scion 12   2735.3     227.9  173   1.0000    
+# Site                2  11554.5    5777.2 5000  < 2e-16 ***
+# Storage             1   2056.4    2056.4 1826  0.05203 .  
+# Site:Storage        2    812.4     406.2  371  0.45822    
+# Scion               6    875.7     145.9  494  0.98583    
+# Site:Scion         12   2817.7     234.8  344  0.80233    
+# Storage:Scion       6   2046.5     341.1  736  0.65897    
+# Site:Storage:Scion 12   2735.3     227.9  921  0.92074    
 # Residuals          39  21381.5     548.2                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -1421,8 +1422,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 2056.4245 </td>
    <td style="text-align:right;"> 2056.4245 </td>
-   <td style="text-align:right;"> 2513 </td>
-   <td style="text-align:right;"> 0.0385993 </td>
+   <td style="text-align:right;"> 1826 </td>
+   <td style="text-align:right;"> 0.0520263 </td>
    <td style="text-align:right;"> 4.644139 </td>
   </tr>
   <tr>
@@ -1430,8 +1431,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 812.3544 </td>
    <td style="text-align:right;"> 406.1772 </td>
-   <td style="text-align:right;"> 515 </td>
-   <td style="text-align:right;"> 0.6000000 </td>
+   <td style="text-align:right;"> 371 </td>
+   <td style="text-align:right;"> 0.4582210 </td>
    <td style="text-align:right;"> 1.834585 </td>
   </tr>
   <tr>
@@ -1439,8 +1440,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 875.6763 </td>
    <td style="text-align:right;"> 145.9461 </td>
-   <td style="text-align:right;"> 98 </td>
-   <td style="text-align:right;"> 1.0000000 </td>
+   <td style="text-align:right;"> 494 </td>
+   <td style="text-align:right;"> 0.9858300 </td>
    <td style="text-align:right;"> 1.977589 </td>
   </tr>
   <tr>
@@ -1448,8 +1449,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2817.7201 </td>
    <td style="text-align:right;"> 234.8100 </td>
-   <td style="text-align:right;"> 259 </td>
-   <td style="text-align:right;"> 0.9227799 </td>
+   <td style="text-align:right;"> 344 </td>
+   <td style="text-align:right;"> 0.8023256 </td>
    <td style="text-align:right;"> 6.363415 </td>
   </tr>
   <tr>
@@ -1457,8 +1458,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2046.5389 </td>
    <td style="text-align:right;"> 341.0898 </td>
-   <td style="text-align:right;"> 862 </td>
-   <td style="text-align:right;"> 0.6867749 </td>
+   <td style="text-align:right;"> 736 </td>
+   <td style="text-align:right;"> 0.6589674 </td>
    <td style="text-align:right;"> 4.621813 </td>
   </tr>
   <tr>
@@ -1466,8 +1467,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2735.3173 </td>
    <td style="text-align:right;"> 227.9431 </td>
-   <td style="text-align:right;"> 173 </td>
-   <td style="text-align:right;"> 1.0000000 </td>
+   <td style="text-align:right;"> 921 </td>
+   <td style="text-align:right;"> 0.9207383 </td>
    <td style="text-align:right;"> 6.177320 </td>
   </tr>
   <tr>
@@ -1503,12 +1504,12 @@ summary(result)
 # Component 1 :
 #                    Df R Sum Sq R Mean Sq Iter Pr(Prob)    
 # Site                2  12291.8    6145.9 5000  < 2e-16 ***
-# Storage             1   1077.6    1077.6 1184  0.07855 .  
-# Site:Storage        2   2320.4    1160.2 2042  0.06758 .  
-# Scion               6    570.9      95.1  170  1.00000    
-# Site:Scion         12   3082.1     256.8  593  0.87690    
-# Storage:Scion       6   2730.6     455.1 1813  0.26917    
-# Site:Storage:Scion 12   5311.1     442.6 1207  0.44325    
+# Storage             1   1077.6    1077.6  908  0.10022    
+# Site:Storage        2   2320.4    1160.2 2743  0.04995 *  
+# Scion               6    570.9      95.1  260  0.99615    
+# Site:Scion         12   3082.1     256.8  672  0.82440    
+# Storage:Scion       6   2730.6     455.1 1890  0.39735    
+# Site:Storage:Scion 12   5311.1     442.6 2008  0.38098    
 # Residuals          39  16895.5     433.2                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -1550,8 +1551,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 1077.5749 </td>
    <td style="text-align:right;"> 1077.57489 </td>
-   <td style="text-align:right;"> 1184 </td>
-   <td style="text-align:right;"> 0.0785473 </td>
+   <td style="text-align:right;"> 908 </td>
+   <td style="text-align:right;"> 0.1002203 </td>
    <td style="text-align:right;"> 2.433548 </td>
   </tr>
   <tr>
@@ -1559,8 +1560,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 2320.4220 </td>
    <td style="text-align:right;"> 1160.21098 </td>
-   <td style="text-align:right;"> 2042 </td>
-   <td style="text-align:right;"> 0.0675808 </td>
+   <td style="text-align:right;"> 2743 </td>
+   <td style="text-align:right;"> 0.0499453 </td>
    <td style="text-align:right;"> 5.240339 </td>
   </tr>
   <tr>
@@ -1568,8 +1569,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 570.8675 </td>
    <td style="text-align:right;"> 95.14458 </td>
-   <td style="text-align:right;"> 170 </td>
-   <td style="text-align:right;"> 1.0000000 </td>
+   <td style="text-align:right;"> 260 </td>
+   <td style="text-align:right;"> 0.9961538 </td>
    <td style="text-align:right;"> 1.289222 </td>
   </tr>
   <tr>
@@ -1577,8 +1578,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 3082.1462 </td>
    <td style="text-align:right;"> 256.84552 </td>
-   <td style="text-align:right;"> 593 </td>
-   <td style="text-align:right;"> 0.8768971 </td>
+   <td style="text-align:right;"> 672 </td>
+   <td style="text-align:right;"> 0.8244048 </td>
    <td style="text-align:right;"> 6.960583 </td>
   </tr>
   <tr>
@@ -1586,8 +1587,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2730.6068 </td>
    <td style="text-align:right;"> 455.10114 </td>
-   <td style="text-align:right;"> 1813 </td>
-   <td style="text-align:right;"> 0.2691671 </td>
+   <td style="text-align:right;"> 1890 </td>
+   <td style="text-align:right;"> 0.3973545 </td>
    <td style="text-align:right;"> 6.166682 </td>
   </tr>
   <tr>
@@ -1595,8 +1596,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 5311.1323 </td>
    <td style="text-align:right;"> 442.59435 </td>
-   <td style="text-align:right;"> 1207 </td>
-   <td style="text-align:right;"> 0.4432477 </td>
+   <td style="text-align:right;"> 2008 </td>
+   <td style="text-align:right;"> 0.3809761 </td>
    <td style="text-align:right;"> 11.994427 </td>
   </tr>
   <tr>
@@ -1631,13 +1632,13 @@ summary(result)
 ```
 # Component 1 :
 #                    Df R Sum Sq R Mean Sq Iter Pr(Prob)    
-# Site                2  12937.5    6468.8 5000   <2e-16 ***
-# Storage             1    764.2     764.2  475   0.1747    
-# Site:Storage        2   2484.2    1242.1  915   0.1355    
-# Scion               6   1188.1     198.0  596   0.8557    
-# Site:Scion         12   2027.8     169.0  801   0.9600    
-# Storage:Scion       6   2529.6     421.6  840   0.4274    
-# Site:Storage:Scion 12   5334.6     444.6 1342   0.3920    
+# Site                2  12937.5    6468.8 5000  < 2e-16 ***
+# Storage             1    764.2     764.2  668  0.13024    
+# Site:Storage        2   2484.2    1242.1 1725  0.05507 .  
+# Scion               6   1188.1     198.0  248  0.76210    
+# Site:Scion         12   2027.8     169.0   92  1.00000    
+# Storage:Scion       6   2529.6     421.6  749  0.52203    
+# Site:Storage:Scion 12   5334.6     444.6 1709  0.45114    
 # Residuals          39  17014.0     436.3                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -1679,8 +1680,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 764.2007 </td>
    <td style="text-align:right;"> 764.2007 </td>
-   <td style="text-align:right;"> 475 </td>
-   <td style="text-align:right;"> 0.1747368 </td>
+   <td style="text-align:right;"> 668 </td>
+   <td style="text-align:right;"> 0.1302395 </td>
    <td style="text-align:right;"> 1.725837 </td>
   </tr>
   <tr>
@@ -1688,8 +1689,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 2484.2454 </td>
    <td style="text-align:right;"> 1242.1227 </td>
-   <td style="text-align:right;"> 915 </td>
-   <td style="text-align:right;"> 0.1355191 </td>
+   <td style="text-align:right;"> 1725 </td>
+   <td style="text-align:right;"> 0.0550725 </td>
    <td style="text-align:right;"> 5.610310 </td>
   </tr>
   <tr>
@@ -1697,8 +1698,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 1188.0542 </td>
    <td style="text-align:right;"> 198.0090 </td>
-   <td style="text-align:right;"> 596 </td>
-   <td style="text-align:right;"> 0.8557047 </td>
+   <td style="text-align:right;"> 248 </td>
+   <td style="text-align:right;"> 0.7620968 </td>
    <td style="text-align:right;"> 2.683049 </td>
   </tr>
   <tr>
@@ -1706,8 +1707,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2027.7819 </td>
    <td style="text-align:right;"> 168.9818 </td>
-   <td style="text-align:right;"> 801 </td>
-   <td style="text-align:right;"> 0.9600499 </td>
+   <td style="text-align:right;"> 92 </td>
+   <td style="text-align:right;"> 1.0000000 </td>
    <td style="text-align:right;"> 4.579453 </td>
   </tr>
   <tr>
@@ -1715,8 +1716,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2529.5940 </td>
    <td style="text-align:right;"> 421.5990 </td>
-   <td style="text-align:right;"> 840 </td>
-   <td style="text-align:right;"> 0.4273810 </td>
+   <td style="text-align:right;"> 749 </td>
+   <td style="text-align:right;"> 0.5220294 </td>
    <td style="text-align:right;"> 5.712724 </td>
   </tr>
   <tr>
@@ -1724,8 +1725,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 5334.6194 </td>
    <td style="text-align:right;"> 444.5516 </td>
-   <td style="text-align:right;"> 1342 </td>
-   <td style="text-align:right;"> 0.3919523 </td>
+   <td style="text-align:right;"> 1709 </td>
+   <td style="text-align:right;"> 0.4511410 </td>
    <td style="text-align:right;"> 12.047469 </td>
   </tr>
   <tr>
@@ -4949,20 +4950,54 @@ data.table(
   totalASVs = sapply(top_asvs_per_site, function(x) sum(rowSums(asv_counts[, rownames(x$data)]) > 0, na.rm = TRUE)),
   topreads = sapply(top_asvs_per_site, function(x) sum(select(x$data, starts_with("ASV")))),
   totalreads = sapply(top_asvs_per_site, function(x) sum(asv_counts[, rownames(x$data)]))
-) %>%
-  mutate(
-    "ASV%" = round(topASVs / totalASVs * 100),
-    "Read%" = round(topreads / totalreads * 100)
-  )
+) %>% mutate(
+  "ASV%" = round(topASVs / totalASVs * 100),
+  "Read%" = round(topreads / totalreads * 100)
+) %>% kbl() %>% kable_styling("striped", full_width = F)  
 ```
 
-```
-#     Site topASVs totalASVs topreads totalreads  ASV% Read%
-#    <int>   <int>     <int>    <num>      <num> <num> <num>
-# 1:     1     111       820  1847045    2024873    14    91
-# 2:     2     163       915  5716207    6092025    18    94
-# 3:     3     101       822  2728361    2989425    12    91
-```
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+ <thead>
+  <tr>
+   <th style="text-align:right;"> Site </th>
+   <th style="text-align:right;"> topASVs </th>
+   <th style="text-align:right;"> totalASVs </th>
+   <th style="text-align:right;"> topreads </th>
+   <th style="text-align:right;"> totalreads </th>
+   <th style="text-align:right;"> ASV% </th>
+   <th style="text-align:right;"> Read% </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 111 </td>
+   <td style="text-align:right;"> 820 </td>
+   <td style="text-align:right;"> 1847045 </td>
+   <td style="text-align:right;"> 2024873 </td>
+   <td style="text-align:right;"> 14 </td>
+   <td style="text-align:right;"> 91 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 163 </td>
+   <td style="text-align:right;"> 915 </td>
+   <td style="text-align:right;"> 5716207 </td>
+   <td style="text-align:right;"> 6092025 </td>
+   <td style="text-align:right;"> 18 </td>
+   <td style="text-align:right;"> 94 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 3 </td>
+   <td style="text-align:right;"> 101 </td>
+   <td style="text-align:right;"> 822 </td>
+   <td style="text-align:right;"> 2728361 </td>
+   <td style="text-align:right;"> 2989425 </td>
+   <td style="text-align:right;"> 12 </td>
+   <td style="text-align:right;"> 91 </td>
+  </tr>
+</tbody>
+</table>
 
 ``` r
 canker_site_design <- "Cankers ~ Storage * Scion"
@@ -9177,20 +9212,54 @@ data.table(
   totalASVs = sapply(top_asvs_per_site, function(x) sum(rowSums(asv_counts[, rownames(x$data)]) > 0, na.rm = TRUE)),
   topreads = sapply(top_asvs_per_site, function(x) sum(select(x$data, starts_with("ASV")))),
   totalreads = sapply(top_asvs_per_site, function(x) sum(asv_counts[, rownames(x$data)]))
-) %>%
-  mutate(
-    "ASV%" = round(topASVs / totalASVs * 100),
-    "Read%" = round(topreads / totalreads * 100)
-  )
+) %>% mutate(
+  "ASV%" = round(topASVs / totalASVs * 100),
+  "Read%" = round(topreads / totalreads * 100)
+) %>% kbl() %>% kable_styling("striped", full_width = F)
 ```
 
-```
-#     Site topASVs totalASVs topreads totalreads  ASV% Read%
-#    <int>   <int>     <int>    <num>      <num> <num> <num>
-# 1:     1     113      5713 879008.0    1801618     2    49
-# 2:     2      39      5750 240576.8     820971     1    29
-# 3:     3      78      5587 634626.6    1418274     1    45
-```
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+ <thead>
+  <tr>
+   <th style="text-align:right;"> Site </th>
+   <th style="text-align:right;"> topASVs </th>
+   <th style="text-align:right;"> totalASVs </th>
+   <th style="text-align:right;"> topreads </th>
+   <th style="text-align:right;"> totalreads </th>
+   <th style="text-align:right;"> ASV% </th>
+   <th style="text-align:right;"> Read% </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 113 </td>
+   <td style="text-align:right;"> 5713 </td>
+   <td style="text-align:right;"> 879008.0 </td>
+   <td style="text-align:right;"> 1801618 </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 49 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 39 </td>
+   <td style="text-align:right;"> 5750 </td>
+   <td style="text-align:right;"> 240576.8 </td>
+   <td style="text-align:right;"> 820971 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 29 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 3 </td>
+   <td style="text-align:right;"> 78 </td>
+   <td style="text-align:right;"> 5587 </td>
+   <td style="text-align:right;"> 634626.6 </td>
+   <td style="text-align:right;"> 1418274 </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 45 </td>
+  </tr>
+</tbody>
+</table>
 
 ``` r
 canker_site_design <- "Cankers ~ Storage * Scion"

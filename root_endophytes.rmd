@@ -2,7 +2,8 @@
 title: "Root endophyte analysis"
 output: 
   html_document:
-    keep_md: yes
+    keep_md: true
+    cache: true
 ---
 
 Built with R version  `r getRversion()`.
@@ -14,7 +15,7 @@ knitr::opts_chunk$set(warning = F)
 knitr::opts_chunk$set(comment = "#")
 knitr::opts_chunk$set(fig.width = 9, fig.height = 9)
 knitr::opts_chunk$set(error = TRUE)
-knitr::opts_chunk$set(cache = F)
+knitr::opts_chunk$set(cache = T)
 ```
 
 ## Setup
@@ -1378,11 +1379,10 @@ data.table(
   totalASVs = sapply(top_asvs_per_site, function(x) sum(rowSums(asv_counts[, rownames(x$data)]) > 0, na.rm = TRUE)),
   topreads = sapply(top_asvs_per_site, function(x) sum(select(x$data, starts_with("ASV")))),
   totalreads = sapply(top_asvs_per_site, function(x) sum(asv_counts[, rownames(x$data)]))
-) %>%
-  mutate(
-    "ASV%" = round(topASVs / totalASVs * 100),
-    "Read%" = round(topreads / totalreads * 100)
-  )
+) %>% mutate(
+  "ASV%" = round(topASVs / totalASVs * 100),
+  "Read%" = round(topreads / totalreads * 100)
+) %>% kbl() %>% kable_styling("striped", full_width = F)  
 
 canker_site_design <- "Cankers ~ Storage * Scion"
 
@@ -2439,11 +2439,10 @@ data.table(
   totalASVs = sapply(top_asvs_per_site, function(x) sum(rowSums(asv_counts[, rownames(x$data)]) > 0, na.rm = TRUE)),
   topreads = sapply(top_asvs_per_site, function(x) sum(select(x$data, starts_with("ASV")))),
   totalreads = sapply(top_asvs_per_site, function(x) sum(asv_counts[, rownames(x$data)]))
-) %>%
-  mutate(
-    "ASV%" = round(topASVs / totalASVs * 100),
-    "Read%" = round(topreads / totalreads * 100)
-  )
+) %>% mutate(
+  "ASV%" = round(topASVs / totalASVs * 100),
+  "Read%" = round(topreads / totalreads * 100)
+) %>% kbl() %>% kable_styling("striped", full_width = F)
 
 canker_site_design <- "Cankers ~ Storage * Scion"
 
