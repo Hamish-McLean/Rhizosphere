@@ -57,8 +57,8 @@ PAIREDONLY =   F     # Will remove the pair of samples which fail the readfilter
 TAXCONF =      0.80  # Sets the taxonomy confidence level to get "rank" in taxonomy files
 TOPOTU =       10    # Number of Top OTUs for summary information
 DIFFOTU =      200   # Number of Top OTUs for correlation analysis
-FUNASVFILTER = 0.05  # Filter fungal ASVs with proportion of total reads below value
-BACASVFILTER = 0.5   # Filter bacterial ASVs with proportion of total reads below value
+FUNASVFILTER = 0 # 0.05  # Filter fungal ASVs with proportion of total reads below value
+BACASVFILTER = 0 # 0.5   # Filter bacterial ASVs with proportion of total reads below value
 
 # graphics
 DEVICE =       "png"
@@ -1117,7 +1117,10 @@ cat(
 # top_asvs <- asv_counts[rowMeans(asv_counts) > 100, ]
 
 # Filter top ASVs with 90% of reads
-top_asvs <- asv_counts[filter_otus(asv_counts, FUNASVFILTER), ]
+# top_asvs <- asv_counts[filter_otus(asv_counts, FUNASVFILTER), ]
+
+# No filtering
+top_asvs <- asv_counts
 
 # Check that sample names match
 identical(names(top_asvs), rownames(colData))
@@ -1140,7 +1143,7 @@ top_asv_data <- merge(top_asv_data, colData, by = 0) %>% column_to_rownames("Row
 
 ### Effect of design factors on abundance of top ASVs
 
-Effect of Site, Scion, and Storage on abundance of top `r DIFFOTU` ASVs
+Effect of Site, Scion, and Storage on abundance of top ASVs
 
 ```{r ASV anova}
 # ANOVA of top ASVs
@@ -1169,7 +1172,7 @@ extend_asv_anova <- function(anova_result, asv) {
   anova_result %>% mutate(
     ASV = asv,
     Taxonomy = taxData[asv, "rank"],
-    Abundance = round(mean(top_asv_data[[asv]])),
+    Abundance = round(mean(top_asv_data[[asv]]), 3),
     Factor = gsub(" ", "", rownames(anova_result)),
     perc_var = Sum.Sq / sum(anova_result$Sum.Sq) * 100,
     sig = case_when(
@@ -1210,9 +1213,9 @@ top_asvs_anova_summary <- top_asvs_anova_results %>%
   spread(key = Factor, value = Variance) %>%
   data.table()
 
-top_asvs_anova_summary %>%
-  kbl() %>%
-  kable_styling("striped", full_width = F)
+# top_asvs_anova_summary %>%
+#   kbl() %>%
+#   kable_styling("striped", full_width = F)
 
 cat(
   "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
@@ -1229,9 +1232,9 @@ cat(
 # Filter by significant effect of scion and its interactions
 scion_asvs <- top_asvs_anova_results[grepl("Scion", Factor) & p.adj < 0.05, ]
 
-scion_asvs %>%
-  kbl() %>%
-  kable_styling("striped", full_width = F)
+# scion_asvs %>%
+#   kbl() %>%
+#   kable_styling("striped", full_width = F)
 
 cat(
   length(scion_asvs$ASV), 
@@ -1239,9 +1242,15 @@ cat(
 )
 
 # Summary of ASVs with significant Scion effect
-top_asvs_anova_summary[ASV %in% scion_asvs$ASV, ] %>%
-  kbl() %>%
-  kable_styling("striped", full_width = F)
+fun_significant_scion <- top_asvs_anova_summary[ASV %in% scion_asvs$ASV, ] %>%
+  arrange(desc(Abundance))
+
+kbl(fun_significant_scion) %>%
+  kable_styling("striped")
+
+kbl(fun_significant_scion) %>%
+  kable_styling("striped") %>%
+  save_kable("tables/FUN_scion_asvs.html")
 ```
 
 ```{r}
@@ -1283,7 +1292,7 @@ abundance_model <- glm.nb(abundance_design, data = canker_abundance_data)
 # ANOVA of abundance with canker count
 anova(base_model, abundance_model) %>%
   kbl() %>%
-  kable_styling("striped", full_width = F)
+  kable_styling("striped")
 ```
 
 ### Effect of ASV abundance on canker count
@@ -1320,31 +1329,51 @@ glm.nb_with_warnings <- function(f, data) {
 
 # ANOVA of top ASVs with canker count
 asv_canker_anova <- function(asv, design, base_model, data) {
-  log_asv = paste0("log(", asv, " + 1)")
-  f = paste(design, "+", log_asv)#, "+", log_asv, ":Site")
-  m = glm.nb_with_warnings(f, data)
-  a = anova(base_model, m$fit) %>% data.frame()
-  b = suppressWarnings(anova(m$fit)) %>% data.frame()
-  total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
-  d = data.frame(
-    ASV = asv,
-    Taxonomy = taxData[asv, "rank"],
-    Abundance = round(mean(data[[asv]])),
-    coef = round(m$fit$coefficients[log_asv], 3),
-    var = round(b[log_asv, 'Deviance'] / total_deviance * 100, 3),
-    p = a[2, 'Pr.Chi.'],
-    warning = m$warning
-  )
-  return(d)
+  tryCatch({
+    log_asv = paste0("log(", asv, " + 1)")
+    f = paste(design, "+", log_asv)#, "+", log_asv, ":Site")
+    m = glm.nb_with_warnings(f, data)
+    a = anova(base_model, m$fit) %>% data.frame()
+    b = suppressWarnings(anova(m$fit)) %>% data.frame()
+    total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
+    d = data.frame(
+      ASV = asv,
+      Taxonomy = taxData[asv, "rank"],
+      Abundance = round(mean(data[[asv]]), 3),
+      coef = round(m$fit$coefficients[log_asv], 3),
+      var = round(b[log_asv, 'Deviance'] / total_deviance * 100, 3),
+      p = a[2, 'Pr.Chi.'],
+      warning = m$warning
+    )
+    return(d)
+  }, warning = function(w) {
+    return(data.frame(
+      ASV = asv,
+      Taxonomy = taxData[asv, "rank"],
+      Abundance = round(mean(data[[asv]])),
+      coef = NA,
+      var = NA,
+      p = NA,
+      warning = paste("Warning: ", conditionMessage(w))
+    ))
+  }, error = function(e) {
+    return(data.frame(
+      ASV = asv,
+      Taxonomy = taxData[asv, "rank"],
+      Abundance = round(mean(data[[asv]])),
+      coef = NA,
+      var = NA,
+      p = NA,
+      warning = paste("Error: ", conditionMessage(e))
+    ))
+  })
 }
 
-# kable(asv_canker_anova(top_asv_ids[1], canker_design, base_model, canker_top_asv_data))
-
 # Effect of ASV abundance on canker count for top ASVs
-asv_canker_results <- sapply(
+asv_canker_results <- lapply(
   top_asv_ids, 
   function(x) asv_canker_anova(x, canker_design, base_model, canker_top_asv_data)
-) %>% t() %>% data.table()
+) %>% bind_rows() %>% data.table()
 
 # Adjust p-values for multiple testing
 asv_canker_results$p_adjusted <- p.adjust(asv_canker_results$p, method = "BH")
@@ -1354,11 +1383,16 @@ cat(
   nrow(asv_canker_results[p_adjusted < 0.05, ]), "of", nrow(asv_canker_results),
   "ASVs have statistically significant (*P* < 0.05) adjusted p-values\n\n"
 )
-if(nrow(asv_canker_results[p_adjusted < 0.05, ]) > 0) {
-  asv_canker_results[p_adjusted < 0.05, ] %>%
-    kbl() %>%
-    kable_styling("striped", full_width = F)
-}
+
+fun_sig_canker_asvs <- asv_canker_results[p_adjusted < 0.05, ] %>%
+  arrange(desc(Abundance))
+
+kbl(fun_sig_canker_asvs) %>%
+  kable_styling("striped")
+
+kbl(fun_sig_canker_asvs) %>%
+  kable_styling("striped") %>%
+  save_kable("tables/FUN_canker_asvs.html")
 ```
 
 #### Effect of ASV abundance on canker count per site
@@ -1374,7 +1408,8 @@ top_asvs_per_site <- lapply(
     samples <- filter(colData, Site == site)
     top_asv_data <- select(asv_counts, rownames(samples))
     # top_asvs <- filter(top_asv_data, rowMeans(top_asv_data) > 100)
-    top_asvs <- top_asv_data[filter_otus(top_asv_data, FUNASVFILTER), ]
+    # top_asvs <- top_asv_data[filter_otus(top_asv_data, FUNASVFILTER), ]
+    top_asvs <- top_asv_data[rowSums(top_asv_data) > 0, ]
     top_asv_ids <- rownames(top_asvs)
     top_asvs <- data.frame(t(top_asvs)) %>% merge(samples, by = 0) %>% column_to_rownames("Row.names")
     top_asvs <- top_asvs[complete.cases(top_asvs$Cankers), ]
@@ -1392,17 +1427,17 @@ data.table(
 ) %>% mutate(
   "ASV%" = round(topASVs / totalASVs * 100),
   "Read%" = round(topreads / totalreads * 100)
-) %>% kbl() %>% kable_styling("striped", full_width = F)  
+) %>% kbl() %>% kable_styling("striped")  
 
 canker_site_design <- "Cankers ~ Storage * Scion"
 
 # ANOVA of ASV abundance with canker count per ASV
 asv_canker_site_anova <- function(asvs, data) {
   base_model <- glm.nb(canker_site_design, data = data)
-  results <- sapply(
+  results <- lapply(
     asvs, 
     function(asv) asv_canker_anova(asv, canker_site_design, base_model, data)
-  ) %>% t() %>% data.table()
+  ) %>% bind_rows() %>% data.table()
   results$p_adjusted <- p.adjust(results$p, method = "BH")
   return(results)
 }
@@ -1426,13 +1461,15 @@ asv_canker_site_results <- lapply(
 # Significant ASVs
 significant_asvs <- asv_canker_site_results[p_adjusted < 0.05 & is.na(warning), ]
 
-significant_asvs[, c("Site", "ASV", "Taxonomy", "Abundance", "coef", "var", "p_adjusted")]
-  # kbl("html", digits = 3) %>%
-  # kable_styling("striped", full_width = T) %>%
-  # column_spec(3, extra_css = "word-wrap: break-all; white-space: normal; width: 10cm;") %>%
-  # save_kable("tables/FUN_canker_site_asvs.html")
+fun_canker_site_asvs <- significant_asvs[, c("Site", "ASV", "Taxonomy", "Abundance", "coef", "var", "p_adjusted")] %>%
+  arrange(Site, desc(Abundance))
 
-significant_asvs$Taxonomy %>% unlist
+kbl(fun_canker_site_asvs) %>%
+  kable_styling("striped")
+
+kbl(fun_canker_site_asvs) %>%
+  kable_styling("striped") %>%
+  save_kable("tables/FUN_canker_site_asvs.html")
 ```
 
 ```{r}
@@ -1446,7 +1483,7 @@ write.fasta(
 
 ##### Plot of ASV abundance against canker count
 
-```{r}
+```{r eval = FALSE}
 # List of significant ASVs
 significant_asv_list <- significant_asvs$ASV %>% unlist()
 
@@ -1550,10 +1587,10 @@ genus_canker_anova <- function(genus, design, base_model, data) {
 # genus_canker_anova(fun_genera[1], canker_design, base_model, fun_genus_data)
 
 # Effect of genera abundance on canker counts
-genus_canker_results <- sapply(
+genus_canker_results <- lapply(
   fun_genera, 
   function(x) genus_canker_anova(x, canker_design, base_model, fun_genus_data)
-) %>% t() %>% data.table()
+) %>% bind_rows() %>% data.table()
 
 # Adjust p-values for multiple testing
 genus_canker_results$p_adjusted <- p.adjust(genus_canker_results$p, method = "BH")
@@ -1565,17 +1602,16 @@ cat(
 )
 if(nrow(genus_canker_results[p_adjusted < 0.05, ]) > 0) {
   genus_canker_results[p_adjusted < 0.05, ] %>%
+    arrange(desc(Abundance)) %>%
     kbl() %>%
-    kable_styling("striped", full_width = F)
+    kable_styling("striped")
 }
 
-sig_genus <- genus_canker_results[p_adjusted < 0.05]$Genus %>% unlist()
-
-for (genus in sig_genus) {
-  log_genus = paste0("log(", genus, " + 1)")
-  f = paste(canker_design, "+", log_genus)
-  m = glm.nb(f, data = fun_genus_data)
-  print(anova(base_model, m))
+# for (genus in sig_genus) {
+#   log_genus = paste0("log(", genus, " + 1)")
+#   f = paste(canker_design, "+", log_genus)
+#   m = glm.nb(f, data = fun_genus_data)
+#   print(anova(base_model, m))
 }
 ```
 
@@ -1640,11 +1676,11 @@ alpha_canker_anova <- function(measure, data) {
 # alpha_canker_anova("shannon", all_alpha_ord)
 
 # Effect of α-diversity on canker count for each measure
-alpha_canker_results <- data.table(t(sapply(measures, function(x) alpha_canker_anova(x, all_alpha_ord))))
+alpha_canker_results <- data.table(bind_rows(lapply(measures, function(x) alpha_canker_anova(x, all_alpha_ord))))
 
 alpha_canker_results %>%
   kbl() %>%
-  kable_styling("striped", full_width = F)
+  kable_styling("striped")
 
 # ANOVA results
 for (measure in measures) {
@@ -1687,11 +1723,11 @@ beta_canker_anova <- function(pc, data) {
 }
 
 # Effect of β-diversity on canker count for each PC
-beta_canker_results <- data.table(t(sapply(pcs, function(x) beta_canker_anova(x, pc_scores))))
+beta_canker_results <- data.table(bind_rows(lapply(pcs, function(x) beta_canker_anova(x, pc_scores))))
 
 beta_canker_results %>%
   kbl() %>%
-  kable_styling("striped", full_width = F)
+  kable_styling("striped")
 ```
 
 ```{r}
@@ -2273,7 +2309,10 @@ cat(
 # top_asvs <- asv_counts[rowMeans(asv_counts) > 100, ]
 
 # Filter top ASVs with 90% of reads
-top_asvs <- asv_counts[filter_otus(asv_counts, BACASVFILTER), ]
+# top_asvs <- asv_counts[filter_otus(asv_counts, BACASVFILTER), ]
+
+# No filtering
+top_asvs <- asv_counts
 
 # Check that sample names match
 identical(names(top_asvs), rownames(colData))
@@ -2320,9 +2359,9 @@ top_asvs_anova_summary <- top_asvs_anova_results %>%
   spread(key = Factor, value = Variance) %>%
   data.table()
 
-top_asvs_anova_summary %>%
-  kbl() %>%
-  kable_styling("striped", full_width = F)
+# top_asvs_anova_summary %>%
+#   kbl() %>%
+#   kable_styling("striped", full_width = F)
 
 cat(
   "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
@@ -2339,9 +2378,9 @@ cat(
 # Filter by significant effect of scion and its interactions
 scion_asvs <- top_asvs_anova_results[grepl("Scion", Factor) & p.adj < 0.05, ]
 
-scion_asvs %>%
-  kbl() %>%
-  kable_styling("striped", full_width = F)
+# scion_asvs %>%
+#   kbl() %>%
+#   kable_styling("striped", full_width = F)
 
 cat(
   length(scion_asvs$ASV), 
@@ -2349,9 +2388,15 @@ cat(
 )
 
 # Summary of ASVs with significant Scion effect
-top_asvs_anova_summary[ASV %in% scion_asvs$ASV, ] %>%
-  kbl() %>%
-  kable_styling("striped", full_width = F)
+bac_significant_scion <- top_asvs_anova_summary[ASV %in% scion_asvs$ASV, ] %>%
+  arrange(desc(Abundance))
+
+kbl(bac_significant_scion) %>%
+  kable_styling("striped")
+
+kbl(bac_significant_scion) %>%
+  kable_styling("striped") %>%
+  save_kable("tables/BAC_scion_asvs.html")
 ```
 
 ```{r}
@@ -2393,7 +2438,7 @@ abundance_model <- glm.nb(abundance_design, data = canker_abundance_data)
 # ANOVA of abundance with canker count
 anova(base_model, abundance_model) %>%
   kbl() %>%
-  kable_styling("striped", full_width = F)
+  kable_styling("striped")
 ```
 
 ### Effect of ASV abundance on canker count
@@ -2408,13 +2453,11 @@ canker_design = "Cankers ~ Site * Storage * Scion"
 # Base model with ASV abundance data
 base_model <- glm.nb(canker_design, data = top_asv_data)
 
-# kable(asv_canker_anova(top_asv_ids[1], canker_design, base_model, canker_top_asv_data))
-
 # Effect of ASV abundance on canker count for top ASVs
-asv_canker_results <- sapply(
+asv_canker_results <- lapply(
   top_asv_ids, 
   function(x) asv_canker_anova(x, canker_design, base_model, top_asv_data)
-) %>% t() %>% data.table()
+) %>% bind_rows() %>% data.table()
 
 # Adjust p-values for multiple testing
 asv_canker_results$p_adjusted <- p.adjust(asv_canker_results$p, method = "BH")
@@ -2424,9 +2467,16 @@ cat(
   nrow(asv_canker_results[p_adjusted < 0.05, ]), 
   "ASVs have statistically significant (*P* < 0.05) adjusted p-values"
 )
-asv_canker_results[p_adjusted < 0.05, ] %>%
-  kbl() %>%
-  kable_styling("striped", full_width = F)
+
+bac_sig_canker_asvs <- asv_canker_results[p_adjusted < 0.05, ] %>%
+  arrange(desc(Abundance))
+
+kbl(bac_sig_canker_asvs) %>%
+  kable_styling("striped")
+
+kbl(bac_sig_canker_asvs) %>%
+  kable_styling("striped") %>%
+  save_kable("tables/BAC_canker_asvs.html")
 ```
 
 #### Effect of ASV abundance on canker count per site
@@ -2442,7 +2492,9 @@ top_asvs_per_site <- lapply(
     samples <- filter(colData, Site == site)
     top_asv_data <- select(asv_counts, rownames(samples))
     # top_asvs <- filter(top_asv_data, rowMeans(top_asv_data) > 100)
-    top_asvs <- top_asv_data[filter_otus(top_asv_data, BACASVFILTER), ]
+    # top_asvs <- top_asv_data[filter_otus(top_asv_data, BACASVFILTER), ]
+    top_asvs <- top_asv_data[rowSums(top_asv_data) > 0, ]
+    # top_asvs <- top_asvs[ , colSums(is.na(top_asvs)) == 0] # Remove ASVs with missing values
     top_asv_ids <- rownames(top_asvs)
     top_asvs <- data.frame(t(top_asvs)) %>% merge(samples, by = 0) %>% column_to_rownames("Row.names")
     top_asvs <- top_asvs[complete.cases(top_asvs$Cankers), ]
@@ -2460,17 +2512,17 @@ data.table(
 ) %>% mutate(
   "ASV%" = round(topASVs / totalASVs * 100),
   "Read%" = round(topreads / totalreads * 100)
-) %>% kbl() %>% kable_styling("striped", full_width = F)
+) %>% kbl() %>% kable_styling("striped")
 
 canker_site_design <- "Cankers ~ Storage * Scion"
 
 # ANOVA of ASV abundance with canker count per ASV
 asv_canker_site_anova <- function(asvs, data) {
   base_model <- glm.nb(canker_site_design, data = data)
-  results <- sapply(
+  results <- lapply(
     asvs, 
     function(asv) asv_canker_anova(asv, canker_site_design, base_model, data)
-  ) %>% t() %>% data.table()
+  ) %>% bind_rows() %>% data.table()
   results$p_adjusted <- p.adjust(results$p, method = "BH")
   return(results)
 }
@@ -2487,19 +2539,22 @@ asv_canker_site_results <- lapply(
   function(site) {
     result <- asv_canker_site_results[[site]]
     result$Site <- site
-    result
+    return(result)
   }
 ) %>% bind_rows()
 
 # Significant ASVs
 significant_asvs <- asv_canker_site_results[p_adjusted < 0.05 & is.na(warning), ]
 
-significant_asvs[, c("Site", "ASV", "Taxonomy", "Abundance", "coef", "var", "p_adjusted")]
-  # kbl("html", digits = 3) %>%
-  # kable_styling("striped", full_width = T) %>%
-  # column_spec(3, extra_css = "word-wrap: break-word;")
+bac_canker_site_asvs <- significant_asvs[, c("Site", "ASV", "Taxonomy", "Abundance", "coef", "var", "p_adjusted")] %>%
+  arrange(Site, desc(Abundance))
 
-significant_asvs$Taxonomy %>% unlist()
+kbl(bac_canker_site_asvs) %>%
+  kable_styling("striped")
+  
+kbl(bac_canker_site_asvs) %>%
+  kable_styling("striped") %>%
+  save_kable("tables/BAC_significant_site_canker_asvs.html")
 ```
 
 ```{r}
@@ -2513,7 +2568,7 @@ write.fasta(
 
 ##### Plot of ASV abundance against canker count
 
-```{r}
+```{r eval = FALSE}
 # List of significant ASVs
 significant_asv_list <- significant_asvs$ASV %>% unlist()
 
@@ -2626,10 +2681,10 @@ genus_canker_anova <- function(genus, design, base_model, data) {
 # genus_canker_anova(bac_genera[1], canker_design, base_model, bac_genus_data)
 
 # Effect of genera abundance on canker counts
-genus_canker_results <- sapply(
+genus_canker_results <- lapply(
   bac_genera, 
   function(x) genus_canker_anova(x, canker_design, base_model, bac_genus_data)
-) %>% t() %>% data.table()
+) %>% bind_rows() %>% data.table()
 
 # Adjust p-values for multiple testing
 genus_canker_results$p_adjusted <- p.adjust(genus_canker_results$p, method = "BH")
@@ -2641,8 +2696,9 @@ cat(
 )
 if(nrow(genus_canker_results[p_adjusted < 0.05, ]) > 0) {
   genus_canker_results[p_adjusted < 0.05, ] %>%
-  kbl() %>%
-  kable_styling("striped", full_width = F)
+    arrange(desc(Abundance)) %>%
+    kbl() %>%
+    kable_styling("striped")
 }
 
 sig_genus <- genus_canker_results[p_adjusted < 0.05]$Genus %>% unlist()
@@ -2713,11 +2769,11 @@ alpha_canker_anova <- function(measure, data) {
 }
 
 # Effect of α-diversity on canker count for each measure
-alpha_canker_results <- data.table(t(sapply(measures, function(x) alpha_canker_anova(x, all_alpha_ord))))
+alpha_canker_results <- data.table(bind_rows(lapply(measures, function(x) alpha_canker_anova(x, all_alpha_ord))))
 
 alpha_canker_results %>%
   kbl() %>%
-  kable_styling("striped", full_width = F)
+  kable_styling("striped")
 
 # ANOVA results
 for (measure in measures) {
@@ -2760,11 +2816,11 @@ beta_canker_anova <- function(pc, data) {
 }
 
 # Effect of β-diversity on canker count for each PC
-beta_canker_results <- data.table(t(sapply(pcs, function(x) beta_canker_anova(x, pc_scores))))
+beta_canker_results <- data.table(bind_rows(lapply(pcs, function(x) beta_canker_anova(x, pc_scores))))
 
 beta_canker_results %>%
   kbl() %>%
-  kable_styling("striped", full_width = F)
+  kable_styling("striped")
 ```
 
 # Extra figures
