@@ -138,7 +138,7 @@ rownames(ubiome_BAC$countData) <- gsub("OTU", "ASV", rownames(ubiome_BAC$countDa
 
 ### Global removals
 
-```{r}
+```{r removals}
 # Sample "A2-7" removed due to missampling.
 ubiome_BAC$colData <- ubiome_BAC$colData[!rownames(ubiome_BAC$colData) %in% "HMA27", ]
 ubiome_BAC$countData <- ubiome_BAC$countData[, !colnames(ubiome_BAC$countData) %in% "HMA27"]
@@ -154,7 +154,7 @@ Plantae taxa are filtered from fungal `taxData`.
 Chloroplast and Eukaryote  taxa are filtered from bacterial `taxData`.
 Corresponding ASVs are removed from `countData`.
 
-```{r filter_taxa}
+```{r filter taxa}
 # Filter Plant, Chloroplast, and Eukaryote ASVs
 
 # Fungi: Plantae ASVs
@@ -188,7 +188,7 @@ Plot rarefaction curves.
 
 Remove samples with read count below `r READFILTER * 100` % of median.
 
-```{r filter_samples, eval = FALSE}
+```{r rarefaction, eval = FALSE}
 invisible(mapply(assign, names(ubiome_BAC), ubiome_BAC, MoreArgs = list(envir = globalenv())))
 rare_bac <- gfunc(countData, colData, "Bacteria")
 # rare_bac <- gfunc(as.data.frame(counts(dds)), as.data.frame(colData(dds)), "Bacteria ZOTU")
@@ -223,7 +223,7 @@ cat("Bacteria: ",sum(filt),"sample(s) removed\n")
 
 Number of ASVs which account for 50 %, 80 %, and 99 % of total reads.
 
-```{r}
+```{r ASV read proportions}
 asv_propotions <- function(countData, proportion){
   i <- sum(countData)
   y <- rowSums(countData)
@@ -249,7 +249,7 @@ top_asvs %>%
 
 Remove ASVs with read count below `r OTUFILTER * 100` % of total reads.
 
-```{r filter_reads}
+```{r filter reads}
 # Fungi
 keep <- filter_otus(ubiome_FUN$countData, OTUFILTER)
 cat(
@@ -312,7 +312,7 @@ ubiome_BAC$colData <- merge(
 
 #### Remove outliers
 
-```{r}
+```{r abundance outliers}
 # Detect outliers with std > threshold from the median
 detect_outliers <- function(x, val, threshold, na.rm = TRUE) {
   med_x <- median(x[[val]], na.rm = na.rm)
@@ -404,7 +404,7 @@ ubiome_BAC$colData <- merge(
 
 Summary stats
 
-```{r}
+```{r canker summary}
 # png("figures/hist.png", width = 800, height = 600)
 # hist(cankers$Cankers, breaks = 20, main = "Total canker count", xlab = "Total canker count")
 # dev.off()
@@ -520,14 +520,14 @@ Absolute abundance normalisation using DESeq2 size factors.
 
 Values are centred around the mean of the copy number.
 
-```{r}
+```{r DESeq normalisation}
 # Normalise count data using DESeq2 size factors
 
 ubiome_FUN$dds$sizeFactor <- ubiome_FUN$dds$copy_number / mean(ubiome_FUN$dds$copy_number)
 ubiome_BAC$dds$sizeFactor <- ubiome_BAC$dds$copy_number / mean(ubiome_BAC$dds$copy_number)
 ```
 
-```{r}
+```{r save data environment} 
 # Save environment
 save.image("data_loaded.RData")
 ```
@@ -536,7 +536,7 @@ save.image("data_loaded.RData")
 # **Fungi**
 <!-- #=============================================================================== -->
 
-```{r}
+```{r FUN unpack data}
 # Unpack fungi data
 invisible(mapply(assign, names(ubiome_FUN), ubiome_FUN, MoreArgs = list(envir = globalenv())))
 ```
@@ -545,7 +545,7 @@ invisible(mapply(assign, names(ubiome_FUN), ubiome_FUN, MoreArgs = list(envir = 
 
 ### Read and sample summary
 
-```{r read_summary}
+```{r FUN read summary}
 cat(
   "Raw reads", "\n\n",
   "Total raw reads:\t\t", sum(countData), "\n",
@@ -569,7 +569,7 @@ cat("Normalised reads", "\n\n",
 
 ### ASV summary 
 
-```{r asv_summary}
+```{r FUN asv summary}
 cat(
   "Total ASVs:\t\t", nrow(taxData),"\n\n",
   "Raw reads per ASV summary", "\n\n",
@@ -608,7 +608,7 @@ data.frame(
 
 Proportion of ASVs which can be assigned (with the given confidence) at each taxonomic rank.
 
-```{r}
+```{r FUN taxonomy ASVs}
 
 # Proportion of ASVs which can be assigned (with the given confidence) at each taxonomic rank
 
@@ -630,7 +630,7 @@ data.table(
 
 % of reads which can be assigned to each taxonomic ranks
 
-```{r}
+```{r FUN taxonomy reads}
 
 tx <-taxData[rownames(dds),]
 nc <- counts(dds, normalize = T)
@@ -651,7 +651,7 @@ data.table(
 
 Plots of proportion of normalised reads assigned to members of phylum and class.
 
-```{r}
+```{r FUN taxonomy plots}
 dat <- list(as.data.frame(counts(dds, normalize = T)), taxData, as.data.frame(colData(dds)))
 
 design <- c("Site", "Storage")
@@ -695,7 +695,7 @@ fun_class_plot
 Plot copy number for each sample grouped by site, Scion, and Storage.
 Test the effect of site, Scion, and Storage on copy number using ANOVA.
 
-```{r}
+```{r FUN abundance}
 # abundance_plot <- ggplot(
 #   data = as.data.frame(colData(dds)), 
 #   aes(x = site, y = log_copy_number, colour = Scion, shape = Storage)
@@ -758,7 +758,7 @@ abundance_results %>%
 
 ### Alpha diversity plot
 
-```{r fun_alpha_diversity}
+```{r FUN α-diversity}
 
 # plot alpha diversity - plot_alpha will convert normalised abundances to integer values
 
@@ -781,7 +781,7 @@ fun_alpha_plot
 
 ### Permutation based anova on diversity index ranks
 
-```{r}
+```{r FUN α-diversity ANOVA}
 # get the diversity index data
 all_alpha_ord <- plot_alpha(
   counts(dds, normalize = F),
@@ -802,7 +802,7 @@ formula <- FULL_DESIGN # x ~ Site * Storage * Scion + Site / Site.block
 
 #### Chao1
 
-```{r}
+```{r FUN Chao1}
 setkey(all_alpha_ord, S.chao1)
 all_alpha_ord[, measure := as.numeric(as.factor(S.chao1))]
 result <- aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T)
@@ -817,7 +817,7 @@ df %>%
 
 #### Shannon
 
-```{r}
+```{r FUN Shannon}
 setkey(all_alpha_ord, shannon)
 all_alpha_ord[, measure := as.numeric(as.factor(shannon))]
 result <- aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T)
@@ -832,7 +832,7 @@ df %>%
 
 #### Simpson
 
-```{r}
+```{r FUN Simpson}
 setkey(all_alpha_ord, simpson)
 all_alpha_ord[, measure := as.numeric(as.factor(simpson))]
 result <- aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T)
@@ -849,7 +849,7 @@ df %>%
 
 ### PCA
 
-```{r}
+```{r FUN PCA}
 # Number of PCs to include
 n_pcs <- 10
 
@@ -864,7 +864,7 @@ formula = FULL_DESIGN
 
 #### Percent variation in first `r n_pcs` PCs 
 
-```{r}
+```{r FUN PCA var}
 # Cumulative percentage of variance explained
 pca_cum_var <- data.frame(
   cumulative = cumsum(mypca$percentVar * 100),
@@ -892,7 +892,7 @@ pca_var %>%
 
 #### ANOVA of first `r n_pcs` PCs
 
-```{r} 
+```{r FUN PCA ANOVA} 
 pca_summary <- apply(
   mypca$x[, 1:n_pcs], 2, 
   function(x){
@@ -905,7 +905,7 @@ pca_summary
 
 #### Percent variation in first `r n_pcs` PCs for each factor
 
-```{r}
+```{r FUN PCA summary}
 # Extract PC scores as a list of dataframes
 pcas <- lapply(pca_summary, function(i) data.frame(unclass(i)))
 
@@ -968,7 +968,7 @@ pcs_factors %>%
 
 #### PCA plot
 
-```{r, fig.width = 8, fig.height = 5}
+```{r FUN PCA plot, fig.width = 8, fig.height = 5}
 fun_pca_plot <- plotOrd(
   fun_pca,
   colData(dds),
@@ -988,7 +988,7 @@ fun_pca_plot
 
 #### PCA sum of squares (% var)
 
-```{r}
+```{r FUN PCA summary var}
 sum_squares <- apply(mypca$x, 2 ,function(x) 
   summary(aov(update(formula, x ~ .), data = cbind(x, colData(dds))))[[1]][2]
 )
@@ -1001,7 +1001,7 @@ round(colSums(perVar) / sum(colSums(perVar)) * 100, 3)
 
 ### ADONIS
 
-```{r}
+```{r FUN ADONIS}
 # Calculate Bray-Curtis distance matrix
 vg <- vegdist(t(counts(dds, normalize = T)), method = "bray")
 
@@ -1019,7 +1019,7 @@ df %>%
 
 ### NMDS ordination
 
-```{r}
+```{r FUN NMDS}
 set.seed(sum(utf8ToInt("Hamish McLean")))
 ord <- metaMDS(vg,trace=0) 
 #sratmax=20000,maxit=20000,try = 177, trymax = 177
@@ -1042,7 +1042,7 @@ fun_nmds_plot
 
 ### Explore distribution of ASV read counts
 
-```{r top ASVs}
+```{r FUN top ASVs}
 # Extract normalised counts from DESeq object
 asv_counts <- counts(dds, normalize = T) %>% as.data.frame()
 
@@ -1109,7 +1109,7 @@ cat(
 
 ### Filter top ASVs with `r (1 - FUNASVFILTER) * 100` % of reads
 
-```{r}
+```{r FUN ASV filter}
 # Filter the top x abundant ASVs by the sum of their normalised counts
 # top_asvs <- asv_counts[order(rowSums(asv_counts), decreasing = T)[1:DIFFOTU], ]
 
@@ -1145,7 +1145,7 @@ top_asv_data <- merge(top_asv_data, colData, by = 0) %>% column_to_rownames("Row
 
 Effect of Site, Scion, and Storage on abundance of top ASVs
 
-```{r ASV anova}
+```{r FUN ASV ANOVA}
 # ANOVA of top ASVs
 asv_lm_anova <- function(asv, formula, data) {
   f = update(formula, paste0("log(", asv, " + 1) ~ ."))
@@ -1245,15 +1245,21 @@ cat(
 fun_significant_scion <- top_asvs_anova_summary[ASV %in% scion_asvs$ASV, ] %>%
   arrange(desc(Abundance))
 
-kbl(fun_significant_scion) %>%
-  kable_styling("striped")
+# kbl(fun_significant_scion) %>%
+#   kable_styling("striped")
 
 kbl(fun_significant_scion) %>%
   kable_styling("striped") %>%
   save_kable("tables/FUN_scion_asvs.html")
+
+top_asvs_anova_summary %>%
+  arrange(desc(Abundance)) %>%
+  kbl() %>%
+  kable_styling("striped") %>%
+  save_kable("tables/FUN_all_asvs.html")
 ```
 
-```{r}
+```{r FUN ASV FASTA}
 # Export significant ASVs as fasta
 
 # Read FUN ASVs
@@ -1277,7 +1283,7 @@ This uses a nested negative binomial regression model.
 
 The base model for canker counts uses the formula: `r canker_design`.
 
-```{r fun canker model}
+```{r FUN canker}
 # Filter out samples with missing canker count
 canker_abundance_data <- colData[complete.cases(colData$Cankers), ]
 
@@ -1297,7 +1303,7 @@ anova(base_model, abundance_model) %>%
 
 ### Effect of ASV abundance on canker count
 
-```{r}
+```{r FUN ASV canker}
 # Filter out samples with missing canker count
 canker_top_asv_data <- top_asv_data[complete.cases(top_asv_data$Cankers), ]
 # all.equal(top_asv_data[c("Site", "Storage", "Scion", "Cankers")],cankers)
@@ -1387,8 +1393,8 @@ cat(
 fun_sig_canker_asvs <- asv_canker_results[p_adjusted < 0.05, ] %>%
   arrange(desc(Abundance))
 
-kbl(fun_sig_canker_asvs) %>%
-  kable_styling("striped")
+# kbl(fun_sig_canker_asvs) %>%
+#   kable_styling("striped")
 
 kbl(fun_sig_canker_asvs) %>%
   kable_styling("striped") %>%
@@ -1400,7 +1406,7 @@ kbl(fun_sig_canker_asvs) %>%
 Filter top ASVs with `r (1 - FUNASVFILTER) * 100` % of reads per site
 and test the effect of ASV abundance on canker count per site.
 
-```{r}
+```{r FUN ASV canker per site}
 # For each site, select top ASVs with 90% of reads
 top_asvs_per_site <- lapply(
   unique(colData$Site),
@@ -1461,18 +1467,18 @@ asv_canker_site_results <- lapply(
 # Significant ASVs
 significant_asvs <- asv_canker_site_results[p_adjusted < 0.05 & is.na(warning), ]
 
-fun_canker_site_asvs <- significant_asvs[, c("Site", "ASV", "Taxonomy", "Abundance", "coef", "var", "p_adjusted")] %>%
+fun_canker_site_asvs <- significant_asvs[, c("Site", "ASV", "Taxonomy", "Abundance", "coef", "var", "p_adjusted", "warning")] %>%
   arrange(Site, desc(Abundance))
 
-kbl(fun_canker_site_asvs) %>%
-  kable_styling("striped")
+# kbl(fun_canker_site_asvs) %>%
+#   kable_styling("striped")
 
 kbl(fun_canker_site_asvs) %>%
   kable_styling("striped") %>%
   save_kable("tables/FUN_canker_site_asvs.html")
 ```
 
-```{r}
+```{r FUN ASV canker FASTA}
 # Export significant ASVs as FASTA
 write.fasta(
   sequences = FUN_asvs[as.character(significant_asvs$ASV)],
@@ -1483,7 +1489,7 @@ write.fasta(
 
 ##### Plot of ASV abundance against canker count
 
-```{r eval = FALSE}
+```{r FUN ASV canker plot, eval = FALSE}
 # List of significant ASVs
 significant_asv_list <- significant_asvs$ASV %>% unlist()
 
@@ -1519,7 +1525,7 @@ fun_asv_canker_plot
 
 #### Effect of aggregated genera on canker counts
 
-```{r}
+```{r FUN genus}
 # Add genus from taxData to countData
 fun_genus_data <- counts(dds, normalize = T) %>% as.data.frame() %>% mutate(
   genus = taxData[rownames(countData), "genus"]
@@ -1559,7 +1565,7 @@ fun_genus_data <- t(fun_genus_data) %>% as.data.frame() %>% mutate(
 fun_genus_data <- fun_genus_data[complete.cases(fun_genus_data$Cankers), ]
 ```
 
-```{r}
+```{r FUN genus canker}
 # Base model design
 canker_design = "Cankers ~ Site * Storage * Scion"
 
@@ -1617,7 +1623,7 @@ if(nrow(genus_canker_results[p_adjusted < 0.05, ]) > 0) {
 
 ##### Plot of genus abundance against canker count
 
-```{r}
+```{r FUN genus plot}
 significant_genera <- genus_canker_results[p_adjusted < 0.05]$Genus %>% unlist()
 
 significant_genera_data <- fun_genus_data[, c(significant_genera, FACTORS, "Cankers")]
@@ -1647,7 +1653,7 @@ ggsave(
 
 ### Effect of α-diversity on canker count
 
-```{r}
+```{r FUN α-diversity canker}
 # ANOVA of α-diversity with canker count
 
 # Base model with α-diversity data
@@ -1692,7 +1698,7 @@ for (measure in measures) {
 
 ### Effect of β-diversity on canker count
 
-```{r}
+```{r FUN β-diversity canker}
 no_pcs <- 10
 
 # Merge PC scores with canker data
@@ -1730,7 +1736,7 @@ beta_canker_results %>%
   kable_styling("striped")
 ```
 
-```{r}
+```{r FUN save image}
 # Save environment
 save.image("FUN.RData")
 ```
@@ -1739,7 +1745,7 @@ save.image("FUN.RData")
 # **Bacteria**
 <!-- #=============================================================================== -->
 
-```{r}
+```{r BAC unpack data}
 # Unpack bacteria data
 invisible(mapply(assign, names(ubiome_BAC), ubiome_BAC, MoreArgs = list(envir = globalenv())))
 ```
@@ -1748,7 +1754,7 @@ invisible(mapply(assign, names(ubiome_BAC), ubiome_BAC, MoreArgs = list(envir = 
 
 ### Read and sample summary
 
-```{r}
+```{r BAC read summary}
 cat(
   "Raw reads", "\n\n",
   "Total raw reads:\t\t", sum(countData), "\n",
@@ -1772,7 +1778,7 @@ cat("Normalised reads", "\n\n",
 
 ### ASV summary 
 
-```{r}
+```{r BAC ASV summary}
 cat(
   "Total ASVs:\t\t", nrow(taxData),"\n\n",
   "Raw reads per ASV summary", "\n\n",
@@ -1811,7 +1817,7 @@ data.frame(
 
 Proportion of ASVs which can be assigned (with the given confidence) at each taxonomic rank
 
-```{r}
+```{r BAC taxonomy ASVs}
 
 # Proportion of ASVs which can be assigned (with the given confidence) at each taxonomic rank
 
@@ -1833,7 +1839,7 @@ data.table(
 
 % of reads which can be assigned to each taxonomic ranks
 
-```{r}
+```{r BAC taxonomy reads}
 
 tx <-taxData[rownames(dds),]
 nc <- counts(dds, normalize = T)
@@ -1854,7 +1860,7 @@ data.table(
 
 Plots of proportion of normalised reads assigned to members of phylum and class.
 
-```{r}
+```{r BAC taxonomy plots}
 dat <- list(as.data.frame(counts(dds, normalize = T)), taxData, as.data.frame(colData(dds)))
 
 design <- c("Site", "Storage")
@@ -1895,7 +1901,7 @@ bac_class_plot
 
 ## Abundance
 
-```{r}
+```{r BAC abundance}
 abundance_plot <- ggplot(
   data = as.data.frame(colData(dds)), 
   aes(x = Site, y = log_copy_number, colour = Scion, shape = Storage)
@@ -1944,7 +1950,7 @@ abundance_results %>%
 
 ### Alpha diversity plot
 
-```{r}
+```{r BAC α-diversity plot}
 
 # plot alpha diversity - plot_alpha will convert normalised abundances to integer values
 
@@ -1974,7 +1980,7 @@ bac_alpha_plot
 
 ### Permutation based anova on diversity index ranks
 
-```{r}
+```{r BAC α-diversity ANOVA}
 # get the diversity index data
 all_alpha_ord <- plot_alpha(
   counts(dds, normalize = F), colData(dds), design = "Site", returnData = T
@@ -1992,7 +1998,7 @@ formula <- FULL_DESIGN
 
 #### Chao1
 
-```{r}
+```{r BAC Chao1}
 setkey(all_alpha_ord, S.chao1)
 all_alpha_ord[, measure := as.numeric(as.factor(S.chao1))]
 result <- aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T)
@@ -2007,7 +2013,7 @@ df %>%
 
 #### Shannon
 
-```{r}
+```{r BAC Shannon}
 setkey(all_alpha_ord, shannon)
 all_alpha_ord[, measure := as.numeric(as.factor(shannon))]
 result <- aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T)
@@ -2022,7 +2028,7 @@ df %>%
 
 #### Simpson
 
-```{r}
+```{r BAC Simpson}
 setkey(all_alpha_ord, simpson)
 all_alpha_ord[, measure := as.numeric(as.factor(simpson))]
 result <- aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T)
@@ -2038,7 +2044,7 @@ df %>%
 ## Beta diversity PCA/NMDS
 
 ### PCA 
-```{r}
+```{r BAC PCA}
 # Number of PCs to include
 n_pcs <- 10
 
@@ -2052,7 +2058,7 @@ formula = FULL_DESIGN
 ```
 
 #### Percent variation in first `r n_pcs` PCs 
-```{r}
+```{r BAC PCA var}
 # Cumulative percentage of variance explained
 pca_cum_var <- data.frame(
   cumulative = cumsum(mypca$percentVar * 100),
@@ -2079,7 +2085,7 @@ pca_var %>%
 ```
 
 #### ANOVA of first `r n_pcs` PCs
-```{r} 
+```{r BAC PCA ANOVA} 
 pca_summary <- apply(
   mypca$x[, 1:n_pcs], 2, 
   function(x){
@@ -2092,7 +2098,7 @@ pca_summary
 
 #### Percent variation in first `r n_pcs` PCs for each factor
 
-```{r}
+```{r BAC PCA summary}
 # Extract PC scores as a list of dataframes
 pcas <- lapply(pca_summary, function(i) data.frame(unclass(i)))
 
@@ -2146,7 +2152,7 @@ pcs_factors %>%
 ```
 
 #### PCA plot
-```{r, fig.width=8,fig.height=5}
+```{r BAC PCA plot, fig.width=8,fig.height=5}
 
 bac_pca_plot <- plotOrd(
   bac_pca,
@@ -2180,7 +2186,7 @@ bac_pca_3_6_plot
 
 #### PCA sum of squares (% var)
 
-```{r}
+```{r BAC PCA summary var}
 sum_squares <- apply(mypca$x, 2 ,function(x) 
   summary(aov(update(formula, x ~ .), data = cbind(x, colData(dds))))[[1]][2]
 )
@@ -2193,7 +2199,7 @@ round(colSums(perVar) / sum(colSums(perVar)) * 100, 3)
 
 ### ADONIS
 
-```{r}
+```{r BAC ADONIS}
 # Calculate Bray-Curtis distance matrix
 vg <- vegdist(t(counts(dds, normalize = T)), method = "bray")
 
@@ -2211,7 +2217,7 @@ df %>%
 
 ### NMDS ordination
 
-```{r}
+```{r BAC NMDS}
 set.seed(sum(utf8ToInt("Hamish McLean")))
 ord <- metaMDS(vg,trace=0) 
 #sratmax=20000,maxit=20000,try = 177, trymax = 177
@@ -2234,7 +2240,7 @@ bac_nmds_plot
 
 ### Explore distribution of ASV counts
 
-```{r Bac top ASVs}
+```{r BAC top ASVs}
 # Extract normalised counts from DESeq object
 asv_counts <- counts(dds, normalize = T) %>% as.data.frame()
 
@@ -2301,7 +2307,7 @@ cat(
 
 ### Filter top ASVs with `r (1 - BACASVFILTER) * 100` % of reads
 
-```{r}
+```{r BAC ASV filter}
 # Filter the top x abundant ASVs by the sum of their normalised counts
 # top_asvs <- asv_counts[order(rowSums(asv_counts), decreasing = T)[1:DIFFOTU], ]
 
@@ -2334,7 +2340,7 @@ top_asv_data <- merge(top_asv_data, colData, by = 0) %>% column_to_rownames("Row
 
 Effect of Site, Scion, and Storage on abundance of top `r DIFFOTU` ASVs
 
-```{r Bac ASV anova}
+```{r BAC ASV ANOVA}
 # Perform ANOVA on list of top ASVs
 top_asvs_anova_results <- lapply(
   top_asv_ids, 
@@ -2388,18 +2394,24 @@ cat(
 )
 
 # Summary of ASVs with significant Scion effect
-bac_significant_scion <- top_asvs_anova_summary[ASV %in% scion_asvs$ASV, ] %>%
-  arrange(desc(Abundance))
+# bac_significant_scion <- top_asvs_anova_summary[ASV %in% scion_asvs$ASV, ] %>%
+#   arrange(desc(Abundance))
 
-kbl(bac_significant_scion) %>%
-  kable_styling("striped")
+# kbl(bac_significant_scion) %>%
+#   kable_styling("striped")
 
-kbl(bac_significant_scion) %>%
-  kable_styling("striped") %>%
-  save_kable("tables/BAC_scion_asvs.html")
+# kbl(bac_significant_scion) %>%
+#   kable_styling("striped") %>%
+#   save_kable("tables/BAC_scion_asvs.html")
+
+top_asvs_anova_summary %>%
+  # arrange(desc(Abundance)) %>%
+  kbl() %>%
+  # kable_styling("striped") %>%
+  save_kable("tables/BAC_all_asvs.csv")
 ```
 
-```{r}
+```{r BAC ASV FASTA}
 # Export significant ASVs as fasta
 
 # Read BAC ASVs
@@ -2423,7 +2435,7 @@ This uses a nested negative binomial regression model.
 
 The base model for canker counts uses the formula: `r canker_design`.
 
-```{r bac canker model}
+```{r BAC canker model}
 # Filter out samples with missing canker count
 canker_abundance_data <- colData[complete.cases(colData$Cankers), ]
 
@@ -2443,7 +2455,7 @@ anova(base_model, abundance_model) %>%
 
 ### Effect of ASV abundance on canker count
 
-```{r}
+```{r BAC ASV canker}
 # Filter out samples with missing canker count
 top_asv_data <- top_asv_data[complete.cases(top_asv_data$Cankers), ]
 
@@ -2471,8 +2483,8 @@ cat(
 bac_sig_canker_asvs <- asv_canker_results[p_adjusted < 0.05, ] %>%
   arrange(desc(Abundance))
 
-kbl(bac_sig_canker_asvs) %>%
-  kable_styling("striped")
+# kbl(bac_sig_canker_asvs) %>%
+#   kable_styling("striped")
 
 kbl(bac_sig_canker_asvs) %>%
   kable_styling("striped") %>%
@@ -2484,7 +2496,7 @@ kbl(bac_sig_canker_asvs) %>%
 Filter top ASVs with `r (1 - BACASVFILTER) * 100` % of reads per site
 and test the effect of ASV abundance on canker count per site.
 
-```{r}
+```{r BAC ASV canker per site}
 # For each site, select top ASVs with 50% of reads
 top_asvs_per_site <- lapply(
   unique(colData$Site),
@@ -2546,18 +2558,18 @@ asv_canker_site_results <- lapply(
 # Significant ASVs
 significant_asvs <- asv_canker_site_results[p_adjusted < 0.05 & is.na(warning), ]
 
-bac_canker_site_asvs <- significant_asvs[, c("Site", "ASV", "Taxonomy", "Abundance", "coef", "var", "p_adjusted")] %>%
+bac_canker_site_asvs <- significant_asvs[, c("Site", "ASV", "Taxonomy", "Abundance", "coef", "var", "p_adjusted", "warning")] %>%
   arrange(Site, desc(Abundance))
 
-kbl(bac_canker_site_asvs) %>%
-  kable_styling("striped")
+# kbl(bac_canker_site_asvs) %>%
+#   kable_styling("striped")
   
 kbl(bac_canker_site_asvs) %>%
   kable_styling("striped") %>%
   save_kable("tables/BAC_significant_site_canker_asvs.html")
 ```
 
-```{r}
+```{r BAC canker FASTA}
 # Export significant ASVs as FASTA
 write.fasta(
   sequences = BAC_asvs[as.character(significant_asvs$ASV)],
@@ -2568,7 +2580,7 @@ write.fasta(
 
 ##### Plot of ASV abundance against canker count
 
-```{r eval = FALSE}
+```{r BAC ASV canker plot, eval = FALSE}
 # List of significant ASVs
 significant_asv_list <- significant_asvs$ASV %>% unlist()
 
@@ -2604,7 +2616,7 @@ bac_asv_canker_plot
 
 #### Effect of aggregated genera on canker counts
 
-```{r}
+```{r BAC genus}
 # Add genus from taxData to countData
 bac_genus_data <- counts(dds, normalize = T) %>% as.data.frame() %>% mutate(
   genus = taxData[rownames(countData), "genus"]
@@ -2653,7 +2665,7 @@ bac_genus_data <- t(bac_genus_data) %>% as.data.frame() %>% mutate(
 bac_genus_data <- bac_genus_data[complete.cases(bac_genus_data$Cankers), ]
 ```
 
-```{r}
+```{r BAC genus canker}
 # Base model design
 canker_design = "Cankers ~ Site * Storage * Scion"
 
@@ -2713,7 +2725,7 @@ for (genus in sig_genus) {
 
 ##### Plot of genus abundance against canker count
 
-```{r}
+```{r BAC genus canker plot}
 significant_genera <- genus_canker_results[p_adjusted < 0.05]$Genus %>% unlist()
 
 significant_genera_data <- bac_genus_data[, c(significant_genera, FACTORS, "Cankers")]
@@ -2742,7 +2754,7 @@ ggsave(
 
 ### Effect of α-diversity on canker count
 
-```{r}
+```{r BAC α-diversity canker}
 # ANOVA of α-diversity with canker count
 
 # Base model with α-diversity data
@@ -2785,7 +2797,7 @@ for (measure in measures) {
 
 ### Effect of β-diversity on canker count
 
-```{r}
+```{r BAC β-diversity canker}
 no_pcs <- 10
 
 # Merge PC scores with canker data
@@ -2827,7 +2839,7 @@ beta_canker_results %>%
 
 ## Abundance
 
-```{r}
+```{r abundance figures}
 abundance_combined <- rbind(
   as.data.frame(colData(ubiome_FUN$dds)), as.data.frame(colData(ubiome_BAC$dds))
 ) %>% mutate(kingdom = ifelse(Target == "ITS", "Fungi", "Bacteria")) %>%
@@ -2865,7 +2877,7 @@ abundance_box
 
 ## Alpha diversity
 
-```{r}
+```{r α-diversity figures}
 alpha_combined <- rbind(fun_alpha, bac_alpha) %>% 
   subset(select = c("Site", "Storage", "Scion", "Target", "S.chao1", "shannon", "simpson")) %>%
   mutate(kingdom = ifelse(Target == "ITS", "Fungi", "Bacteria")) %>%
@@ -2938,7 +2950,7 @@ ggsave(
 
 ## PCA
   
-```{r}
+```{r PCA figures}
 pca_combo_plot <- ggarrange(
   fun_pca_plot, bac_pca_plot,
   ncol = 2, nrow = 1, labels = c("A", "B"),
@@ -2980,7 +2992,7 @@ ggsave(
 mega_combo_plot
 ```
 
-```{r}
+```{r BAC save image}
 # Save environment
 save.image("BAC.RData")
 ```
