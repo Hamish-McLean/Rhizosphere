@@ -1174,18 +1174,18 @@ extend_asv_anova <- function(anova_result, asv) {
     Taxonomy = taxData[asv, "rank"],
     Abundance = round(mean(top_asv_data[[asv]]), 3),
     Factor = gsub(" ", "", rownames(anova_result)),
-    perc_var = Sum.Sq / sum(anova_result$Sum.Sq) * 100,
-    sig = case_when(
-      is.na(Pr..F.) ~ "",
-      Pr..F. < 0.001 ~ "***",
-      Pr..F. < 0.01 ~ "**",
-      Pr..F. < 0.05 ~ "*",
-      TRUE ~ ""
-    ),
-    Variance = ifelse(
-      perc_var < 0.01, paste0("<0.01", sig),
-      paste0(round(perc_var, 2), sig)
-    )
+    var = Sum.Sq / sum(anova_result$Sum.Sq) * 100,
+    # sig = case_when(
+    #   is.na(Pr..F.) ~ "",
+    #   Pr..F. < 0.001 ~ "***",
+    #   Pr..F. < 0.01 ~ "**",
+    #   Pr..F. < 0.05 ~ "*",
+    #   TRUE ~ ""
+    # ),
+    # Variance = ifelse(
+    #   perc_var < 0.01, paste0("<0.01", sig),
+    #   paste0(round(perc_var, 2), sig)
+    # )
   )
 }
 
@@ -1209,8 +1209,14 @@ top_asvs_anova_results$Factor <- factor(top_asvs_anova_results$Factor, levels = 
 
 # Summary of top ASV ANOVA results
 top_asvs_anova_summary <- top_asvs_anova_results %>% 
-  select(ASV, Taxonomy, Abundance, Factor, Variance) %>% 
-  spread(key = Factor, value = Variance) %>%
+  select(ASV, Taxonomy, Abundance, Factor, var, p.adj) %>% 
+  pivot_wider(names_from = Factor, values_from = c(var, p.adj), names_glue = "{Factor}_{.value}") %>%
+  select(
+    ASV, Taxonomy, Abundance, Site_var, Site_p.adj, Storage_var, Storage_p.adj, 
+    Scion_var, Scion_p.adj, "Site:Storage_var", "Site:Storage_p.adj", "Site:Scion_var", 
+    "Site:Scion_p.adj", "Storage:Scion_var", "Storage:Scion_p.adj", "Site:Storage:Scion_var", 
+    "Site:Storage:Scion_p.adj"
+  ) %>%
   data.table()
 
 # top_asvs_anova_summary %>%
@@ -2361,8 +2367,14 @@ top_asvs_anova_results$Factor <- factor(top_asvs_anova_results$Factor, levels = 
 
 # Summary of top ASV ANOVA results
 top_asvs_anova_summary <- top_asvs_anova_results %>% 
-  select(ASV, Taxonomy, Abundance, Factor, Variance) %>% 
-  spread(key = Factor, value = Variance) %>%
+  select(ASV, Taxonomy, Abundance, Factor, var, p.adj) %>% 
+  pivot_wider(names_from = Factor, values_from = c(var, p.adj), names_glue = "{Factor}_{.value}") %>%
+  select(
+    ASV, Taxonomy, Abundance, Site_var, Site_p.adj, Storage_var, Storage_p.adj, 
+    Scion_var, Scion_p.adj, "Site:Storage_var", "Site:Storage_p.adj", "Site:Scion_var", 
+    "Site:Scion_p.adj", "Storage:Scion_var", "Storage:Scion_p.adj", "Site:Storage:Scion_var", 
+    "Site:Storage:Scion_p.adj"
+  ) %>%
   data.table()
 
 # top_asvs_anova_summary %>%
@@ -2405,10 +2417,10 @@ cat(
 #   save_kable("tables/BAC_scion_asvs.html")
 
 top_asvs_anova_summary %>%
-  # arrange(desc(Abundance)) %>%
+  arrange(desc(Abundance)) %>%
   kbl() %>%
-  # kable_styling("striped") %>%
-  save_kable("tables/BAC_all_asvs.csv")
+  kable_styling("striped") %>%
+  save_kable("tables/BAC_all_asvs.html")
 ```
 
 ```{r BAC ASV FASTA}
