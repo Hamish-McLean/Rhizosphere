@@ -71,6 +71,9 @@ FACTORS = c("Site", "Storage", "Scion")
 DESIGN = y ~ Site + Storage + Scion
 FULL_DESIGN = y ~ Site * Storage * Scion
 canker_design = "Cankers ~ Site * Storage * Scion"
+
+# Control
+ASV_MODELS = FALSE # Toggle for ASV model cells
 ```
 
 ```{r functions}
@@ -1145,7 +1148,7 @@ top_asv_data <- merge(top_asv_data, colData, by = 0) %>% column_to_rownames("Row
 
 Effect of Site, Scion, and Storage on abundance of top ASVs
 
-```{r FUN ASV ANOVA}
+```{r FUN ASV ANOVA, eval=ASV_MODELS}
 # ANOVA of top ASVs
 asv_lm_anova <- function(asv, formula, data) {
   f = update(formula, paste0("log(", asv, " + 1) ~ ."))
@@ -1265,7 +1268,7 @@ top_asvs_anova_summary %>%
   save_kable("tables/FUN_all_asvs.html")
 ```
 
-```{r FUN ASV FASTA}
+```{r FUN ASV FASTA, eval=ASV_MODELS}
 # Export significant ASVs as fasta
 
 # Read FUN ASVs
@@ -1309,7 +1312,7 @@ anova(base_model, abundance_model) %>%
 
 ### Effect of ASV abundance on canker count
 
-```{r FUN ASV canker}
+```{r FUN ASV canker, eval=ASV_MODELS}
 # Filter out samples with missing canker count
 canker_top_asv_data <- top_asv_data[complete.cases(top_asv_data$Cankers), ]
 # all.equal(top_asv_data[c("Site", "Storage", "Scion", "Cankers")],cankers)
@@ -1405,6 +1408,16 @@ fun_sig_canker_asvs <- asv_canker_results[p_adjusted < 0.05, ] %>%
 kbl(fun_sig_canker_asvs) %>%
   kable_styling("striped") %>%
   save_kable("tables/FUN_canker_asvs.html")
+
+cat(
+  "\nSignificant canker bacterial ASVs\n",
+  "\nTotal ASVs: ", nrow(asv_canker_results),
+  "\nWarnings: ", nrow(asv_canker_results[!is.na(warning)]),
+  "\nTotal ASVs without warnings: ", nrow(asv_canker_results[is.na(warning)]),
+  "\nTotal significant ASVs: ", nrow(asv_canker_results[p_adjusted < 0.05]),
+  "\nASVs with negative effect: ", nrow(asv_canker_results[p_adjusted < 0.05 & coef < 0]),
+  "\nASVs with positive effect: ", nrow(asv_canker_results[p_adjusted < 0.05 & coef > 0]), "\n"
+)
 ```
 
 #### Effect of ASV abundance on canker count per site
@@ -1412,7 +1425,7 @@ kbl(fun_sig_canker_asvs) %>%
 Filter top ASVs with `r (1 - FUNASVFILTER) * 100` % of reads per site
 and test the effect of ASV abundance on canker count per site.
 
-```{r FUN ASV canker per site}
+```{r FUN ASV canker per site, eval=ASV_MODELS}
 # For each site, select top ASVs with 90% of reads
 top_asvs_per_site <- lapply(
   unique(colData$Site),
@@ -1482,6 +1495,18 @@ fun_canker_site_asvs <- significant_asvs[, c("Site", "ASV", "Taxonomy", "Abundan
 kbl(fun_canker_site_asvs) %>%
   kable_styling("striped") %>%
   save_kable("tables/FUN_canker_site_asvs.html")
+
+for(site in 1:3){
+  cat(
+    "\nSignificant canker fungal ASVs for site ", site, "\n",
+    "\nTotal ASVs: ", nrow(asv_canker_site_results[Site == site]),
+    "\nWarnings: ", nrow(asv_canker_site_results[Site == site & !is.na(warning)]),
+    "\nTotal ASVs without warnings: ", nrow(asv_canker_site_results[Site == site & is.na(warning)]),
+    "\nTotal significant ASVs: ", nrow(asv_canker_site_results[Site == site & p_adjusted < 0.05]),
+    "\nASVs with negative effect: ", nrow(asv_canker_site_results[Site == site & p_adjusted < 0.05 & coef < 0]),
+    "\nASVs with positive effect: ", nrow(asv_canker_site_results[Site == site & p_adjusted < 0.05 & coef > 0]), "\n"
+  )
+}
 ```
 
 ```{r FUN ASV canker FASTA}
@@ -1531,7 +1556,7 @@ fun_asv_canker_plot
 
 #### Effect of aggregated genera on canker counts
 
-```{r FUN genus}
+```{r FUN genus, eval = FLASE}
 # Add genus from taxData to countData
 fun_genus_data <- counts(dds, normalize = T) %>% as.data.frame() %>% mutate(
   genus = taxData[rownames(countData), "genus"]
@@ -1571,7 +1596,7 @@ fun_genus_data <- t(fun_genus_data) %>% as.data.frame() %>% mutate(
 fun_genus_data <- fun_genus_data[complete.cases(fun_genus_data$Cankers), ]
 ```
 
-```{r FUN genus canker}
+```{r FUN genus canker, eval = FALSE}
 # Base model design
 canker_design = "Cankers ~ Site * Storage * Scion"
 
@@ -1629,7 +1654,7 @@ if(nrow(genus_canker_results[p_adjusted < 0.05, ]) > 0) {
 
 ##### Plot of genus abundance against canker count
 
-```{r FUN genus plot}
+```{r FUN genus plot, eval = FALSE}
 significant_genera <- genus_canker_results[p_adjusted < 0.05]$Genus %>% unlist()
 
 significant_genera_data <- fun_genus_data[, c(significant_genera, FACTORS, "Cankers")]
@@ -1700,6 +1725,66 @@ for (measure in measures) {
   m = glm.nb(f, data = all_alpha_ord)
   print(anova(base_model, m))
 }
+```
+
+### α-diversity ~ canker permutation anova
+
+```{r FUN α-diversity ANOVA}
+# get the diversity index data
+# all_alpha_ord <- plot_alpha(
+#   counts(dds, normalize = F),
+#   colData(dds),
+#   returnData = T
+# )
+
+# # join diversity indices and metadata
+# all_alpha_ord <- all_alpha_ord[
+#   as.data.table(colData(dds), keep.rownames = "Samples"), 
+#   on = "Samples"
+# ]
+
+# fun_alpha <- all_alpha_ord
+
+canker_formula <- y ~ Site * Storage * Scion * Cankers
+
+# Chao1
+
+setkey(all_alpha_ord, S.chao1)
+all_alpha_ord[, measure := as.numeric(as.factor(S.chao1))]
+result <- aovp(update(canker_formula, measure ~ .), all_alpha_ord, seqs = T)
+summary(result)
+df <- result %>% summary() %>% unclass() %>% data.frame()
+total_variance <- sum(df$R.Sum.Sq)
+df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
+df %>%
+  kbl() %>%
+  kable_styling("striped", full_width = F)
+
+# Shannon
+
+setkey(all_alpha_ord, shannon)
+all_alpha_ord[, measure := as.numeric(as.factor(shannon))]
+result <- aovp(update(canker_formula, measure ~ .), all_alpha_ord, seqs = T)
+summary(result)
+df <- result %>% summary() %>% unclass() %>% data.frame()
+total_variance <- sum(df$R.Sum.Sq)
+df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
+df %>%
+  kbl() %>%
+  kable_styling("striped", full_width = F)
+
+# Simpson
+
+setkey(all_alpha_ord, simpson)
+all_alpha_ord[, measure := as.numeric(as.factor(simpson))]
+result <- aovp(update(canker_formula, measure ~ .), all_alpha_ord, seqs = T)
+summary(result)
+df <- result %>% summary() %>% unclass() %>% data.frame()
+total_variance <- sum(df$R.Sum.Sq)
+df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
+df %>%
+  kbl() %>%
+  kable_styling("striped", full_width = F)
 ```
 
 ### Effect of β-diversity on canker count
@@ -2346,7 +2431,7 @@ top_asv_data <- merge(top_asv_data, colData, by = 0) %>% column_to_rownames("Row
 
 Effect of Site, Scion, and Storage on abundance of top `r DIFFOTU` ASVs
 
-```{r BAC ASV ANOVA}
+```{r BAC ASV ANOVA, eval=ASV_MODELS}
 # Perform ANOVA on list of top ASVs
 top_asvs_anova_results <- lapply(
   top_asv_ids, 
@@ -2423,7 +2508,7 @@ top_asvs_anova_summary %>%
   save_kable("tables/BAC_all_asvs.html")
 ```
 
-```{r BAC ASV FASTA}
+```{r BAC ASV FASTA, eval=ASV_MODELS}
 # Export significant ASVs as fasta
 
 # Read BAC ASVs
@@ -2467,7 +2552,7 @@ anova(base_model, abundance_model) %>%
 
 ### Effect of ASV abundance on canker count
 
-```{r BAC ASV canker}
+```{r BAC ASV canker, eval=ASV_MODELS}
 # Filter out samples with missing canker count
 top_asv_data <- top_asv_data[complete.cases(top_asv_data$Cankers), ]
 
@@ -2501,6 +2586,16 @@ bac_sig_canker_asvs <- asv_canker_results[p_adjusted < 0.05, ] %>%
 kbl(bac_sig_canker_asvs) %>%
   kable_styling("striped") %>%
   save_kable("tables/BAC_canker_asvs.html")
+
+cat(
+  "\nSignificant canker bacterial ASVs\n",
+  "\nTotal ASVs: ", nrow(asv_canker_results),
+  "\nWarnings: ", nrow(asv_canker_results[!is.na(warning)]),
+  "\nTotal ASVs without warnings: ", nrow(asv_canker_results[is.na(warning)]),
+  "\nTotal significant ASVs: ", nrow(asv_canker_results[p_adjusted < 0.05]),
+  "\nASVs with negative effect: ", nrow(asv_canker_results[p_adjusted < 0.05 & coef < 0]),
+  "\nASVs with positive effect: ", nrow(asv_canker_results[p_adjusted < 0.05 & coef > 0]), "\n"
+)
 ```
 
 #### Effect of ASV abundance on canker count per site
@@ -2508,7 +2603,7 @@ kbl(bac_sig_canker_asvs) %>%
 Filter top ASVs with `r (1 - BACASVFILTER) * 100` % of reads per site
 and test the effect of ASV abundance on canker count per site.
 
-```{r BAC ASV canker per site}
+```{r BAC ASV canker per site, eval=ASV_MODELS}
 # For each site, select top ASVs with 50% of reads
 top_asvs_per_site <- lapply(
   unique(colData$Site),
@@ -2579,9 +2674,21 @@ bac_canker_site_asvs <- significant_asvs[, c("Site", "ASV", "Taxonomy", "Abundan
 kbl(bac_canker_site_asvs) %>%
   kable_styling("striped") %>%
   save_kable("tables/BAC_significant_site_canker_asvs.html")
+
+for(site in 1:3){
+  cat(
+    "\nSignificant canker fungal ASVs for site ", site, "\n",
+    "\nTotal ASVs: ", nrow(asv_canker_site_results[Site == site]),
+    "\nWarnings: ", nrow(asv_canker_site_results[Site == site & !is.na(warning)]),
+    "\nTotal ASVs without warnings: ", nrow(asv_canker_site_results[Site == site & is.na(warning)]),
+    "\nTotal significant ASVs: ", nrow(asv_canker_site_results[Site == site & p_adjusted < 0.05]),
+    "\nASVs with negative effect: ", nrow(asv_canker_site_results[Site == site & p_adjusted < 0.05 & coef < 0]),
+    "\nASVs with positive effect: ", nrow(asv_canker_site_results[Site == site & p_adjusted < 0.05 & coef > 0]), "\n"
+  )
+}
 ```
 
-```{r BAC canker FASTA}
+```{r BAC canker FASTA, eval=ASV_MODELS}
 # Export significant ASVs as FASTA
 write.fasta(
   sequences = BAC_asvs[as.character(significant_asvs$ASV)],
@@ -2628,7 +2735,7 @@ bac_asv_canker_plot
 
 #### Effect of aggregated genera on canker counts
 
-```{r BAC genus}
+```{r BAC genus, eval = FALSE}
 # Add genus from taxData to countData
 bac_genus_data <- counts(dds, normalize = T) %>% as.data.frame() %>% mutate(
   genus = taxData[rownames(countData), "genus"]
@@ -2677,7 +2784,7 @@ bac_genus_data <- t(bac_genus_data) %>% as.data.frame() %>% mutate(
 bac_genus_data <- bac_genus_data[complete.cases(bac_genus_data$Cankers), ]
 ```
 
-```{r BAC genus canker}
+```{r BAC genus canker, eval = FALSE}
 # Base model design
 canker_design = "Cankers ~ Site * Storage * Scion"
 
@@ -2737,7 +2844,7 @@ for (genus in sig_genus) {
 
 ##### Plot of genus abundance against canker count
 
-```{r BAC genus canker plot}
+```{r BAC genus canker plot, eval = FALSE}
 significant_genera <- genus_canker_results[p_adjusted < 0.05]$Genus %>% unlist()
 
 significant_genera_data <- bac_genus_data[, c(significant_genera, FACTORS, "Cankers")]
@@ -2805,6 +2912,24 @@ for (measure in measures) {
   m = glm.nb(f, data = all_alpha_ord)
   print(anova(base_model, m))
 }
+```
+
+Plot of Simpson against canker counts
+
+```{r}
+ggscatter(all_alpha_ord, y = "Cankers", x = "simpson", add = "reg.line", conf.int = T, cor.coef = T)
+ggsave("figures/bac_alpha_test.png")
+
+m <- glm.nb("Cankers ~ Site * Storage * Scion + simpson", data = all_alpha_ord)
+```
+
+Spearman correlation of α-diversity indices with canker lesion
+
+
+```{r}
+cor.test(all_alpha_ord$S.chao1, all_alpha_ord$Cankers, method = "spearman", use = "complete.obs")
+cor.test(all_alpha_ord$shannon, all_alpha_ord$Cankers, method = "spearman", use = "complete.obs")
+cor.test(all_alpha_ord$simpson, all_alpha_ord$Cankers, method = "spearman", use = "complete.obs")
 ```
 
 ### Effect of β-diversity on canker count
