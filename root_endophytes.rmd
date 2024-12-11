@@ -1209,12 +1209,23 @@ fun_nmds_plot
 #### NMDS with canker counts
 
 ```{r FUN NMDS with canker}
+# Rownames for which Cankers_avg is NA
+missing <- rownames(colData[is.na(colData$Cankers_avg), ])
+
+colData$log_cankers <- log10(colData$Cankers_avg + 1)
+
 fun_nmds_canker_plot <- plotOrd(
-  fun_nmds, colData(dds), 
-  design = "Cankers_avg", 
-  shape = "Site", 
-  alpha = 0.75, cbPalette = T
-) #+ theme(text = element_text(size = 14))
+  fun_nmds, colData, 
+  design = "log_cankers",
+  shape = "Site",
+  continuous = TRUE,
+  colourScale = c(low = "#E69F00", high = "#0072B2"),
+  legendDesign = "colourbar",
+  exclude = missing,
+  alpha = 0.75, cbPalette = TRUE
+)
+
+fun_nmds_canker_plot
 ```
 
 ## ASV abundance
@@ -2594,6 +2605,28 @@ bac_nmds_plot <- plotOrd(
 ggsave(filename = "fun_nmds_plot.png", plot = bac_nmds_plot, path = "figures/")
 
 bac_nmds_plot
+```
+
+#### NMDS with canker counts
+
+```{r BAC NMDS with canker}
+# Rownames for which Cankers_avg is NA
+missing <- rownames(colData[is.na(colData$Cankers_avg), ])
+
+colData$log_cankers <- log10(colData$Cankers_avg + 1)
+
+bac_nmds_canker_plot <- plotOrd(
+  fun_nmds, colData(dds), 
+  design = "log_cankers",
+  shape = "Site",
+  continuous = TRUE,
+  colourScale = c(low = "#E69F00", high = "#0072B2"),
+  legendDesign = "colourbar",
+  exclude = missing,
+  alpha = 0.75, cbPalette = TRUE
+)
+
+bac_nmds_canker_plot
 ```
 
 ## ASV abundance
