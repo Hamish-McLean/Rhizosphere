@@ -67,10 +67,11 @@ WIDTH <-  9
 HEIGHT <- 9
 
 # Model design
-FACTORS <-       c("Site", "Storage", "Scion")
-DESIGN <-        y ~ Site + Storage + Scion
-FULL_DESIGN <-   y ~ Site * Storage * Scion
-canker_design <- "Cankers ~ Site * Storage * Scion"
+FACTORS <-            c("Site", "Storage", "Scion")
+DESIGN <-             y ~ Site + Storage + Scion
+FULL_DESIGN <-        y ~ Site * Storage * Scion
+design_with_canker <- y ~ Site * Storage * Scion * Cankers
+canker_design <-      "Cankers ~ Site * Storage * Scion"
 
 # Control
 ASV_MODELS <- FALSE # Toggle for ASV model cells
@@ -700,12 +701,12 @@ ggsave("figures/fun_class.png", fun_class_plot, width = 25, height = 15, units =
 fun_class_plot
 ```
 
-## Abundance
+## Community size
 
 Plot copy number for each sample grouped by site, Scion, and Storage.
 Test the effect of site, Scion, and Storage on copy number using ANOVA.
 
-```{r FUN abundance}
+```{r FUN size}
 # abundance_plot <- ggplot(
 #   data = as.data.frame(colData(dds)), 
 #   aes(x = site, y = log_copy_number, colour = Scion, shape = Storage)
@@ -764,6 +765,24 @@ abundance_results %>%
   kable_styling("striped", full_width = F)
 ```
 
+### Communtiy size with canker count
+
+```{r FUN size with canker}
+
+
+cat("Model formula: ", deparse(update(design_with_canker, log_copy_number ~ .)), "\n")
+
+abundance_canker_anova <- aov(update(design_with_canker, log_copy_number ~ .), data = as.data.frame(colData(dds)))
+summary(abundance_canker_anova)
+
+abundance_canker_results <- abundance_canker_anova %>% summary() %>% unclass() %>% data.frame()
+total_variance <- sum(abundance_canker_results$Sum.Sq)
+abundance_canker_results$Perc.Var <- abundance_canker_results$Sum.Sq / total_variance * 100
+abundance_canker_results %>%
+  kbl() %>%
+  kable_styling("striped", full_width = F)
+```
+
 ## Alpha diversity analysis
 
 ### Alpha diversity plot
@@ -789,7 +808,7 @@ ggsave(
 fun_alpha_plot
 ```
 
-### Permutation based anova on diversity index ranks
+### Permutation based anova on α-diversity index ranks
 
 ```{r FUN α-diversity ANOVA}
 # get the diversity index data
@@ -808,11 +827,9 @@ all_alpha_ord <- all_alpha_ord[
 fun_alpha <- all_alpha_ord
 
 formula <- FULL_DESIGN # x ~ Site * Storage * Scion + Site / Site.block
-```
 
-#### Chao1
+# Chao1
 
-```{r FUN Chao1}
 setkey(all_alpha_ord, S.chao1)
 all_alpha_ord[, measure := as.numeric(as.factor(S.chao1))]
 result <- aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T)
@@ -823,11 +840,9 @@ df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
 df %>%
   kbl() %>%
   kable_styling("striped", full_width = F)
-```
 
-#### Shannon
+# Shannon
 
-```{r FUN Shannon}
 setkey(all_alpha_ord, shannon)
 all_alpha_ord[, measure := as.numeric(as.factor(shannon))]
 result <- aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T)
@@ -838,14 +853,58 @@ df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
 df %>%
   kbl() %>%
   kable_styling("striped", full_width = F)
-```
 
-#### Simpson
+# Simpson
 
-```{r FUN Simpson}
 setkey(all_alpha_ord, simpson)
 all_alpha_ord[, measure := as.numeric(as.factor(simpson))]
 result <- aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T)
+summary(result)
+df <- result %>% summary() %>% unclass() %>% data.frame()
+total_variance <- sum(df$R.Sum.Sq)
+df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
+df %>%
+  kbl() %>%
+  kable_styling("striped", full_width = F)
+```
+
+#### Permutation based anova on α-diversity index ranks iwth canker lesion counts
+
+```{r FUN α-diversity ANOVA with canker}
+
+cat("Model formula: ", deparse(design_with_canker), "\n")
+
+# Chao1
+
+setkey(all_alpha_ord, S.chao1)
+all_alpha_ord[, measure := as.numeric(as.factor(S.chao1))]
+result <- aovp(update(design_with_canker, measure ~ .), all_alpha_ord, seqs = T)
+summary(result)
+df <- result %>% summary() %>% unclass() %>% data.frame()
+total_variance <- sum(df$R.Sum.Sq)
+df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
+df %>%
+  kbl() %>%
+  kable_styling("striped", full_width = F)
+
+# Shannon
+
+setkey(all_alpha_ord, shannon)
+all_alpha_ord[, measure := as.numeric(as.factor(shannon))]
+result <- aovp(update(design_with_canker, measure ~ .), all_alpha_ord, seqs = T)
+summary(result)
+df <- result %>% summary() %>% unclass() %>% data.frame()
+total_variance <- sum(df$R.Sum.Sq)
+df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
+df %>%
+  kbl() %>%
+  kable_styling("striped", full_width = F)
+
+# Simpson
+
+setkey(all_alpha_ord, simpson)
+all_alpha_ord[, measure := as.numeric(as.factor(simpson))]
+result <- aovp(update(design_with_canker, measure ~ .), all_alpha_ord, seqs = T)
 summary(result)
 df <- result %>% summary() %>% unclass() %>% data.frame()
 total_variance <- sum(df$R.Sum.Sq)
@@ -1007,6 +1066,76 @@ x <- t(apply(sum_squares, 2, prop.table))
 perVar <- x * mypca$percentVar
 #colSums(perVar)
 round(colSums(perVar) / sum(colSums(perVar)) * 100, 3)
+```
+
+### PCA with canker lesion counts
+
+```{r BAC PCA anova with canker}
+pca_summary <- apply(
+  mypca$x[, 1:n_pcs], 2, 
+  function(x){
+    summary(aov(update(design_with_canker, x ~ .), data = as.data.frame(cbind(x, colData(dds)))))
+  }
+)
+
+pca_summary
+
+# Extract PC scores as a list of dataframes
+pcas <- lapply(pca_summary, function(i) data.frame(unclass(i)))
+
+# Merge into single dataframe
+pcs_factors_tidy <- lapply(
+  names(pcas),
+  function(name) {
+    pcas[[name]] %>%
+    mutate(
+      PC = name, #substring(name, 3),
+      Factor = gsub(" ", "", rownames(pcas[[name]])),
+      var = Sum.Sq / sum(pcas[[name]]$Sum.Sq) * 100,
+      pc_var = subset(pca_var, PC == name)$"perc_var",
+      total_var = var * pc_var / 100,
+      sig = case_when(
+        is.na(Pr..F.) ~ "",
+        Pr..F. < 0.001 ~ "***",
+        Pr..F. < 0.01 ~ "**",
+        Pr..F. < 0.05 ~ "*",
+        TRUE ~ ""
+      ),
+      variance = ifelse(
+        total_var < 0.01, paste0("<0.01", sig),
+        paste0(round(total_var, 2), sig)
+      )
+    )
+  }
+) %>% bind_rows() %>% data.table()
+
+# Order PCs and factors
+pcs_factors_tidy$PC <- factor(pcs_factors_tidy$PC, levels = paste0("PC", 1:n_pcs))
+pcs_factors_tidy$Factor <- factor(pcs_factors_tidy$Factor, levels = unique(pcs_factors_tidy$Factor))
+
+# Significant factors
+pcs_factors_tidy[
+  Pr..F. < 0.05, 
+  c("PC", "Factor", "Df", "F.value", "Pr..F.", "var", "pc_var", "total_var")
+] %>%
+  kbl() %>%
+  kable_styling("striped", full_width = F)
+
+# Table with factors as columns and PCs as rows
+# pcs_factors <- dcast(pcs_factors_tidy, PC ~ Factor, value.var = "variance")
+pcs_factors <- pcs_factors_tidy %>%
+  select(PC, pc_var, Factor, variance) %>%
+  spread(key = Factor, value = variance)
+
+# Add a row with sum of each column by removing '<' and '*' and converting to numeric
+pc_sums <- pcs_factors %>%
+  mutate_all(~ gsub("[<|*]", "", .)) %>%
+  mutate_all(as.numeric) %>%
+  colSums()
+
+pcs_factors %>%
+  kbl() %>%
+  kable_styling("striped", full_width = F)
 ```
 
 ### ADONIS
@@ -1563,7 +1692,7 @@ fun_asv_canker_plot
 
 #### Effect of aggregated genera on canker counts
 
-```{r FUN genus, eval = FLASE}
+```{r FUN genus, eval = FALSE}
 # Add genus from taxData to countData
 fun_genus_data <- counts(dds, normalize = T) %>% as.data.frame() %>% mutate(
   genus = taxData[rownames(countData), "genus"]
@@ -1732,66 +1861,6 @@ for (measure in measures) {
   m = glm.nb(f, data = all_alpha_ord)
   print(anova(base_model, m))
 }
-```
-
-### α-diversity ~ canker permutation anova
-
-```{r FUN α-diversity ANOVA}
-# get the diversity index data
-# all_alpha_ord <- plot_alpha(
-#   counts(dds, normalize = F),
-#   colData(dds),
-#   returnData = T
-# )
-
-# # join diversity indices and metadata
-# all_alpha_ord <- all_alpha_ord[
-#   as.data.table(colData(dds), keep.rownames = "Samples"), 
-#   on = "Samples"
-# ]
-
-# fun_alpha <- all_alpha_ord
-
-canker_formula <- y ~ Site * Storage * Scion * Cankers
-
-# Chao1
-
-setkey(all_alpha_ord, S.chao1)
-all_alpha_ord[, measure := as.numeric(as.factor(S.chao1))]
-result <- aovp(update(canker_formula, measure ~ .), all_alpha_ord, seqs = T)
-summary(result)
-df <- result %>% summary() %>% unclass() %>% data.frame()
-total_variance <- sum(df$R.Sum.Sq)
-df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
-df %>%
-  kbl() %>%
-  kable_styling("striped", full_width = F)
-
-# Shannon
-
-setkey(all_alpha_ord, shannon)
-all_alpha_ord[, measure := as.numeric(as.factor(shannon))]
-result <- aovp(update(canker_formula, measure ~ .), all_alpha_ord, seqs = T)
-summary(result)
-df <- result %>% summary() %>% unclass() %>% data.frame()
-total_variance <- sum(df$R.Sum.Sq)
-df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
-df %>%
-  kbl() %>%
-  kable_styling("striped", full_width = F)
-
-# Simpson
-
-setkey(all_alpha_ord, simpson)
-all_alpha_ord[, measure := as.numeric(as.factor(simpson))]
-result <- aovp(update(canker_formula, measure ~ .), all_alpha_ord, seqs = T)
-summary(result)
-df <- result %>% summary() %>% unclass() %>% data.frame()
-total_variance <- sum(df$R.Sum.Sq)
-df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
-df %>%
-  kbl() %>%
-  kable_styling("striped", full_width = F)
 ```
 
 ### Effect of β-diversity on canker count
@@ -1997,9 +2066,9 @@ ggsave("figures/bac_class.png", bac_class_plot, width = 25, height = 15, units =
 bac_class_plot
 ```
 
-## Abundance
+## Community size
 
-```{r BAC abundance}
+```{r BAC size}
 abundance_plot <- ggplot(
   data = as.data.frame(colData(dds)), 
   aes(x = Site, y = log_copy_number, colour = Scion, shape = Storage)
@@ -2044,6 +2113,22 @@ abundance_results %>%
   kable_styling("striped", full_width = F)
 ```
 
+### Communtiy size with canker count
+
+```{r BAC size with canker}
+cat("Model formula: ", deparse(update(design_with_canker, log_copy_number ~ .)), "\n")
+
+abundance_canker_anova <- aov(update(design_with_canker, log_copy_number ~ .), data = as.data.frame(colData(dds)))
+summary(abundance_canker_anova)
+
+abundance_canker_results <- abundance_canker_anova %>% summary() %>% unclass() %>% data.frame()
+total_variance <- sum(abundance_canker_results$Sum.Sq)
+abundance_canker_results$Perc.Var <- abundance_canker_results$Sum.Sq / total_variance * 100
+abundance_canker_results %>%
+  kbl() %>%
+  kable_styling("striped", full_width = F)
+```
+
 ## Alpha diversity analysis
 
 ### Alpha diversity plot
@@ -2076,7 +2161,7 @@ ggsave(
 bac_alpha_plot
 ```
 
-### Permutation based anova on diversity index ranks
+### Permutation based anova on α-diversity index ranks
 
 ```{r BAC α-diversity ANOVA}
 # get the diversity index data
@@ -2092,11 +2177,9 @@ all_alpha_ord <- all_alpha_ord[
 bac_alpha <- all_alpha_ord
 
 formula <- FULL_DESIGN
-```
 
-#### Chao1
+# Chao1
 
-```{r BAC Chao1}
 setkey(all_alpha_ord, S.chao1)
 all_alpha_ord[, measure := as.numeric(as.factor(S.chao1))]
 result <- aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T)
@@ -2107,11 +2190,9 @@ df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
 df %>%
   kbl() %>%
   kable_styling("striped", full_width = F)
-```
 
-#### Shannon
+# Shannon
 
-```{r BAC Shannon}
 setkey(all_alpha_ord, shannon)
 all_alpha_ord[, measure := as.numeric(as.factor(shannon))]
 result <- aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T)
@@ -2122,14 +2203,58 @@ df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
 df %>%
   kbl() %>%
   kable_styling("striped", full_width = F)
-```
 
-#### Simpson
+# Simpson
 
-```{r BAC Simpson}
 setkey(all_alpha_ord, simpson)
 all_alpha_ord[, measure := as.numeric(as.factor(simpson))]
 result <- aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T)
+summary(result)
+df <- result %>% summary() %>% unclass() %>% data.frame()
+total_variance <- sum(df$R.Sum.Sq)
+df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
+df %>%
+  kbl() %>%
+  kable_styling("striped", full_width = F)
+```
+
+#### Permutation based anova on α-diversity index ranks with canker lesion counts
+
+```{r BAC α-diversity ANOVA with canker}
+
+cat("Model formula: ", deparse(design_with_canker), "\n")
+
+# Chao1
+
+setkey(all_alpha_ord, S.chao1)
+all_alpha_ord[, measure := as.numeric(as.factor(S.chao1))]
+result <- aovp(update(design_with_canker, measure ~ .), all_alpha_ord, seqs = T)
+summary(result)
+df <- result %>% summary() %>% unclass() %>% data.frame()
+total_variance <- sum(df$R.Sum.Sq)
+df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
+df %>%
+  kbl() %>%
+  kable_styling("striped", full_width = F)
+
+# Shannon
+
+setkey(all_alpha_ord, shannon)
+all_alpha_ord[, measure := as.numeric(as.factor(shannon))]
+result <- aovp(update(design_with_canker, measure ~ .), all_alpha_ord, seqs = T)
+summary(result)
+df <- result %>% summary() %>% unclass() %>% data.frame()
+total_variance <- sum(df$R.Sum.Sq)
+df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
+df %>%
+  kbl() %>%
+  kable_styling("striped", full_width = F)
+
+# Simpson
+
+setkey(all_alpha_ord, simpson)
+all_alpha_ord[, measure := as.numeric(as.factor(simpson))]
+result <- aovp(update(design_with_canker, measure ~ .), all_alpha_ord, seqs = T)
 summary(result)
 df <- result %>% summary() %>% unclass() %>% data.frame()
 total_variance <- sum(df$R.Sum.Sq)
@@ -2293,6 +2418,76 @@ x <- t(apply(sum_squares, 2, prop.table))
 perVar <- x * mypca$percentVar
 #colSums(perVar)
 round(colSums(perVar) / sum(colSums(perVar)) * 100, 3)
+```
+
+### PCA with canker lesion counts
+
+```{r FUN PCA anova with canker}
+pca_summary <- apply(
+  mypca$x[, 1:n_pcs], 2, 
+  function(x){
+    summary(aov(update(design_with_canker, x ~ .), data = as.data.frame(cbind(x, colData(dds)))))
+  }
+)
+
+pca_summary
+
+# Extract PC scores as a list of dataframes
+pcas <- lapply(pca_summary, function(i) data.frame(unclass(i)))
+
+# Merge into single dataframe
+pcs_factors_tidy <- lapply(
+  names(pcas),
+  function(name) {
+    pcas[[name]] %>%
+    mutate(
+      PC = name, #substring(name, 3),
+      Factor = gsub(" ", "", rownames(pcas[[name]])),
+      var = Sum.Sq / sum(pcas[[name]]$Sum.Sq) * 100,
+      pc_var = subset(pca_var, PC == name)$"perc_var",
+      total_var = var * pc_var / 100,
+      sig = case_when(
+        is.na(Pr..F.) ~ "",
+        Pr..F. < 0.001 ~ "***",
+        Pr..F. < 0.01 ~ "**",
+        Pr..F. < 0.05 ~ "*",
+        TRUE ~ ""
+      ),
+      variance = ifelse(
+        total_var < 0.01, paste0("<0.01", sig),
+        paste0(round(total_var, 2), sig)
+      )
+    )
+  }
+) %>% bind_rows() %>% data.table()
+
+# Order PCs and factors
+pcs_factors_tidy$PC <- factor(pcs_factors_tidy$PC, levels = paste0("PC", 1:n_pcs))
+pcs_factors_tidy$Factor <- factor(pcs_factors_tidy$Factor, levels = unique(pcs_factors_tidy$Factor))
+
+# Significant factors
+pcs_factors_tidy[
+  Pr..F. < 0.05, 
+  c("PC", "Factor", "Df", "F.value", "Pr..F.", "var", "pc_var", "total_var")
+] %>%
+  kbl() %>%
+  kable_styling("striped", full_width = F)
+
+# Table with factors as columns and PCs as rows
+# pcs_factors <- dcast(pcs_factors_tidy, PC ~ Factor, value.var = "variance")
+pcs_factors <- pcs_factors_tidy %>%
+  select(PC, pc_var, Factor, variance) %>%
+  spread(key = Factor, value = variance)
+
+# Add a row with sum of each column by removing '<' and '*' and converting to numeric
+pc_sums <- pcs_factors %>%
+  mutate_all(~ gsub("[<|*]", "", .)) %>%
+  mutate_all(as.numeric) %>%
+  colSums()
+
+pcs_factors %>%
+  kbl() %>%
+  kable_styling("striped", full_width = F)
 ```
 
 ### ADONIS
