@@ -70,7 +70,7 @@ HEIGHT <- 9
 FACTORS <-            c("Site", "Storage", "Scion")
 DESIGN <-             y ~ Site + Storage + Scion
 FULL_DESIGN <-        y ~ Site * Storage * Scion
-design_with_canker <- y ~ Site * Storage * Scion * Cankers
+design_with_canker <- y ~ Site * Storage * Scion + Cankers_avg
 canker_design <-      "Cankers ~ Site * Storage * Scion"
 
 # Control
@@ -381,7 +381,8 @@ missing <- unique(canker_data[!complete.cases(canker_data), code])
 missing <- c(missing, "HMA27")
 
 # Remove missing samples from canker data
-canker_data <- canker_data[!canker_data$code %in% missing, ]
+# canker_data <- canker_data[!canker_data$code %in% missing, ]
+canker_data <- canker_data[!canker_data$code %in% "HMA27", ]
 
 # Verify that there are two trees for each sample
 canker_data %>% group_by(code) %>% summarise(n = n()) %>% filter(n != 2)
@@ -393,21 +394,22 @@ cankers <- canker_data %>%
     Site = first(Site),
     Storage = first(Storage),
     Scion = first(Scion),
-    Cankers = sum(total_cankers)
+    Cankers = sum(total_cankers),
+    Cankers_avg = mean(total_cankers, na.rm = TRUE)
   ) %>% 
   column_to_rownames("code")
 
 # Add total canker count to colData for both FUN and BAC
 ubiome_FUN$colData <- merge(
   ubiome_FUN$colData, 
-  cankers["Cankers"], 
+  cankers[, c("Cankers", "Cankers_avg")], 
   by = 0,
-  all.x = T
+  all.x = TRUE
 ) %>% column_to_rownames("Row.names")
 
 ubiome_BAC$colData <- merge(
   ubiome_BAC$colData, 
-  cankers["Cankers"], 
+  cankers[, c("Cankers", "Cankers_avg")], 
   by = 0,
   all.x = T
 ) %>% column_to_rownames("Row.names")
