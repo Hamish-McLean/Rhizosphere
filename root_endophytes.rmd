@@ -36,6 +36,7 @@ library(kableExtra)
 library(knitr)
 library(lmPerm)
 library(MASS)
+library(matrixcalc)
 library(pscl)
 # library(rcompanion)
 library(seqinr)
@@ -70,7 +71,7 @@ HEIGHT <- 9
 FACTORS <-            c("Site", "Storage", "Scion")
 DESIGN <-             y ~ Site + Storage + Scion
 FULL_DESIGN <-        y ~ Site * Storage * Scion
-design_with_canker <- y ~ Site * Storage * Scion + Cankers_avg
+design_with_canker <- y ~ Site * Storage * Scion * Cankers_avg
 canker_design <-      "Cankers ~ Site * Storage * Scion"
 
 # Control
@@ -308,21 +309,21 @@ ubiome_FUN$abundance <- abundance[abundance$Target == "ITS"] %>%
 ubiome_BAC$abundance <- abundance[abundance$Target == "16S"] %>%
   column_to_rownames(var = "id")
 
-# Merge copy number from abundance with colData
+// ...existing code...
 ubiome_FUN$colData <- merge(
   ubiome_FUN$colData, 
   ubiome_FUN$abundance[, c("Target", "copy_number", "log_copy_number")], 
-  by = 0
+  by = "row.names", all.x = TRUE
 ) %>% column_to_rownames(var = "Row.names")
+
 ubiome_BAC$colData <- merge(
   ubiome_BAC$colData, 
   ubiome_BAC$abundance[, c("Target", "copy_number", "log_copy_number")], 
-  by = 0
+  by = "row.names", all.x = TRUE
 ) %>% column_to_rownames(var = "Row.names")
 ```
 
 #### Remove outliers
-
 ```{r abundance outliers}
 # Detect outliers with std > threshold from the median
 detect_outliers <- function(x, val, threshold, na.rm = TRUE) {
@@ -1158,11 +1159,37 @@ df %>%
   kable_styling("striped", full_width = F)
 ```
 
+#### Bray-Curtis canker correlation
+
+```{r FUN BC canker correlation}
+# Convert Bray-Curtis distance matrix to table
+bc <- as.matrix(vg)
+bc[lower.tri(bc, diag = TRUE)] <- NA
+bc <- melt(bc, value.name = "BC", na.rm = TRUE)
+
+# Calculate canker count difference matrix
+cankers <- colData$Cankers_avg
+cankers_diff <- abs(outer(cankers, cankers, "-"))
+rownames(cankers_diff) <- rownames(colData)
+colnames(cankers_diff) <- rownames(colData)
+cankers_diff[lower.tri(cankers_diff, diag = TRUE)] <- NA
+cankers_diff <- melt(cankers_diff, value.name = "Cankers", na.rm = TRUE)
+
+# Merge Bray-Curtis and canker count difference matrices
+bc_cankers <- merge(bc, cankers_diff, by = c("Var1", "Var2"))
+
+# Calculate correlation between Bray-Curtis and canker count difference
+cor.test(bc_cankers$BC, bc_cankers$Cankers, method = "spearman")
+
+# Plot correlation between Bray-Curtis and canker count difference
+ggscatter(bc_cankers, x = "BC", y = "Cankers", add = "reg.line", conf.int = TRUE)
+```
+
 ### NMDS ordination
 
 ```{r FUN NMDS}
 set.seed(sum(utf8ToInt("Hamish McLean")))
-ord <- metaMDS(vg,trace=0) 
+ord <- metaMDS(vg, trace=0) 
 #sratmax=20000,maxit=20000,try = 177, trymax = 177
 
 fun_nmds <- scores(ord)
@@ -1177,6 +1204,17 @@ fun_nmds_plot <- plotOrd(
 ggsave(filename = "fun_nmds_plot.png", plot = fun_nmds_plot, path = "figures/")
 
 fun_nmds_plot
+```
+
+#### NMDS with canker counts
+
+```{r FUN NMDS with canker}
+fun_nmds_canker_plot <- plotOrd(
+  fun_nmds, colData(dds), 
+  design = "Cankers_avg", 
+  shape = "Site", 
+  alpha = 0.75, cbPalette = T
+) #+ theme(text = element_text(size = 14))
 ```
 
 ## ASV abundance
@@ -2508,6 +2546,33 @@ df$Perc.Var <- df$SumOfSqs / df["Total", "SumOfSqs"] * 100
 df %>%
   kbl() %>%
   kable_styling("striped", full_width = F)
+```
+
+#### Bray-Curtis canker correlation
+
+```{r BAC BC canker correlation}
+# Convert Bray-Curtis distance matrix to table
+bc <- as.matrix(vg)
+bc[lower.tri(bc, diag = TRUE)] <- NA
+bc <- melt(bc, value.name = "BC", na.rm = TRUE)
+
+
+# Calculate canker count difference matrix
+cankers <- colData$Cankers_avg
+cankers_diff <- abs(outer(cankers, cankers, "-"))
+rownames(cankers_diff) <- rownames(colData)
+colnames(cankers_diff) <- rownames(colData)
+cankers_diff[lower.tri(cankers_diff, diag = TRUE)] <- NA
+cankers_diff <- melt(cankers_diff, value.name = "Cankers", na.rm = TRUE)
+
+# Merge Bray-Curtis and canker count difference matrices
+bc_cankers <- merge(bc, cankers_diff, by = c("Var1", "Var2"))
+
+# Calculate correlation between Bray-Curtis and canker count difference
+cor.test(bc_cankers$BC, bc_cankers$Cankers, method = "spearman")
+
+# Plot correlation between Bray-Curtis and canker count difference
+ggscatter(bc_cankers, x = "BC", y = "Cankers", add = "reg.line", conf.int = TRUE)
 ```
 
 ### NMDS ordination
