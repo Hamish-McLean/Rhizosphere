@@ -309,7 +309,7 @@ ubiome_FUN$abundance <- abundance[abundance$Target == "ITS"] %>%
 ubiome_BAC$abundance <- abundance[abundance$Target == "16S"] %>%
   column_to_rownames(var = "id")
 
-// ...existing code...
+# Merge copy number from abundance with colData
 ubiome_FUN$colData <- merge(
   ubiome_FUN$colData, 
   ubiome_FUN$abundance[, c("Target", "copy_number", "log_copy_number")], 
@@ -2616,7 +2616,7 @@ missing <- rownames(colData[is.na(colData$Cankers_avg), ])
 colData$log_cankers <- log10(colData$Cankers_avg + 1)
 
 bac_nmds_canker_plot <- plotOrd(
-  fun_nmds, colData(dds), 
+  fun_nmds, colData, 
   design = "log_cankers",
   shape = "Site",
   continuous = TRUE,
