@@ -1500,11 +1500,18 @@ asv_canker_anova_summary <- asv_canker_anova_results %>%
   select(ASV, Taxonomy, Abundance, Factor, var, p.adj) %>% 
   pivot_wider(names_from = Factor, values_from = c(var, p.adj), names_glue = "{Factor}_{.value}") %>%
   select(
-    ASV, Taxonomy, Abundance, Cankers_var, Cankers_p.adj
-    # Site_var, Site_p.adj, Storage_var, Storage_p.adj, 
-    # Scion_var, Scion_p.adj, "Site:Storage_var", "Site:Storage_p.adj", "Site:Scion_var", 
-    # "Site:Scion_p.adj", "Storage:Scion_var", "Storage:Scion_p.adj", "Site:Storage:Scion_var", 
-    # "Site:Storage:Scion_p.adj", 
+    ASV, Taxonomy, Abundance, 
+    Site_var, Site_p.adj, Storage_var, Storage_p.adj, 
+    Scion_var, Scion_p.adj, Cankers_var, Cankers_p.adj, 
+    "Site:Storage_var", "Site:Storage_p.adj", 
+    "Site:Scion_var", "Site:Scion_p.adj", 
+    "Storage:Scion_var", "Storage:Scion_p.adj", 
+    "Site:Cankers_var", "Site:Cankers_p.adj",
+    "Storage:Cankers_var", "Storage:Cankers_p.adj", 
+    "Scion:Cankers_var", "Scion:Cankers_p.adj",
+    "Site:Storage:Scion_var", "Site:Storage:Scion_p.adj", 
+    "Site:Storage:Cankers_var", "Site:Storage:Cankers_p.adj",
+    "Site:Storage:Scion:Cankers_var", "Site:Storage:Scion:Cankers_p.adj"
   ) %>%
   data.table()
 
@@ -2804,11 +2811,18 @@ asv_canker_anova_summary <- asv_canker_anova_results %>%
   select(ASV, Taxonomy, Abundance, Factor, var, p.adj) %>% 
   pivot_wider(names_from = Factor, values_from = c(var, p.adj), names_glue = "{Factor}_{.value}") %>%
   select(
-    ASV, Taxonomy, Abundance, Cankers_var, Cankers_p.adj
-    # Site_var, Site_p.adj, Storage_var, Storage_p.adj, 
-    # Scion_var, Scion_p.adj, "Site:Storage_var", "Site:Storage_p.adj", "Site:Scion_var", 
-    # "Site:Scion_p.adj", "Storage:Scion_var", "Storage:Scion_p.adj", "Site:Storage:Scion_var", 
-    # "Site:Storage:Scion_p.adj", 
+    ASV, Taxonomy, Abundance, 
+    Site_var, Site_p.adj, Storage_var, Storage_p.adj, 
+    Scion_var, Scion_p.adj, Cankers_var, Cankers_p.adj, 
+    "Site:Storage_var", "Site:Storage_p.adj", 
+    "Site:Scion_var", "Site:Scion_p.adj", 
+    "Storage:Scion_var", "Storage:Scion_p.adj", 
+    "Site:Cankers_var", "Site:Cankers_p.adj",
+    "Storage:Cankers_var", "Storage:Cankers_p.adj", 
+    "Scion:Cankers_var", "Scion:Cankers_p.adj",
+    "Site:Storage:Scion_var", "Site:Storage:Scion_p.adj", 
+    "Site:Storage:Cankers_var", "Site:Storage:Cankers_p.adj",
+    "Site:Storage:Scion:Cankers_var", "Site:Storage:Scion:Cankers_p.adj"
   ) %>%
   data.table()
 
