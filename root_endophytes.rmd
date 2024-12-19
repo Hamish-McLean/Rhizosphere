@@ -36,7 +36,7 @@ library(kableExtra)
 library(knitr)
 library(lmPerm)
 library(MASS)
-library(matrixcalc)
+# library(matrixcalc)
 library(pscl)
 # library(rcompanion)
 library(seqinr)
@@ -1365,13 +1365,13 @@ extend_asv_anova <- function(anova_result, asv) {
     Abundance = round(mean(top_asv_data[[asv]]), 3),
     Factor = gsub(" ", "", rownames(anova_result)),
     var = Sum.Sq / sum(anova_result$Sum.Sq) * 100,
-    # sig = case_when(
-    #   is.na(Pr..F.) ~ "",
-    #   Pr..F. < 0.001 ~ "***",
-    #   Pr..F. < 0.01 ~ "**",
-    #   Pr..F. < 0.05 ~ "*",
-    #   TRUE ~ ""
-    # ),
+    sig = case_when(
+      is.na(Pr..F.) ~ "",
+      Pr..F. < 0.001 ~ "***",
+      Pr..F. < 0.01 ~ "**",
+      Pr..F. < 0.05 ~ "*",
+      TRUE ~ ""
+    )#,
     # Variance = ifelse(
     #   perc_var < 0.01, paste0("<0.01", sig),
     #   paste0(round(perc_var, 2), sig)
@@ -1433,7 +1433,7 @@ scion_asvs <- top_asvs_anova_results[grepl("Scion", Factor) & p.adj < 0.05, ]
 #   kable_styling("striped", full_width = F)
 
 cat(
-  length(scion_asvs$ASV), 
+  length(unique(scion_asvs$ASV)), 
   "ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Scion and its interactions.", "\n\n"
 )
 
@@ -1469,6 +1469,69 @@ write.fasta(
   names = paste(scion_asvs$ASV, taxData[scion_asvs$ASV, "rank"]),
   file = "fasta/FUN_scion_asvs.fasta"
 )
+```
+
+### Effect of design factors and canker counts on abundance of top ASVs
+
+```{r FUN ASV ANOVA with canker, eval=ASV_MODELS}
+
+formula <- design_with_canker
+
+# Perform ANOVA on list of top ASVs
+asv_canker_anova_results <- lapply(
+  top_asv_ids, 
+  function(asv) {
+    asv_lm_anova(asv, formula, top_asv_data) %>%
+    extend_asv_anova(asv)
+  }
+) %>% bind_rows() %>% data.table()
+
+# Group by factor and adjust p-values
+asv_canker_anova_results <- asv_canker_anova_results %>% 
+  group_by(Factor) %>% 
+  mutate(p.adj = p.adjust(`Pr..F.`, method = "BH")) %>% 
+  data.table()
+
+# Order factors by original order
+asv_canker_anova_results$Factor <- factor(asv_canker_anova_results$Factor, levels = unique(asv_canker_anova_results$Factor))
+
+# Summary of top ASV ANOVA results
+asv_canker_anova_summary <- asv_canker_anova_results %>% 
+  select(ASV, Taxonomy, Abundance, Factor, var, p.adj) %>% 
+  pivot_wider(names_from = Factor, values_from = c(var, p.adj), names_glue = "{Factor}_{.value}") %>%
+  select(
+    ASV, Taxonomy, Abundance, Cankers_avg_var, Cankers_avg_p.adj
+    # Site_var, Site_p.adj, Storage_var, Storage_p.adj, 
+    # Scion_var, Scion_p.adj, "Site:Storage_var", "Site:Storage_p.adj", "Site:Scion_var", 
+    # "Site:Scion_p.adj", "Storage:Scion_var", "Storage:Scion_p.adj", "Site:Storage:Scion_var", 
+    # "Site:Storage:Scion_p.adj", 
+  ) %>%
+  data.table()
+
+cat(
+  "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
+  "Cankers:", nrow(asv_canker_anova_results[Factor == "Cankers_avg" & p.adj < 0.05, ]), "\n",
+  # "Storage:", nrow(top_asvs_anova_results[Factor == "Storage" & p.adj < 0.05, ]), "\n",
+  # "Scion:", nrow(top_asvs_anova_results[Factor == "Scion" & p.adj < 0.05, ]), "\n",
+  # "Site:Storage:", nrow(top_asvs_anova_results[Factor == "Site:Storage" & p.adj < 0.05, ]), "\n",
+  # "Site:Scion:", nrow(top_asvs_anova_results[Factor == "Site:Scion" & p.adj < 0.05, ]), "\n",
+  # "Storage:Scion:", nrow(top_asvs_anova_results[Factor == "Storage:Scion" & p.adj < 0.05, ]), "\n",
+  # "Site:Storage:Scion:", nrow(top_asvs_anova_results[Factor == "Site:Storage:Scion" & p.adj < 0.05, ]), "\n\n",
+  "Total ASVs:", length(unique(asv_canker_anova_results$ASV)), "\n\n"
+)
+
+# Filter by significant effect of scion and its interactions
+canker_asvs <- asv_canker_anova_results[grepl("Cankers_avg", Factor) & p.adj < 0.05, ]
+
+canker_asvs %>%
+  kbl() %>%
+  kable_styling("striped", full_width = F)
+
+cat(
+  length(unique(canker_asvs$ASV)), 
+  "ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Cankers and its interactions.", "\n\n"
+)
+
 ```
 
 ## Canker counts
@@ -2660,7 +2723,7 @@ scion_asvs <- top_asvs_anova_results[grepl("Scion", Factor) & p.adj < 0.05, ]
 #   kable_styling("striped", full_width = F)
 
 cat(
-  length(scion_asvs$ASV), 
+  length(unique(scion_asvs$ASV)), 
   "ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Scion and its interactions.", "\n\n"
 )
 
@@ -2696,6 +2759,69 @@ write.fasta(
   names = paste(scion_asvs$ASV, taxData[scion_asvs$ASV, "rank"]),
   file = "fasta/BAC_scion_asvs.fasta"
 )
+```
+
+### Effect of design factors and canker counts on abundance of top ASVs
+
+```{r BAC ASV ANOVA with canker, eval=ASV_MODELS}
+
+formula <- design_with_canker
+
+# Perform ANOVA on list of top ASVs
+asv_canker_anova_results <- lapply(
+  top_asv_ids, 
+  function(asv) {
+    asv_lm_anova(asv, formula, top_asv_data) %>%
+    extend_asv_anova(asv)
+  }
+) %>% bind_rows() %>% data.table()
+
+# Group by factor and adjust p-values
+asv_canker_anova_results <- asv_canker_anova_results %>% 
+  group_by(Factor) %>% 
+  mutate(p.adj = p.adjust(`Pr..F.`, method = "BH")) %>% 
+  data.table()
+
+# Order factors by original order
+asv_canker_anova_results$Factor <- factor(asv_canker_anova_results$Factor, levels = unique(asv_canker_anova_results$Factor))
+
+# Summary of top ASV ANOVA results
+asv_canker_anova_summary <- asv_canker_anova_results %>% 
+  select(ASV, Taxonomy, Abundance, Factor, var, p.adj) %>% 
+  pivot_wider(names_from = Factor, values_from = c(var, p.adj), names_glue = "{Factor}_{.value}") %>%
+  select(
+    ASV, Taxonomy, Abundance, Cankers_avg_var, Cankers_avg_p.adj
+    # Site_var, Site_p.adj, Storage_var, Storage_p.adj, 
+    # Scion_var, Scion_p.adj, "Site:Storage_var", "Site:Storage_p.adj", "Site:Scion_var", 
+    # "Site:Scion_p.adj", "Storage:Scion_var", "Storage:Scion_p.adj", "Site:Storage:Scion_var", 
+    # "Site:Storage:Scion_p.adj", 
+  ) %>%
+  data.table()
+
+cat(
+  "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
+  "Cankers:", nrow(asv_canker_anova_results[Factor == "Cankers_avg" & p.adj < 0.05, ]), "\n",
+  # "Storage:", nrow(top_asvs_anova_results[Factor == "Storage" & p.adj < 0.05, ]), "\n",
+  # "Scion:", nrow(top_asvs_anova_results[Factor == "Scion" & p.adj < 0.05, ]), "\n",
+  # "Site:Storage:", nrow(top_asvs_anova_results[Factor == "Site:Storage" & p.adj < 0.05, ]), "\n",
+  # "Site:Scion:", nrow(top_asvs_anova_results[Factor == "Site:Scion" & p.adj < 0.05, ]), "\n",
+  # "Storage:Scion:", nrow(top_asvs_anova_results[Factor == "Storage:Scion" & p.adj < 0.05, ]), "\n",
+  # "Site:Storage:Scion:", nrow(top_asvs_anova_results[Factor == "Site:Storage:Scion" & p.adj < 0.05, ]), "\n\n",
+  "Total ASVs:", length(unique(asv_canker_anova_results$ASV)), "\n\n"
+)
+
+# Filter by significant effect of scion and its interactions
+canker_asvs <- asv_canker_anova_results[grepl("Cankers_avg", Factor) & p.adj < 0.05, ]
+
+canker_asvs %>%
+  kbl() %>%
+  kable_styling("striped", full_width = F)
+
+cat(
+  length(unique(canker_asvs$ASV)), 
+  "ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Cankers and its interactions.", "\n\n"
+)
+
 ```
 
 ## Canker counts
