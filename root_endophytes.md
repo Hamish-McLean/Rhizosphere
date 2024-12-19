@@ -65,7 +65,7 @@ HEIGHT <- 9
 FACTORS <-            c("Site", "Storage", "Scion")
 DESIGN <-             y ~ Site + Storage + Scion
 FULL_DESIGN <-        y ~ Site * Storage * Scion
-design_with_canker <- y ~ Site * Storage * Scion * Cankers
+design_with_canker <- y ~ Site + Storage + Scion + Cankers + Site:Storage + Site:Scion + Storage:Scion + Cankers:Site + Cankers:Storage + Cankers:Scion
 canker_design <-      "Cankers ~ Site * Storage * Scion"
 
 # Control
@@ -1304,7 +1304,7 @@ cat("Model formula: ", deparse(update(design_with_canker, log_copy_number ~ .)),
 ```
 
 ```
-# Model formula:  log_copy_number ~ Site + Storage + Scion + Cankers + Site:Storage +      Site:Scion + Storage:Scion + Site:Cankers + Storage:Cankers +      Scion:Cankers + Site:Storage:Scion + Site:Storage:Cankers +      Site:Scion:Cankers + Storage:Scion:Cankers + Site:Storage:Scion:Cankers
+# Model formula:  log_copy_number ~ Site + Storage + Scion + Cankers + Site:Storage +      Site:Scion + Storage:Scion + Site:Cankers + Storage:Cankers +      Scion:Cankers
 ```
 
 ``` r
@@ -1313,23 +1313,20 @@ summary(abundance_canker_anova)
 ```
 
 ```
-#                            Df Sum Sq Mean Sq F value Pr(>F)
-# Site                        2 0.7796  0.3898   3.216  0.179
-# Storage                     1 0.5749  0.5749   4.744  0.118
-# Scion                       6 0.5805  0.0968   0.798  0.629
-# Cankers                     1 0.0499  0.0499   0.412  0.567
-# Site:Storage                2 0.6135  0.3067   2.531  0.227
-# Site:Scion                 12 1.0018  0.0835   0.689  0.723
-# Storage:Scion               6 0.4170  0.0695   0.573  0.743
-# Site:Cankers                2 0.1872  0.0936   0.772  0.536
-# Storage:Cankers             1 0.0097  0.0097   0.080  0.796
-# Scion:Cankers               6 0.3209  0.0535   0.441  0.819
-# Site:Storage:Scion         12 1.6998  0.1416   1.169  0.510
-# Site:Storage:Cankers        2 0.0217  0.0108   0.089  0.917
-# Site:Scion:Cankers         11 0.9682  0.0880   0.726  0.699
-# Storage:Scion:Cankers       6 0.2938  0.0490   0.404  0.841
-# Site:Storage:Scion:Cankers  5 0.6259  0.1252   1.033  0.523
-# Residuals                   3 0.3636  0.1212               
+#                 Df Sum Sq Mean Sq F value Pr(>F)  
+# Site             2  0.780  0.3898   3.826 0.0304 *
+# Storage          1  0.575  0.5749   5.644 0.0225 *
+# Scion            6  0.581  0.0968   0.950 0.4714  
+# Cankers          1  0.050  0.0499   0.490 0.4882  
+# Site:Storage     2  0.613  0.3067   3.011 0.0608 .
+# Site:Scion      12  1.002  0.0835   0.819 0.6297  
+# Storage:Scion    6  0.417  0.0695   0.682 0.6649  
+# Site:Cankers     2  0.187  0.0936   0.919 0.4075  
+# Storage:Cankers  1  0.010  0.0097   0.095 0.7593  
+# Scion:Cankers    6  0.321  0.0535   0.525 0.7858  
+# Residuals       39  3.973  0.1019                 
+# ---
+# Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 ```
 
@@ -1360,8 +1357,8 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 0.7796132 </td>
    <td style="text-align:right;"> 0.3898066 </td>
-   <td style="text-align:right;"> 3.2161358 </td>
-   <td style="text-align:right;"> 0.1793731 </td>
+   <td style="text-align:right;"> 3.8264193 </td>
+   <td style="text-align:right;"> 0.0303835 </td>
    <td style="text-align:right;"> 9.1633108 </td>
   </tr>
   <tr>
@@ -1369,8 +1366,8 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 0.5749285 </td>
    <td style="text-align:right;"> 0.5749285 </td>
-   <td style="text-align:right;"> 4.7435014 </td>
-   <td style="text-align:right;"> 0.1175741 </td>
+   <td style="text-align:right;"> 5.6436127 </td>
+   <td style="text-align:right;"> 0.0225290 </td>
    <td style="text-align:right;"> 6.7575159 </td>
   </tr>
   <tr>
@@ -1378,8 +1375,8 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 0.5805056 </td>
    <td style="text-align:right;"> 0.0967509 </td>
-   <td style="text-align:right;"> 0.7982527 </td>
-   <td style="text-align:right;"> 0.6288750 </td>
+   <td style="text-align:right;"> 0.9497265 </td>
+   <td style="text-align:right;"> 0.4713815 </td>
    <td style="text-align:right;"> 6.8230675 </td>
   </tr>
   <tr>
@@ -1387,8 +1384,8 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 0.0499015 </td>
    <td style="text-align:right;"> 0.0499015 </td>
-   <td style="text-align:right;"> 0.4117167 </td>
-   <td style="text-align:right;"> 0.5667584 </td>
+   <td style="text-align:right;"> 0.4898427 </td>
+   <td style="text-align:right;"> 0.4881516 </td>
    <td style="text-align:right;"> 0.5865249 </td>
   </tr>
   <tr>
@@ -1396,8 +1393,8 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 0.6134679 </td>
    <td style="text-align:right;"> 0.3067340 </td>
-   <td style="text-align:right;"> 2.5307375 </td>
-   <td style="text-align:right;"> 0.2270179 </td>
+   <td style="text-align:right;"> 3.0109620 </td>
+   <td style="text-align:right;"> 0.0608122 </td>
    <td style="text-align:right;"> 7.2104959 </td>
   </tr>
   <tr>
@@ -1405,8 +1402,8 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 1.0017806 </td>
    <td style="text-align:right;"> 0.0834817 </td>
-   <td style="text-align:right;"> 0.6887738 </td>
-   <td style="text-align:right;"> 0.7232024 </td>
+   <td style="text-align:right;"> 0.8194732 </td>
+   <td style="text-align:right;"> 0.6297497 </td>
    <td style="text-align:right;"> 11.7745925 </td>
   </tr>
   <tr>
@@ -1414,8 +1411,8 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 0.4169670 </td>
    <td style="text-align:right;"> 0.0694945 </td>
-   <td style="text-align:right;"> 0.5733708 </td>
-   <td style="text-align:right;"> 0.7427747 </td>
+   <td style="text-align:right;"> 0.6821718 </td>
+   <td style="text-align:right;"> 0.6649206 </td>
    <td style="text-align:right;"> 4.9008893 </td>
   </tr>
   <tr>
@@ -1423,8 +1420,8 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 0.1871726 </td>
    <td style="text-align:right;"> 0.0935863 </td>
-   <td style="text-align:right;"> 0.7721427 </td>
-   <td style="text-align:right;"> 0.5363935 </td>
+   <td style="text-align:right;"> 0.9186619 </td>
+   <td style="text-align:right;"> 0.4075144 </td>
    <td style="text-align:right;"> 2.1999640 </td>
   </tr>
   <tr>
@@ -1432,8 +1429,8 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 0.0096995 </td>
    <td style="text-align:right;"> 0.0096995 </td>
-   <td style="text-align:right;"> 0.0800265 </td>
-   <td style="text-align:right;"> 0.7956581 </td>
+   <td style="text-align:right;"> 0.0952120 </td>
+   <td style="text-align:right;"> 0.7592951 </td>
    <td style="text-align:right;"> 0.1140044 </td>
   </tr>
   <tr>
@@ -1441,63 +1438,18 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 0.3209250 </td>
    <td style="text-align:right;"> 0.0534875 </td>
-   <td style="text-align:right;"> 0.4413036 </td>
-   <td style="text-align:right;"> 0.8189207 </td>
+   <td style="text-align:right;"> 0.5250439 </td>
+   <td style="text-align:right;"> 0.7857697 </td>
    <td style="text-align:right;"> 3.7720440 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Storage:Scion </td>
-   <td style="text-align:right;"> 12 </td>
-   <td style="text-align:right;"> 1.6997714 </td>
-   <td style="text-align:right;"> 0.1416476 </td>
-   <td style="text-align:right;"> 1.1686770 </td>
-   <td style="text-align:right;"> 0.5097752 </td>
-   <td style="text-align:right;"> 19.9785412 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Storage:Cankers </td>
-   <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 0.0216696 </td>
-   <td style="text-align:right;"> 0.0108348 </td>
-   <td style="text-align:right;"> 0.0893937 </td>
-   <td style="text-align:right;"> 0.9168318 </td>
-   <td style="text-align:right;"> 0.2546975 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Scion:Cankers </td>
-   <td style="text-align:right;"> 11 </td>
-   <td style="text-align:right;"> 0.9682207 </td>
-   <td style="text-align:right;"> 0.0880201 </td>
-   <td style="text-align:right;"> 0.7262178 </td>
-   <td style="text-align:right;"> 0.6990109 </td>
-   <td style="text-align:right;"> 11.3801401 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Storage:Scion:Cankers </td>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 0.2938195 </td>
-   <td style="text-align:right;"> 0.0489699 </td>
-   <td style="text-align:right;"> 0.4040309 </td>
-   <td style="text-align:right;"> 0.8411058 </td>
-   <td style="text-align:right;"> 3.4534552 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Storage:Scion:Cankers </td>
-   <td style="text-align:right;"> 5 </td>
-   <td style="text-align:right;"> 0.6259329 </td>
-   <td style="text-align:right;"> 0.1251866 </td>
-   <td style="text-align:right;"> 1.0328637 </td>
-   <td style="text-align:right;"> 0.5234685 </td>
-   <td style="text-align:right;"> 7.3570049 </td>
-  </tr>
-  <tr>
    <td style="text-align:left;"> Residuals </td>
-   <td style="text-align:right;"> 3 </td>
-   <td style="text-align:right;"> 0.3636102 </td>
-   <td style="text-align:right;"> 0.1212034 </td>
+   <td style="text-align:right;"> 39 </td>
+   <td style="text-align:right;"> 3.9730243 </td>
+   <td style="text-align:right;"> 0.1018724 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> 4.2737518 </td>
+   <td style="text-align:right;"> 46.6975908 </td>
   </tr>
 </tbody>
 </table>
@@ -1584,13 +1536,13 @@ summary(result)
 ```
 # Component 1 :
 #                    Df R Sum Sq R Mean Sq Iter Pr(Prob)    
-# Site                2  11554.5    5777.2 5000  < 2e-16 ***
-# Storage             1   2056.4    2056.4 2623  0.03698 *  
-# Site:Storage        2    812.4     406.2  323  0.42724    
-# Scion               6    875.7     145.9  235  0.88511    
-# Site:Scion         12   2817.7     234.8  538  0.94796    
-# Storage:Scion       6   2046.5     341.1  844  0.69431    
-# Site:Storage:Scion 12   2735.3     227.9 1688  0.95912    
+# Site                2  11554.5    5777.2 5000   <2e-16 ***
+# Storage             1   2056.4    2056.4 1422   0.0661 .  
+# Site:Storage        2    812.4     406.2  368   0.4728    
+# Scion               6    875.7     145.9  104   1.0000    
+# Site:Scion         12   2817.7     234.8  283   0.9823    
+# Storage:Scion       6   2046.5     341.1  416   0.6226    
+# Site:Storage:Scion 12   2735.3     227.9  591   0.9695    
 # Residuals          39  21381.5     548.2                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -1632,8 +1584,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 2056.4245 </td>
    <td style="text-align:right;"> 2056.4245 </td>
-   <td style="text-align:right;"> 2623 </td>
-   <td style="text-align:right;"> 0.0369806 </td>
+   <td style="text-align:right;"> 1422 </td>
+   <td style="text-align:right;"> 0.0661041 </td>
    <td style="text-align:right;"> 4.644139 </td>
   </tr>
   <tr>
@@ -1641,8 +1593,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 812.3544 </td>
    <td style="text-align:right;"> 406.1772 </td>
-   <td style="text-align:right;"> 323 </td>
-   <td style="text-align:right;"> 0.4272446 </td>
+   <td style="text-align:right;"> 368 </td>
+   <td style="text-align:right;"> 0.4728261 </td>
    <td style="text-align:right;"> 1.834585 </td>
   </tr>
   <tr>
@@ -1650,8 +1602,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 875.6763 </td>
    <td style="text-align:right;"> 145.9461 </td>
-   <td style="text-align:right;"> 235 </td>
-   <td style="text-align:right;"> 0.8851064 </td>
+   <td style="text-align:right;"> 104 </td>
+   <td style="text-align:right;"> 1.0000000 </td>
    <td style="text-align:right;"> 1.977589 </td>
   </tr>
   <tr>
@@ -1659,8 +1611,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2817.7201 </td>
    <td style="text-align:right;"> 234.8100 </td>
-   <td style="text-align:right;"> 538 </td>
-   <td style="text-align:right;"> 0.9479554 </td>
+   <td style="text-align:right;"> 283 </td>
+   <td style="text-align:right;"> 0.9823322 </td>
    <td style="text-align:right;"> 6.363415 </td>
   </tr>
   <tr>
@@ -1668,8 +1620,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2046.5389 </td>
    <td style="text-align:right;"> 341.0898 </td>
-   <td style="text-align:right;"> 844 </td>
-   <td style="text-align:right;"> 0.6943128 </td>
+   <td style="text-align:right;"> 416 </td>
+   <td style="text-align:right;"> 0.6225962 </td>
    <td style="text-align:right;"> 4.621813 </td>
   </tr>
   <tr>
@@ -1677,8 +1629,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2735.3173 </td>
    <td style="text-align:right;"> 227.9431 </td>
-   <td style="text-align:right;"> 1688 </td>
-   <td style="text-align:right;"> 0.9591232 </td>
+   <td style="text-align:right;"> 591 </td>
+   <td style="text-align:right;"> 0.9695431 </td>
    <td style="text-align:right;"> 6.177320 </td>
   </tr>
   <tr>
@@ -1712,13 +1664,13 @@ summary(result)
 ```
 # Component 1 :
 #                    Df R Sum Sq R Mean Sq Iter Pr(Prob)    
-# Site                2  12291.8    6145.9 5000   <2e-16 ***
-# Storage             1   1077.6    1077.6  392   0.2041    
-# Site:Storage        2   2320.4    1160.2  690   0.1725    
-# Scion               6    570.9      95.1  229   1.0000    
-# Site:Scion         12   3082.1     256.8  626   0.8275    
-# Storage:Scion       6   2730.6     455.1 2575   0.3988    
-# Site:Storage:Scion 12   5311.1     442.6 1518   0.4783    
+# Site                2  12291.8    6145.9 5000  < 2e-16 ***
+# Storage             1   1077.6    1077.6 1114  0.08259 .  
+# Site:Storage        2   2320.4    1160.2 3262  0.06223 .  
+# Scion               6    570.9      95.1  137  0.97080    
+# Site:Scion         12   3082.1     256.8  540  0.82593    
+# Storage:Scion       6   2730.6     455.1 1820  0.38407    
+# Site:Storage:Scion 12   5311.1     442.6 1943  0.39938    
 # Residuals          39  16895.5     433.2                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -1760,8 +1712,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 1077.5749 </td>
    <td style="text-align:right;"> 1077.57489 </td>
-   <td style="text-align:right;"> 392 </td>
-   <td style="text-align:right;"> 0.2040816 </td>
+   <td style="text-align:right;"> 1114 </td>
+   <td style="text-align:right;"> 0.0825853 </td>
    <td style="text-align:right;"> 2.433548 </td>
   </tr>
   <tr>
@@ -1769,8 +1721,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 2320.4220 </td>
    <td style="text-align:right;"> 1160.21098 </td>
-   <td style="text-align:right;"> 690 </td>
-   <td style="text-align:right;"> 0.1724638 </td>
+   <td style="text-align:right;"> 3262 </td>
+   <td style="text-align:right;"> 0.0622318 </td>
    <td style="text-align:right;"> 5.240339 </td>
   </tr>
   <tr>
@@ -1778,8 +1730,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 570.8675 </td>
    <td style="text-align:right;"> 95.14458 </td>
-   <td style="text-align:right;"> 229 </td>
-   <td style="text-align:right;"> 1.0000000 </td>
+   <td style="text-align:right;"> 137 </td>
+   <td style="text-align:right;"> 0.9708029 </td>
    <td style="text-align:right;"> 1.289222 </td>
   </tr>
   <tr>
@@ -1787,8 +1739,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 3082.1462 </td>
    <td style="text-align:right;"> 256.84552 </td>
-   <td style="text-align:right;"> 626 </td>
-   <td style="text-align:right;"> 0.8274760 </td>
+   <td style="text-align:right;"> 540 </td>
+   <td style="text-align:right;"> 0.8259259 </td>
    <td style="text-align:right;"> 6.960583 </td>
   </tr>
   <tr>
@@ -1796,8 +1748,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2730.6068 </td>
    <td style="text-align:right;"> 455.10114 </td>
-   <td style="text-align:right;"> 2575 </td>
-   <td style="text-align:right;"> 0.3988350 </td>
+   <td style="text-align:right;"> 1820 </td>
+   <td style="text-align:right;"> 0.3840659 </td>
    <td style="text-align:right;"> 6.166682 </td>
   </tr>
   <tr>
@@ -1805,8 +1757,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 5311.1323 </td>
    <td style="text-align:right;"> 442.59435 </td>
-   <td style="text-align:right;"> 1518 </td>
-   <td style="text-align:right;"> 0.4782609 </td>
+   <td style="text-align:right;"> 1943 </td>
+   <td style="text-align:right;"> 0.3993824 </td>
    <td style="text-align:right;"> 11.994427 </td>
   </tr>
   <tr>
@@ -1840,13 +1792,13 @@ summary(result)
 ```
 # Component 1 :
 #                    Df R Sum Sq R Mean Sq Iter Pr(Prob)    
-# Site                2  12937.5    6468.8 5000  < 2e-16 ***
-# Storage             1    764.2     764.2   55  0.65455    
-# Site:Storage        2   2484.2    1242.1 1028  0.08949 .  
-# Scion               6   1188.1     198.0  295  0.93898    
-# Site:Scion         12   2027.8     169.0  305  0.95738    
-# Storage:Scion       6   2529.6     421.6  316  0.76582    
-# Site:Storage:Scion 12   5334.6     444.6 1457  0.38229    
+# Site                2  12937.5    6468.8 5000   <2e-16 ***
+# Storage             1    764.2     764.2  196   0.3418    
+# Site:Storage        2   2484.2    1242.1  964   0.1048    
+# Scion               6   1188.1     198.0  538   0.8420    
+# Site:Scion         12   2027.8     169.0  671   0.9791    
+# Storage:Scion       6   2529.6     421.6 1526   0.5380    
+# Site:Storage:Scion 12   5334.6     444.6 1451   0.5507    
 # Residuals          39  17014.0     436.3                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -1888,8 +1840,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 764.2007 </td>
    <td style="text-align:right;"> 764.2007 </td>
-   <td style="text-align:right;"> 55 </td>
-   <td style="text-align:right;"> 0.6545455 </td>
+   <td style="text-align:right;"> 196 </td>
+   <td style="text-align:right;"> 0.3418367 </td>
    <td style="text-align:right;"> 1.725837 </td>
   </tr>
   <tr>
@@ -1897,8 +1849,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 2484.2454 </td>
    <td style="text-align:right;"> 1242.1227 </td>
-   <td style="text-align:right;"> 1028 </td>
-   <td style="text-align:right;"> 0.0894942 </td>
+   <td style="text-align:right;"> 964 </td>
+   <td style="text-align:right;"> 0.1047718 </td>
    <td style="text-align:right;"> 5.610310 </td>
   </tr>
   <tr>
@@ -1906,8 +1858,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 1188.0542 </td>
    <td style="text-align:right;"> 198.0090 </td>
-   <td style="text-align:right;"> 295 </td>
-   <td style="text-align:right;"> 0.9389831 </td>
+   <td style="text-align:right;"> 538 </td>
+   <td style="text-align:right;"> 0.8420074 </td>
    <td style="text-align:right;"> 2.683049 </td>
   </tr>
   <tr>
@@ -1915,8 +1867,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2027.7819 </td>
    <td style="text-align:right;"> 168.9818 </td>
-   <td style="text-align:right;"> 305 </td>
-   <td style="text-align:right;"> 0.9573770 </td>
+   <td style="text-align:right;"> 671 </td>
+   <td style="text-align:right;"> 0.9791356 </td>
    <td style="text-align:right;"> 4.579453 </td>
   </tr>
   <tr>
@@ -1924,8 +1876,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2529.5940 </td>
    <td style="text-align:right;"> 421.5990 </td>
-   <td style="text-align:right;"> 316 </td>
-   <td style="text-align:right;"> 0.7658228 </td>
+   <td style="text-align:right;"> 1526 </td>
+   <td style="text-align:right;"> 0.5380079 </td>
    <td style="text-align:right;"> 5.712724 </td>
   </tr>
   <tr>
@@ -1933,8 +1885,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 5334.6194 </td>
    <td style="text-align:right;"> 444.5516 </td>
-   <td style="text-align:right;"> 1457 </td>
-   <td style="text-align:right;"> 0.3822924 </td>
+   <td style="text-align:right;"> 1451 </td>
+   <td style="text-align:right;"> 0.5506547 </td>
    <td style="text-align:right;"> 12.047469 </td>
   </tr>
   <tr>
@@ -1957,7 +1909,7 @@ cat("Model formula: ", deparse(design_with_canker), "\n")
 ```
 
 ```
-# Model formula:  y ~ Site * Storage * Scion * Cankers
+# Model formula:  y ~ Site + Storage + Scion + Cankers + Site:Storage + Site:Scion +      Storage:Scion + Cankers:Site + Cankers:Storage + Cankers:Scion
 ```
 
 ``` r
@@ -1978,23 +1930,18 @@ summary(result)
 
 ```
 # Component 1 :
-#                            Df R Sum Sq R Mean Sq Iter Pr(Prob)  
-# Site                        2  10705.9    5353.0 5000  0.01760 *
-# Storage                     1   2000.3    2000.3 1025  0.08976 .
-# Site:Storage                2   1102.9     551.5   92  0.53261  
-# Scion                       6   1343.8     224.0  135  0.80000  
-# Site:Scion                 12   2791.5     232.6  368  0.90217  
-# Storage:Scion               6   2435.1     405.9  657  0.53729  
-# Site:Storage:Scion         12   3159.0     263.3 1116  0.76075  
-# Cankers                     1    415.7     415.7   60  0.63333  
-# Site:Cankers                2     43.4      21.7   51  1.00000  
-# Storage:Cankers             1   1559.8    1559.8  236  0.30085  
-# Site:Storage:Cankers        2   1128.1     564.1  524  0.16985  
-# Scion:Cankers               6   1888.0     314.7 1018  0.52358  
-# Site:Scion:Cankers         11   6604.8     600.4 1020  0.33039  
-# Storage:Scion:Cankers       6   4147.8     691.3 1100  0.33727  
-# Site:Storage:Scion:Cankers  5   2248.0     449.6  281  0.42705  
-# Residuals                   3   1373.0     457.7                
+#                 Df R Sum Sq R Mean Sq Iter Pr(Prob)   
+# Site             2  10705.9    5353.0 5000  0.00120 **
+# Storage          1   2000.3    2000.3 1822  0.05214 . 
+# Site:Storage     2   1102.9     551.5  290  0.42069   
+# Scion            6   1343.8     224.0   56  1.00000   
+# Site:Scion      12   2791.5     232.6  492  0.91870   
+# Storage:Scion    6   2435.1     405.9  507  0.67850   
+# Cankers          1      5.4       5.4   51  0.98039   
+# Site:Cankers     2     74.7      37.4   51  0.98039   
+# Storage:Cankers  1   1309.8    1309.8   51  0.74510   
+# Scion:Cankers    6    838.5     139.8   69  1.00000   
+# Residuals       39  20339.1     521.5                 
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -2027,7 +1974,7 @@ df %>%
    <td style="text-align:right;"> 10705.94490 </td>
    <td style="text-align:right;"> 5352.97245 </td>
    <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0176000 </td>
+   <td style="text-align:right;"> 0.0012000 </td>
    <td style="text-align:right;"> 24.9282204 </td>
   </tr>
   <tr>
@@ -2035,8 +1982,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 2000.30721 </td>
    <td style="text-align:right;"> 2000.30721 </td>
-   <td style="text-align:right;"> 1025 </td>
-   <td style="text-align:right;"> 0.0897561 </td>
+   <td style="text-align:right;"> 1822 </td>
+   <td style="text-align:right;"> 0.0521405 </td>
    <td style="text-align:right;"> 4.6576084 </td>
   </tr>
   <tr>
@@ -2044,8 +1991,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 1102.90059 </td>
    <td style="text-align:right;"> 551.45030 </td>
-   <td style="text-align:right;"> 92 </td>
-   <td style="text-align:right;"> 0.5326087 </td>
+   <td style="text-align:right;"> 290 </td>
+   <td style="text-align:right;"> 0.4206897 </td>
    <td style="text-align:right;"> 2.5680451 </td>
   </tr>
   <tr>
@@ -2053,8 +2000,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 1343.79825 </td>
    <td style="text-align:right;"> 223.96637 </td>
-   <td style="text-align:right;"> 135 </td>
-   <td style="text-align:right;"> 0.8000000 </td>
+   <td style="text-align:right;"> 56 </td>
+   <td style="text-align:right;"> 1.0000000 </td>
    <td style="text-align:right;"> 3.1289624 </td>
   </tr>
   <tr>
@@ -2062,8 +2009,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2791.47549 </td>
    <td style="text-align:right;"> 232.62296 </td>
-   <td style="text-align:right;"> 368 </td>
-   <td style="text-align:right;"> 0.9021739 </td>
+   <td style="text-align:right;"> 492 </td>
+   <td style="text-align:right;"> 0.9186992 </td>
    <td style="text-align:right;"> 6.4998015 </td>
   </tr>
   <tr>
@@ -2071,99 +2018,54 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2435.14654 </td>
    <td style="text-align:right;"> 405.85776 </td>
-   <td style="text-align:right;"> 657 </td>
-   <td style="text-align:right;"> 0.5372907 </td>
+   <td style="text-align:right;"> 507 </td>
+   <td style="text-align:right;"> 0.6785010 </td>
    <td style="text-align:right;"> 5.6701085 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Storage:Scion </td>
-   <td style="text-align:right;"> 12 </td>
-   <td style="text-align:right;"> 3159.01562 </td>
-   <td style="text-align:right;"> 263.25130 </td>
-   <td style="text-align:right;"> 1116 </td>
-   <td style="text-align:right;"> 0.7607527 </td>
-   <td style="text-align:right;"> 7.3555990 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Cankers </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 415.66397 </td>
-   <td style="text-align:right;"> 415.66397 </td>
-   <td style="text-align:right;"> 60 </td>
-   <td style="text-align:right;"> 0.6333333 </td>
-   <td style="text-align:right;"> 0.9678513 </td>
+   <td style="text-align:right;"> 5.41797 </td>
+   <td style="text-align:right;"> 5.41797 </td>
+   <td style="text-align:right;"> 51 </td>
+   <td style="text-align:right;"> 0.9803922 </td>
+   <td style="text-align:right;"> 0.0126155 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Site:Cankers </td>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 43.37242 </td>
-   <td style="text-align:right;"> 21.68621 </td>
+   <td style="text-align:right;"> 74.70363 </td>
+   <td style="text-align:right;"> 37.35182 </td>
    <td style="text-align:right;"> 51 </td>
-   <td style="text-align:right;"> 1.0000000 </td>
-   <td style="text-align:right;"> 0.1009904 </td>
+   <td style="text-align:right;"> 0.9803922 </td>
+   <td style="text-align:right;"> 0.1739434 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Storage:Cankers </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 1559.81300 </td>
-   <td style="text-align:right;"> 1559.81300 </td>
-   <td style="text-align:right;"> 236 </td>
-   <td style="text-align:right;"> 0.3008475 </td>
-   <td style="text-align:right;"> 3.6319412 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Storage:Cankers </td>
-   <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 1128.10410 </td>
-   <td style="text-align:right;"> 564.05205 </td>
-   <td style="text-align:right;"> 524 </td>
-   <td style="text-align:right;"> 0.1698473 </td>
-   <td style="text-align:right;"> 2.6267301 </td>
+   <td style="text-align:right;"> 1309.75912 </td>
+   <td style="text-align:right;"> 1309.75912 </td>
+   <td style="text-align:right;"> 51 </td>
+   <td style="text-align:right;"> 0.7450980 </td>
+   <td style="text-align:right;"> 3.0497041 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 1888.01917 </td>
-   <td style="text-align:right;"> 314.66986 </td>
-   <td style="text-align:right;"> 1018 </td>
-   <td style="text-align:right;"> 0.5235756 </td>
-   <td style="text-align:right;"> 4.3961517 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Scion:Cankers </td>
-   <td style="text-align:right;"> 11 </td>
-   <td style="text-align:right;"> 6604.77814 </td>
-   <td style="text-align:right;"> 600.43438 </td>
-   <td style="text-align:right;"> 1020 </td>
-   <td style="text-align:right;"> 0.3303922 </td>
-   <td style="text-align:right;"> 15.3788728 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Storage:Scion:Cankers </td>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 4147.79466 </td>
-   <td style="text-align:right;"> 691.29911 </td>
-   <td style="text-align:right;"> 1100 </td>
-   <td style="text-align:right;"> 0.3372727 </td>
-   <td style="text-align:right;"> 9.6579181 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Storage:Scion:Cankers </td>
-   <td style="text-align:right;"> 5 </td>
-   <td style="text-align:right;"> 2247.95453 </td>
-   <td style="text-align:right;"> 449.59091 </td>
-   <td style="text-align:right;"> 281 </td>
-   <td style="text-align:right;"> 0.4270463 </td>
-   <td style="text-align:right;"> 5.2342420 </td>
+   <td style="text-align:right;"> 838.54430 </td>
+   <td style="text-align:right;"> 139.75738 </td>
+   <td style="text-align:right;"> 69 </td>
+   <td style="text-align:right;"> 1.0000000 </td>
+   <td style="text-align:right;"> 1.9525056 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Residuals </td>
-   <td style="text-align:right;"> 3 </td>
-   <td style="text-align:right;"> 1373.00000 </td>
-   <td style="text-align:right;"> 457.66667 </td>
+   <td style="text-align:right;"> 39 </td>
+   <td style="text-align:right;"> 20339.09060 </td>
+   <td style="text-align:right;"> 521.51514 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> 3.1969571 </td>
+   <td style="text-align:right;"> 47.3584852 </td>
   </tr>
 </tbody>
 </table>
@@ -2186,23 +2088,18 @@ summary(result)
 
 ```
 # Component 1 :
-#                            Df R Sum Sq R Mean Sq Iter Pr(Prob)  
-# Site                        2  13852.6    6926.3 5000   0.0182 *
-# Storage                     1   1251.7    1251.7   51   1.0000  
-# Site:Storage                2   1768.4     884.2 1033   0.1675  
-# Scion                       6    762.0     127.0  112   1.0000  
-# Site:Scion                 12   2630.3     219.2  553   0.7884  
-# Storage:Scion               6   2739.4     456.6   84   0.9643  
-# Site:Storage:Scion         12   5030.0     419.2 2229   0.3903  
-# Cankers                     1     12.5      12.5   51   0.8039  
-# Site:Cankers                2    454.3     227.1  237   0.4641  
-# Storage:Cankers             1    686.4     686.4  110   0.4818  
-# Site:Storage:Cankers        2    115.6      57.8   51   0.8235  
-# Scion:Cankers               6   3460.6     576.8 1232   0.2857  
-# Site:Scion:Cankers         11   4446.5     404.2  726   0.4614  
-# Storage:Scion:Cankers       6   1911.0     318.5  596   0.4983  
-# Site:Storage:Scion:Cankers  5   3471.6     694.3 2176   0.2132  
-# Residuals                   3    943.0     314.3                
+#                 Df R Sum Sq R Mean Sq Iter Pr(Prob)    
+# Site             2  13852.6    6926.3 5000  < 2e-16 ***
+# Storage          1   1251.7    1251.7 1922  0.04995 *  
+# Site:Storage     2   1768.4     884.2 1853  0.13276    
+# Scion            6    762.0     127.0   80  0.98750    
+# Site:Scion      12   2630.3     219.2  654  0.90061    
+# Storage:Scion    6   2739.4     456.6 2266  0.32921    
+# Cankers          1    185.8     185.8   60  0.63333    
+# Site:Cankers     2    813.1     406.6  391  0.28389    
+# Storage:Cankers  1    548.6     548.6  189  0.34921    
+# Scion:Cankers    6   2265.9     377.7 2605  0.50825    
+# Residuals       39  16718.0     428.7                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -2232,146 +2129,101 @@ df %>%
   <tr>
    <td style="text-align:left;"> Site </td>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 13852.61281 </td>
-   <td style="text-align:right;"> 6926.30640 </td>
+   <td style="text-align:right;"> 13852.6128 </td>
+   <td style="text-align:right;"> 6926.3064 </td>
    <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0182000 </td>
+   <td style="text-align:right;"> 0.0000000 </td>
    <td style="text-align:right;"> 31.8188282 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Storage </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 1251.71952 </td>
-   <td style="text-align:right;"> 1251.71952 </td>
-   <td style="text-align:right;"> 51 </td>
-   <td style="text-align:right;"> 1.0000000 </td>
+   <td style="text-align:right;"> 1251.7195 </td>
+   <td style="text-align:right;"> 1251.7195 </td>
+   <td style="text-align:right;"> 1922 </td>
+   <td style="text-align:right;"> 0.0499480 </td>
    <td style="text-align:right;"> 2.8751434 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Site:Storage </td>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 1768.40249 </td>
-   <td style="text-align:right;"> 884.20124 </td>
-   <td style="text-align:right;"> 1033 </td>
-   <td style="text-align:right;"> 0.1674734 </td>
+   <td style="text-align:right;"> 1768.4025 </td>
+   <td style="text-align:right;"> 884.2012 </td>
+   <td style="text-align:right;"> 1853 </td>
+   <td style="text-align:right;"> 0.1327577 </td>
    <td style="text-align:right;"> 4.0619409 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Scion </td>
    <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 761.98230 </td>
-   <td style="text-align:right;"> 126.99705 </td>
-   <td style="text-align:right;"> 112 </td>
-   <td style="text-align:right;"> 1.0000000 </td>
+   <td style="text-align:right;"> 761.9823 </td>
+   <td style="text-align:right;"> 126.9970 </td>
+   <td style="text-align:right;"> 80 </td>
+   <td style="text-align:right;"> 0.9875000 </td>
    <td style="text-align:right;"> 1.7502390 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Site:Scion </td>
    <td style="text-align:right;"> 12 </td>
-   <td style="text-align:right;"> 2630.33534 </td>
-   <td style="text-align:right;"> 219.19461 </td>
-   <td style="text-align:right;"> 553 </td>
-   <td style="text-align:right;"> 0.7884268 </td>
+   <td style="text-align:right;"> 2630.3353 </td>
+   <td style="text-align:right;"> 219.1946 </td>
+   <td style="text-align:right;"> 654 </td>
+   <td style="text-align:right;"> 0.9006116 </td>
    <td style="text-align:right;"> 6.0417619 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Storage:Scion </td>
    <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 2739.36430 </td>
-   <td style="text-align:right;"> 456.56072 </td>
-   <td style="text-align:right;"> 84 </td>
-   <td style="text-align:right;"> 0.9642857 </td>
+   <td style="text-align:right;"> 2739.3643 </td>
+   <td style="text-align:right;"> 456.5607 </td>
+   <td style="text-align:right;"> 2266 </td>
+   <td style="text-align:right;"> 0.3292145 </td>
    <td style="text-align:right;"> 6.2921965 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Storage:Scion </td>
-   <td style="text-align:right;"> 12 </td>
-   <td style="text-align:right;"> 5029.98198 </td>
-   <td style="text-align:right;"> 419.16517 </td>
-   <td style="text-align:right;"> 2229 </td>
-   <td style="text-align:right;"> 0.3903096 </td>
-   <td style="text-align:right;"> 11.5536422 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Cankers </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 12.46694 </td>
-   <td style="text-align:right;"> 12.46694 </td>
-   <td style="text-align:right;"> 51 </td>
-   <td style="text-align:right;"> 0.8039216 </td>
-   <td style="text-align:right;"> 0.0286360 </td>
+   <td style="text-align:right;"> 185.7798 </td>
+   <td style="text-align:right;"> 185.7798 </td>
+   <td style="text-align:right;"> 60 </td>
+   <td style="text-align:right;"> 0.6333333 </td>
+   <td style="text-align:right;"> 0.4267277 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Site:Cankers </td>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 454.28571 </td>
-   <td style="text-align:right;"> 227.14286 </td>
-   <td style="text-align:right;"> 237 </td>
-   <td style="text-align:right;"> 0.4641350 </td>
-   <td style="text-align:right;"> 1.0434738 </td>
+   <td style="text-align:right;"> 813.1388 </td>
+   <td style="text-align:right;"> 406.5694 </td>
+   <td style="text-align:right;"> 391 </td>
+   <td style="text-align:right;"> 0.2838875 </td>
+   <td style="text-align:right;"> 1.8677433 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Storage:Cankers </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 686.38975 </td>
-   <td style="text-align:right;"> 686.38975 </td>
-   <td style="text-align:right;"> 110 </td>
-   <td style="text-align:right;"> 0.4818182 </td>
-   <td style="text-align:right;"> 1.5766064 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Storage:Cankers </td>
-   <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 115.57093 </td>
-   <td style="text-align:right;"> 57.78546 </td>
-   <td style="text-align:right;"> 51 </td>
-   <td style="text-align:right;"> 0.8235294 </td>
-   <td style="text-align:right;"> 0.2654612 </td>
+   <td style="text-align:right;"> 548.6167 </td>
+   <td style="text-align:right;"> 548.6167 </td>
+   <td style="text-align:right;"> 189 </td>
+   <td style="text-align:right;"> 0.3492063 </td>
+   <td style="text-align:right;"> 1.2601479 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 3460.59941 </td>
-   <td style="text-align:right;"> 576.76657 </td>
-   <td style="text-align:right;"> 1232 </td>
-   <td style="text-align:right;"> 0.2857143 </td>
-   <td style="text-align:right;"> 7.9488411 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Scion:Cankers </td>
-   <td style="text-align:right;"> 11 </td>
-   <td style="text-align:right;"> 4446.53216 </td>
-   <td style="text-align:right;"> 404.23020 </td>
-   <td style="text-align:right;"> 726 </td>
-   <td style="text-align:right;"> 0.4614325 </td>
-   <td style="text-align:right;"> 10.2134843 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Storage:Scion:Cankers </td>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 1911.01017 </td>
-   <td style="text-align:right;"> 318.50169 </td>
-   <td style="text-align:right;"> 596 </td>
-   <td style="text-align:right;"> 0.4983221 </td>
-   <td style="text-align:right;"> 4.3895043 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Storage:Scion:Cankers </td>
-   <td style="text-align:right;"> 5 </td>
-   <td style="text-align:right;"> 3471.64494 </td>
-   <td style="text-align:right;"> 694.32899 </td>
-   <td style="text-align:right;"> 2176 </td>
-   <td style="text-align:right;"> 0.2132353 </td>
-   <td style="text-align:right;"> 7.9742122 </td>
+   <td style="text-align:right;"> 2265.9159 </td>
+   <td style="text-align:right;"> 377.6527 </td>
+   <td style="text-align:right;"> 2605 </td>
+   <td style="text-align:right;"> 0.5082534 </td>
+   <td style="text-align:right;"> 5.2047069 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Residuals </td>
-   <td style="text-align:right;"> 3 </td>
-   <td style="text-align:right;"> 943.00000 </td>
-   <td style="text-align:right;"> 314.33333 </td>
+   <td style="text-align:right;"> 39 </td>
+   <td style="text-align:right;"> 16718.0307 </td>
+   <td style="text-align:right;"> 428.6675 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> 2.1660286 </td>
+   <td style="text-align:right;"> 38.4005642 </td>
   </tr>
 </tbody>
 </table>
@@ -2394,23 +2246,18 @@ summary(result)
 
 ```
 # Component 1 :
-#                            Df R Sum Sq R Mean Sq Iter Pr(Prob)  
-# Site                        2  14033.2    7016.6 2781  0.04387 *
-# Storage                     1    717.3     717.3   51  0.86275  
-# Site:Storage                2   2039.3    1019.6  643  0.16796  
-# Scion                       6   1448.1     241.3   65  0.95385  
-# Site:Scion                 12   1930.5     160.9  160  1.00000  
-# Storage:Scion               6   2599.3     433.2  799  0.56070  
-# Site:Storage:Scion         12   5182.9     431.9  396  0.88384  
-# Cankers                     1      6.0       6.0   51  0.96078  
-# Site:Cankers                2   1034.0     517.0   51  0.88235  
-# Storage:Cankers             1     61.3      61.3   51  0.84314  
-# Site:Storage:Cankers        2    860.7     430.3  311  0.64630  
-# Scion:Cankers               6   4690.1     781.7  189  0.52910  
-# Site:Scion:Cankers         11   3952.7     359.3  339  0.88496  
-# Storage:Scion:Cankers       6    889.6     148.3   75  1.00000  
-# Site:Storage:Scion:Cankers  5   3099.6     619.9 1120  0.40179  
-# Residuals                   3   1555.0     518.3                
+#                 Df R Sum Sq R Mean Sq Iter Pr(Prob)    
+# Site             2  14033.2    7016.6 5000  < 2e-16 ***
+# Storage          1    717.3     717.3  755  0.11788    
+# Site:Storage     2   2039.3    1019.6  480  0.17500    
+# Scion            6   1448.1     241.3  467  0.78158    
+# Site:Scion      12   1930.5     160.9  240  0.95833    
+# Storage:Scion    6   2599.3     433.2 1603  0.41547    
+# Cankers          1    221.4     221.4   65  0.61538    
+# Site:Cankers     2   1657.7     828.9 1217  0.09778 .  
+# Storage:Cankers  1     12.5      12.5   51  0.88235    
+# Scion:Cankers    6   3837.5     639.6 2021  0.15438    
+# Residuals       39  15602.8     400.1                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -2440,146 +2287,101 @@ df %>%
   <tr>
    <td style="text-align:left;"> Site </td>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 14033.173933 </td>
-   <td style="text-align:right;"> 7016.586967 </td>
-   <td style="text-align:right;"> 2781 </td>
-   <td style="text-align:right;"> 0.0438691 </td>
+   <td style="text-align:right;"> 14033.17393 </td>
+   <td style="text-align:right;"> 7016.58697 </td>
+   <td style="text-align:right;"> 5000 </td>
+   <td style="text-align:right;"> 0.0000000 </td>
    <td style="text-align:right;"> 31.8215849 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Storage </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 717.334538 </td>
-   <td style="text-align:right;"> 717.334538 </td>
-   <td style="text-align:right;"> 51 </td>
-   <td style="text-align:right;"> 0.8627451 </td>
+   <td style="text-align:right;"> 717.33454 </td>
+   <td style="text-align:right;"> 717.33454 </td>
+   <td style="text-align:right;"> 755 </td>
+   <td style="text-align:right;"> 0.1178808 </td>
    <td style="text-align:right;"> 1.6266257 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Site:Storage </td>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 2039.262023 </td>
-   <td style="text-align:right;"> 1019.631011 </td>
-   <td style="text-align:right;"> 643 </td>
-   <td style="text-align:right;"> 0.1679627 </td>
+   <td style="text-align:right;"> 2039.26202 </td>
+   <td style="text-align:right;"> 1019.63101 </td>
+   <td style="text-align:right;"> 480 </td>
+   <td style="text-align:right;"> 0.1750000 </td>
    <td style="text-align:right;"> 4.6242247 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Scion </td>
    <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 1448.083382 </td>
-   <td style="text-align:right;"> 241.347230 </td>
-   <td style="text-align:right;"> 65 </td>
-   <td style="text-align:right;"> 0.9538462 </td>
+   <td style="text-align:right;"> 1448.08338 </td>
+   <td style="text-align:right;"> 241.34723 </td>
+   <td style="text-align:right;"> 467 </td>
+   <td style="text-align:right;"> 0.7815846 </td>
    <td style="text-align:right;"> 3.2836697 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Site:Scion </td>
    <td style="text-align:right;"> 12 </td>
-   <td style="text-align:right;"> 1930.461711 </td>
-   <td style="text-align:right;"> 160.871809 </td>
-   <td style="text-align:right;"> 160 </td>
-   <td style="text-align:right;"> 1.0000000 </td>
+   <td style="text-align:right;"> 1930.46171 </td>
+   <td style="text-align:right;"> 160.87181 </td>
+   <td style="text-align:right;"> 240 </td>
+   <td style="text-align:right;"> 0.9583333 </td>
    <td style="text-align:right;"> 4.3775094 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Storage:Scion </td>
    <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 2599.349691 </td>
-   <td style="text-align:right;"> 433.224948 </td>
-   <td style="text-align:right;"> 799 </td>
-   <td style="text-align:right;"> 0.5607009 </td>
+   <td style="text-align:right;"> 2599.34969 </td>
+   <td style="text-align:right;"> 433.22495 </td>
+   <td style="text-align:right;"> 1603 </td>
+   <td style="text-align:right;"> 0.4154710 </td>
    <td style="text-align:right;"> 5.8942779 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Storage:Scion </td>
-   <td style="text-align:right;"> 12 </td>
-   <td style="text-align:right;"> 5182.879025 </td>
-   <td style="text-align:right;"> 431.906585 </td>
-   <td style="text-align:right;"> 396 </td>
-   <td style="text-align:right;"> 0.8838384 </td>
-   <td style="text-align:right;"> 11.7526816 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Cankers </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 5.983438 </td>
-   <td style="text-align:right;"> 5.983438 </td>
-   <td style="text-align:right;"> 51 </td>
-   <td style="text-align:right;"> 0.9607843 </td>
-   <td style="text-align:right;"> 0.0135680 </td>
+   <td style="text-align:right;"> 221.37410 </td>
+   <td style="text-align:right;"> 221.37410 </td>
+   <td style="text-align:right;"> 65 </td>
+   <td style="text-align:right;"> 0.6153846 </td>
+   <td style="text-align:right;"> 0.5019873 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Site:Cankers </td>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 1034.049908 </td>
-   <td style="text-align:right;"> 517.024954 </td>
-   <td style="text-align:right;"> 51 </td>
-   <td style="text-align:right;"> 0.8823529 </td>
-   <td style="text-align:right;"> 2.3448086 </td>
+   <td style="text-align:right;"> 1657.73502 </td>
+   <td style="text-align:right;"> 828.86751 </td>
+   <td style="text-align:right;"> 1217 </td>
+   <td style="text-align:right;"> 0.0977814 </td>
+   <td style="text-align:right;"> 3.7590752 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Storage:Cankers </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 61.289343 </td>
-   <td style="text-align:right;"> 61.289343 </td>
+   <td style="text-align:right;"> 12.46303 </td>
+   <td style="text-align:right;"> 12.46303 </td>
    <td style="text-align:right;"> 51 </td>
-   <td style="text-align:right;"> 0.8431373 </td>
-   <td style="text-align:right;"> 0.1389795 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Storage:Cankers </td>
-   <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 860.653871 </td>
-   <td style="text-align:right;"> 430.326935 </td>
-   <td style="text-align:right;"> 311 </td>
-   <td style="text-align:right;"> 0.6463023 </td>
-   <td style="text-align:right;"> 1.9516162 </td>
+   <td style="text-align:right;"> 0.8823529 </td>
+   <td style="text-align:right;"> 0.0282611 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 4690.092387 </td>
-   <td style="text-align:right;"> 781.682065 </td>
-   <td style="text-align:right;"> 189 </td>
-   <td style="text-align:right;"> 0.5291005 </td>
-   <td style="text-align:right;"> 10.6352400 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Scion:Cankers </td>
-   <td style="text-align:right;"> 11 </td>
-   <td style="text-align:right;"> 3952.730385 </td>
-   <td style="text-align:right;"> 359.339126 </td>
-   <td style="text-align:right;"> 339 </td>
-   <td style="text-align:right;"> 0.8849558 </td>
-   <td style="text-align:right;"> 8.9632001 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Storage:Scion:Cankers </td>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 889.567279 </td>
-   <td style="text-align:right;"> 148.261213 </td>
-   <td style="text-align:right;"> 75 </td>
-   <td style="text-align:right;"> 1.0000000 </td>
-   <td style="text-align:right;"> 2.0171802 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Storage:Scion:Cankers </td>
-   <td style="text-align:right;"> 5 </td>
-   <td style="text-align:right;"> 3099.633389 </td>
-   <td style="text-align:right;"> 619.926678 </td>
-   <td style="text-align:right;"> 1120 </td>
-   <td style="text-align:right;"> 0.4017857 </td>
-   <td style="text-align:right;"> 7.0287198 </td>
+   <td style="text-align:right;"> 3837.52206 </td>
+   <td style="text-align:right;"> 639.58701 </td>
+   <td style="text-align:right;"> 2021 </td>
+   <td style="text-align:right;"> 0.1543790 </td>
+   <td style="text-align:right;"> 8.7019540 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Residuals </td>
-   <td style="text-align:right;"> 3 </td>
-   <td style="text-align:right;"> 1555.000000 </td>
-   <td style="text-align:right;"> 518.333333 </td>
+   <td style="text-align:right;"> 39 </td>
+   <td style="text-align:right;"> 15602.78482 </td>
+   <td style="text-align:right;"> 400.07141 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> 3.5261135 </td>
+   <td style="text-align:right;"> 35.3808300 </td>
   </tr>
 </tbody>
 </table>
@@ -3198,215 +3000,169 @@ pca_summary
 
 ```
 # $PC1
-#                            Df Sum Sq Mean Sq F value   Pr(>F)    
-# Site                        2  69121   34561 167.813 0.000834 ***
-# Storage                     1     78      78   0.378 0.582203    
-# Scion                       6    793     132   0.642 0.705680    
-# Cankers                     1    466     466   2.264 0.229432    
-# Site:Storage                2   1756     878   4.263 0.132796    
-# Site:Scion                 12   1853     154   0.750 0.690652    
-# Storage:Scion               6    604     101   0.489 0.790765    
-# Site:Cankers                2     40      20   0.097 0.910579    
-# Storage:Cankers             1    116     116   0.564 0.507356    
-# Scion:Cankers               6    686     114   0.555 0.752791    
-# Site:Storage:Scion         12   1836     153   0.743 0.694070    
-# Site:Storage:Cankers        2    248     124   0.601 0.603045    
-# Site:Scion:Cankers         11    739      67   0.326 0.926915    
-# Storage:Scion:Cankers       6    845     141   0.684 0.684203    
-# Site:Storage:Scion:Cankers  5   1580     316   1.535 0.384667    
-# Residuals                   3    618     206                     
+#                 Df Sum Sq Mean Sq F value  Pr(>F)    
+# Site             2  69121   34561 229.792 < 2e-16 ***
+# Storage          1     78      78   0.517 0.47620    
+# Scion            6    793     132   0.879 0.51919    
+# Cankers          1    466     466   3.101 0.08609 .  
+# Site:Storage     2   1756     878   5.837 0.00606 ** 
+# Site:Scion      12   1853     154   1.026 0.44497    
+# Storage:Scion    6    604     101   0.670 0.67448    
+# Site:Cankers     2     40      20   0.132 0.87642    
+# Storage:Cankers  1    116     116   0.772 0.38508    
+# Scion:Cankers    6    686     114   0.761 0.60518    
+# Residuals       39   5866     150                    
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC2
-#                            Df Sum Sq Mean Sq F value  Pr(>F)   
-# Site                        2  42751   21376  75.695 0.00271 **
-# Storage                     1    624     624   2.209 0.23389   
-# Scion                       6    234      39   0.138 0.97968   
-# Cankers                     1    439     439   1.555 0.30089   
-# Site:Storage                2   5049    2524   8.939 0.05447 . 
-# Site:Scion                 12   1761     147   0.520 0.82055   
-# Storage:Scion               6    633     105   0.374 0.85925   
-# Site:Cankers                2    652     326   1.154 0.42492   
-# Storage:Cankers             1     78      78   0.274 0.63660   
-# Scion:Cankers               6   1126     188   0.665 0.69391   
-# Site:Storage:Scion         12   2842     237   0.839 0.64591   
-# Site:Storage:Cankers        2    200     100   0.355 0.72740   
-# Site:Scion:Cankers         11   3175     289   1.022 0.56203   
-# Storage:Scion:Cankers       6   3304     551   1.950 0.31178   
-# Site:Storage:Scion:Cankers  5   1121     224   0.794 0.61787   
-# Residuals                   3    847     282                   
+#                 Df Sum Sq Mean Sq F value   Pr(>F)    
+# Site             2  42751   21376  72.560 7.18e-14 ***
+# Storage          1    624     624   2.118 0.153610    
+# Scion            6    234      39   0.132 0.991345    
+# Cankers          1    439     439   1.491 0.229455    
+# Site:Storage     2   5049    2524   8.569 0.000823 ***
+# Site:Scion      12   1761     147   0.498 0.903184    
+# Storage:Scion    6    633     105   0.358 0.900753    
+# Site:Cankers     2    652     326   1.106 0.340990    
+# Storage:Cankers  1     78      78   0.263 0.610901    
+# Scion:Cankers    6   1126     188   0.637 0.699825    
+# Residuals       39  11489     295                     
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC3
-#                            Df Sum Sq Mean Sq F value Pr(>F)
-# Site                        2   2617  1308.3   2.040  0.276
-# Storage                     1    218   217.9   0.340  0.601
-# Scion                       6   1456   242.6   0.378  0.856
-# Cankers                     1     35    35.0   0.055  0.830
-# Site:Storage                2   1629   814.7   1.270  0.398
-# Site:Scion                 12   2669   222.4   0.347  0.920
-# Storage:Scion               6   1253   208.8   0.326  0.888
-# Site:Cankers                2    294   146.9   0.229  0.808
-# Storage:Cankers             1    409   409.0   0.638  0.483
-# Scion:Cankers               6   2094   349.0   0.544  0.759
-# Site:Storage:Scion         12   5693   474.4   0.740  0.696
-# Site:Storage:Cankers        2    302   150.9   0.235  0.804
-# Site:Scion:Cankers         11   2766   251.5   0.392  0.891
-# Storage:Scion:Cankers       6   1500   249.9   0.390  0.850
-# Site:Storage:Scion:Cankers  5    407    81.5   0.127  0.976
-# Residuals                   3   1924   641.4               
+#                 Df Sum Sq Mean Sq F value Pr(>F)  
+# Site             2   2617  1308.3   4.052 0.0252 *
+# Storage          1    218   217.9   0.675 0.4164  
+# Scion            6   1456   242.6   0.751 0.6120  
+# Cankers          1     35    35.0   0.108 0.7437  
+# Site:Storage     2   1629   814.7   2.523 0.0932 .
+# Site:Scion      12   2669   222.4   0.689 0.7517  
+# Storage:Scion    6   1253   208.8   0.647 0.6922  
+# Site:Cankers     2    294   146.9   0.455 0.6378  
+# Storage:Cankers  1    409   409.0   1.267 0.2673  
+# Scion:Cankers    6   2094   349.0   1.081 0.3905  
+# Residuals       39  12591   322.9                 
+# ---
+# Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC4
-#                            Df Sum Sq Mean Sq F value Pr(>F)  
-# Site                        2 1229.4   614.7  26.699 0.0123 *
-# Storage                     1   89.8    89.8   3.899 0.1428  
-# Scion                       6  362.9    60.5   2.627 0.2291  
-# Cankers                     1    0.0     0.0   0.000 0.9920  
-# Site:Storage                2  886.6   443.3  19.254 0.0194 *
-# Site:Scion                 12  995.6    83.0   3.604 0.1594  
-# Storage:Scion               6  560.9    93.5   4.060 0.1388  
-# Site:Cankers                2  218.9   109.5   4.755 0.1174  
-# Storage:Cankers             1  177.0   177.0   7.688 0.0694 .
-# Scion:Cankers               6  997.2   166.2   7.219 0.0667 .
-# Site:Storage:Scion         12 1216.3   101.4   4.402 0.1243  
-# Site:Storage:Cankers        2  223.2   111.6   4.847 0.1149  
-# Site:Scion:Cankers         11 1899.9   172.7   7.502 0.0618 .
-# Storage:Scion:Cankers       6  902.2   150.4   6.531 0.0761 .
-# Site:Storage:Scion:Cankers  5 1239.7   247.9  10.769 0.0392 *
-# Residuals                   3   69.1    23.0                 
+#                 Df Sum Sq Mean Sq F value Pr(>F)  
+# Site             2   1229   614.7   4.319 0.0202 *
+# Storage          1     90    89.8   0.631 0.4319  
+# Scion            6    363    60.5   0.425 0.8578  
+# Cankers          1      0     0.0   0.000 0.9965  
+# Site:Storage     2    887   443.3   3.115 0.0556 .
+# Site:Scion      12    996    83.0   0.583 0.8423  
+# Storage:Scion    6    561    93.5   0.657 0.6845  
+# Site:Cankers     2    219   109.5   0.769 0.4703  
+# Storage:Cankers  1    177   177.0   1.244 0.2716  
+# Scion:Cankers    6    997   166.2   1.168 0.3432  
+# Residuals       39   5550   142.3                 
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC5
-#                            Df Sum Sq Mean Sq F value Pr(>F)  
-# Site                        2  222.2   111.1   2.467 0.2325  
-# Storage                     1  564.4   564.4  12.532 0.0384 *
-# Scion                       6  341.1    56.9   1.263 0.4588  
-# Cankers                     1  305.7   305.7   6.788 0.0800 .
-# Site:Storage                2  306.6   153.3   3.404 0.1692  
-# Site:Scion                 12 1023.2    85.3   1.893 0.3286  
-# Storage:Scion               6  479.0    79.8   1.773 0.3416  
-# Site:Cankers                2  245.1   122.6   2.721 0.2118  
-# Storage:Cankers             1  379.7   379.7   8.432 0.0623 .
-# Scion:Cankers               6  265.7    44.3   0.983 0.5516  
-# Site:Storage:Scion         12  730.3    60.9   1.351 0.4517  
-# Site:Storage:Cankers        2  684.3   342.2   7.598 0.0669 .
-# Site:Scion:Cankers         11 1140.2   103.7   2.302 0.2674  
-# Storage:Scion:Cankers       6 1226.2   204.4   4.538 0.1211  
-# Site:Storage:Scion:Cankers  5 1829.4   365.9   8.125 0.0575 .
-# Residuals                   3  135.1    45.0                 
+#                 Df Sum Sq Mean Sq F value Pr(>F)  
+# Site             2    222   111.1   0.754 0.4771  
+# Storage          1    564   564.4   3.831 0.0575 .
+# Scion            6    341    56.9   0.386 0.8835  
+# Cankers          1    306   305.7   2.075 0.1577  
+# Site:Storage     2    307   153.3   1.040 0.3629  
+# Site:Scion      12   1023    85.3   0.579 0.8456  
+# Storage:Scion    6    479    79.8   0.542 0.7731  
+# Site:Cankers     2    245   122.6   0.832 0.4428  
+# Storage:Cankers  1    380   379.7   2.578 0.1164  
+# Scion:Cankers    6    266    44.3   0.301 0.9328  
+# Residuals       39   5745   147.3                 
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC6
-#                            Df Sum Sq Mean Sq F value Pr(>F)
-# Site                        2  152.5   76.25   0.287  0.769
-# Storage                     1  272.4  272.44   1.026  0.386
-# Scion                       6  216.3   36.04   0.136  0.981
-# Cankers                     1   59.8   59.78   0.225  0.668
-# Site:Storage                2  346.6  173.30   0.652  0.582
-# Site:Scion                 12  475.3   39.61   0.149  0.993
-# Storage:Scion               6  538.0   89.67   0.338  0.881
-# Site:Cankers                2  603.5  301.73   1.136  0.429
-# Storage:Cankers             1   23.3   23.33   0.088  0.786
-# Scion:Cankers               6  756.2  126.03   0.474  0.799
-# Site:Storage:Scion         12 1228.9  102.41   0.386  0.899
-# Site:Storage:Cankers        2  320.7  160.34   0.604  0.602
-# Site:Scion:Cankers         11 1519.9  138.17   0.520  0.816
-# Storage:Scion:Cankers       6  444.9   74.14   0.279  0.914
-# Site:Storage:Scion:Cankers  5  252.5   50.51   0.190  0.947
-# Residuals                   3  796.9  265.65               
+#                 Df Sum Sq Mean Sq F value Pr(>F)  
+# Site             2    153   76.25   0.652 0.5268  
+# Storage          1    272  272.44   2.328 0.1351  
+# Scion            6    216   36.04   0.308 0.9290  
+# Cankers          1     60   59.78   0.511 0.4790  
+# Site:Storage     2    347  173.30   1.481 0.2399  
+# Site:Scion      12    475   39.61   0.338 0.9765  
+# Storage:Scion    6    538   89.67   0.766 0.6009  
+# Site:Cankers     2    603  301.73   2.578 0.0888 .
+# Storage:Cankers  1     23   23.33   0.199 0.6577  
+# Scion:Cankers    6    756  126.03   1.077 0.3929  
+# Residuals       39   4564  117.02                 
+# ---
+# Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC7
-#                            Df Sum Sq Mean Sq F value Pr(>F)
-# Site                        2   41.2   20.61   0.179  0.844
-# Storage                     1   13.6   13.62   0.119  0.753
-# Scion                       6  740.8  123.46   1.074  0.519
-# Cankers                     1    9.5    9.54   0.083  0.792
-# Site:Storage                2    4.6    2.32   0.020  0.980
-# Site:Scion                 12 1123.3   93.61   0.814  0.658
-# Storage:Scion               6  221.1   36.84   0.321  0.891
-# Site:Cankers                2    1.9    0.96   0.008  0.992
-# Storage:Cankers             1   14.0   14.05   0.122  0.750
-# Scion:Cankers               6  165.8   27.64   0.240  0.935
-# Site:Storage:Scion         12  842.4   70.20   0.611  0.767
-# Site:Storage:Cankers        2  127.9   63.95   0.556  0.623
-# Site:Scion:Cankers         11 1281.7  116.52   1.014  0.565
-# Storage:Scion:Cankers       6  669.1  111.52   0.970  0.557
-# Site:Storage:Scion:Cankers  5  404.5   80.89   0.704  0.660
-# Residuals                   3  344.8  114.94               
+#                 Df Sum Sq Mean Sq F value Pr(>F)
+# Site             2     41   20.61   0.219  0.804
+# Storage          1     14   13.62   0.145  0.706
+# Scion            6    741  123.46   1.312  0.275
+# Cankers          1     10    9.54   0.101  0.752
+# Site:Storage     2      5    2.32   0.025  0.976
+# Site:Scion      12   1123   93.61   0.995  0.471
+# Storage:Scion    6    221   36.84   0.391  0.880
+# Site:Cankers     2      2    0.96   0.010  0.990
+# Storage:Cankers  1     14   14.05   0.149  0.701
+# Scion:Cankers    6    166   27.64   0.294  0.936
+# Residuals       39   3670   94.11               
 # 2 observations deleted due to missingness
 # 
 # $PC8
-#                            Df Sum Sq Mean Sq F value Pr(>F)  
-# Site                        2    1.5     0.8   0.055 0.9472  
-# Storage                     1  435.7   435.7  31.899 0.0110 *
-# Scion                       6  161.7    26.9   1.973 0.3083  
-# Cankers                     1  106.9   106.9   7.824 0.0680 .
-# Site:Storage                2  655.5   327.7  23.995 0.0143 *
-# Site:Scion                 12  603.5    50.3   3.682 0.1553  
-# Storage:Scion               6  591.3    98.5   7.215 0.0667 .
-# Site:Cankers                2   16.4     8.2   0.599 0.6043  
-# Storage:Cankers             1   11.0    11.0   0.802 0.4364  
-# Scion:Cankers               6  552.7    92.1   6.744 0.0729 .
-# Site:Storage:Scion         12  316.1    26.3   1.929 0.3226  
-# Site:Storage:Cankers        2  488.3   244.1  17.874 0.0215 *
-# Site:Scion:Cankers         11 1428.7   129.9   9.509 0.0447 *
-# Storage:Scion:Cankers       6  142.5    23.8   1.739 0.3478  
-# Site:Storage:Scion:Cankers  5  140.3    28.1   2.055 0.2937  
-# Residuals                   3   41.0    13.7                 
+#                 Df Sum Sq Mean Sq F value Pr(>F)  
+# Site             2    1.5     0.8   0.012 0.9886  
+# Storage          1  435.7   435.7   6.646 0.0138 *
+# Scion            6  161.7    26.9   0.411 0.8672  
+# Cankers          1  106.9   106.9   1.630 0.2093  
+# Site:Storage     2  655.5   327.7   4.999 0.0117 *
+# Site:Scion      12  603.5    50.3   0.767 0.6792  
+# Storage:Scion    6  591.3    98.5   1.503 0.2028  
+# Site:Cankers     2   16.4     8.2   0.125 0.8831  
+# Storage:Cankers  1   11.0    11.0   0.167 0.6849  
+# Scion:Cankers    6  552.7    92.1   1.405 0.2373  
+# Residuals       39 2556.9    65.6                 
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC9
-#                            Df Sum Sq Mean Sq F value Pr(>F)  
-# Site                        2   58.9    29.4   0.469 0.6647  
-# Storage                     1  198.2   198.2   3.159 0.1736  
-# Scion                       6  336.4    56.1   0.894 0.5872  
-# Cankers                     1    9.6     9.6   0.152 0.7225  
-# Site:Storage                2 1548.6   774.3  12.342 0.0357 *
-# Site:Scion                 12  439.7    36.6   0.584 0.7825  
-# Storage:Scion               6  245.9    41.0   0.653 0.6998  
-# Site:Cankers                2   14.9     7.5   0.119 0.8917  
-# Storage:Cankers             1   40.1    40.1   0.639 0.4826  
-# Scion:Cankers               6  300.9    50.1   0.799 0.6284  
-# Site:Storage:Scion         12  339.8    28.3   0.451 0.8610  
-# Site:Storage:Cankers        2  221.8   110.9   1.768 0.3110  
-# Site:Scion:Cankers         11  412.5    37.5   0.598 0.7701  
-# Storage:Scion:Cankers       6  304.1    50.7   0.808 0.6245  
-# Site:Storage:Scion:Cankers  5  412.0    82.4   1.314 0.4377  
-# Residuals                   3  188.2    62.7                 
+#                 Df Sum Sq Mean Sq F value   Pr(>F)    
+# Site             2   58.9    29.4   0.611   0.5477    
+# Storage          1  198.2   198.2   4.114   0.0494 *  
+# Scion            6  336.4    56.1   1.164   0.3451    
+# Cankers          1    9.6     9.6   0.198   0.6586    
+# Site:Storage     2 1548.6   774.3  16.076 8.09e-06 ***
+# Site:Scion      12  439.7    36.6   0.761   0.6851    
+# Storage:Scion    6  245.9    41.0   0.851   0.5391    
+# Site:Cankers     2   14.9     7.5   0.155   0.8569    
+# Storage:Cankers  1   40.1    40.1   0.832   0.3674    
+# Scion:Cankers    6  300.9    50.1   1.041   0.4140    
+# Residuals       39 1878.5    48.2                     
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC10
-#                            Df Sum Sq Mean Sq F value Pr(>F)
-# Site                        2   11.8    5.89   0.022  0.979
-# Storage                     1   23.9   23.92   0.088  0.786
-# Scion                       6  309.2   51.53   0.190  0.959
-# Cankers                     1   11.8   11.82   0.044  0.848
-# Site:Storage                2  120.7   60.37   0.223  0.813
-# Site:Scion                 12  478.8   39.90   0.147  0.994
-# Storage:Scion               6  117.8   19.64   0.072  0.996
-# Site:Cankers                2   33.3   16.67   0.061  0.942
-# Storage:Cankers             1    0.5    0.55   0.002  0.967
-# Scion:Cankers               6  509.2   84.87   0.313  0.895
-# Site:Storage:Scion         12  601.3   50.10   0.185  0.986
-# Site:Storage:Cankers        2  100.1   50.07   0.185  0.840
-# Site:Scion:Cankers         11  783.4   71.21   0.263  0.957
-# Storage:Scion:Cankers       6  654.0  109.00   0.402  0.842
-# Site:Storage:Scion:Cankers  5  184.5   36.90   0.136  0.972
-# Residuals                   3  813.5  271.15               
+#                 Df Sum Sq Mean Sq F value Pr(>F)
+# Site             2   11.8    5.89   0.073  0.929
+# Storage          1   23.9   23.92   0.297  0.589
+# Scion            6  309.2   51.53   0.641  0.697
+# Cankers          1   11.8   11.82   0.147  0.704
+# Site:Storage     2  120.7   60.37   0.751  0.479
+# Site:Scion      12  478.8   39.90   0.496  0.904
+# Storage:Scion    6  117.8   19.64   0.244  0.959
+# Site:Cankers     2   33.3   16.67   0.207  0.814
+# Storage:Cankers  1    0.5    0.55   0.007  0.935
+# Scion:Cankers    6  509.2   84.87   1.055  0.406
+# Residuals       39 3136.7   80.43               
 # 2 observations deleted due to missingness
 ```
 
@@ -3471,68 +3227,68 @@ pcs_factors_tidy[
    <td style="text-align:left;"> PC1 </td>
    <td style="text-align:left;"> Site </td>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 167.813078 </td>
-   <td style="text-align:right;"> 0.0008339 </td>
+   <td style="text-align:right;"> 229.792043 </td>
+   <td style="text-align:right;"> 0.0000000 </td>
    <td style="text-align:right;"> 84.937120 </td>
    <td style="text-align:right;"> 27.1 </td>
    <td style="text-align:right;"> 23.0179596 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> PC1 </td>
+   <td style="text-align:left;"> Site:Storage </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 5.837224 </td>
+   <td style="text-align:right;"> 0.0060586 </td>
+   <td style="text-align:right;"> 2.157590 </td>
+   <td style="text-align:right;"> 27.1 </td>
+   <td style="text-align:right;"> 0.5847069 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> PC2 </td>
    <td style="text-align:left;"> Site </td>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 75.695004 </td>
-   <td style="text-align:right;"> 0.0027087 </td>
+   <td style="text-align:right;"> 72.559889 </td>
+   <td style="text-align:right;"> 0.0000000 </td>
    <td style="text-align:right;"> 65.938449 </td>
    <td style="text-align:right;"> 21.2 </td>
    <td style="text-align:right;"> 13.9789512 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> PC2 </td>
+   <td style="text-align:left;"> Site:Storage </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 8.569066 </td>
+   <td style="text-align:right;"> 0.0008227 </td>
+   <td style="text-align:right;"> 7.787097 </td>
+   <td style="text-align:right;"> 21.2 </td>
+   <td style="text-align:right;"> 1.6508646 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> PC3 </td>
+   <td style="text-align:left;"> Site </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 4.052404 </td>
+   <td style="text-align:right;"> 0.0251761 </td>
+   <td style="text-align:right;"> 10.356904 </td>
+   <td style="text-align:right;"> 8.4 </td>
+   <td style="text-align:right;"> 0.8699800 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> PC4 </td>
    <td style="text-align:left;"> Site </td>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 26.698766 </td>
-   <td style="text-align:right;"> 0.0122685 </td>
+   <td style="text-align:right;"> 4.319264 </td>
+   <td style="text-align:right;"> 0.0202103 </td>
    <td style="text-align:right;"> 11.106999 </td>
    <td style="text-align:right;"> 4.2 </td>
    <td style="text-align:right;"> 0.4664940 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> PC4 </td>
-   <td style="text-align:left;"> Site:Storage </td>
-   <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 19.254341 </td>
-   <td style="text-align:right;"> 0.0194300 </td>
-   <td style="text-align:right;"> 8.010031 </td>
-   <td style="text-align:right;"> 4.2 </td>
-   <td style="text-align:right;"> 0.3364213 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> PC4 </td>
-   <td style="text-align:left;"> Site:Storage:Scion:Cankers </td>
-   <td style="text-align:right;"> 5 </td>
-   <td style="text-align:right;"> 10.769003 </td>
-   <td style="text-align:right;"> 0.0392278 </td>
-   <td style="text-align:right;"> 11.200078 </td>
-   <td style="text-align:right;"> 4.2 </td>
-   <td style="text-align:right;"> 0.4704033 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> PC5 </td>
-   <td style="text-align:left;"> Storage </td>
-   <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 12.532279 </td>
-   <td style="text-align:right;"> 0.0383611 </td>
-   <td style="text-align:right;"> 5.713288 </td>
-   <td style="text-align:right;"> 3.3 </td>
-   <td style="text-align:right;"> 0.1885385 </td>
-  </tr>
-  <tr>
    <td style="text-align:left;"> PC8 </td>
    <td style="text-align:left;"> Storage </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 31.899388 </td>
-   <td style="text-align:right;"> 0.0109859 </td>
+   <td style="text-align:right;"> 6.645691 </td>
+   <td style="text-align:right;"> 0.0138323 </td>
    <td style="text-align:right;"> 7.653518 </td>
    <td style="text-align:right;"> 1.8 </td>
    <td style="text-align:right;"> 0.1377633 </td>
@@ -3541,38 +3297,28 @@ pcs_factors_tidy[
    <td style="text-align:left;"> PC8 </td>
    <td style="text-align:left;"> Site:Storage </td>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 23.994961 </td>
-   <td style="text-align:right;"> 0.0142710 </td>
+   <td style="text-align:right;"> 4.998939 </td>
+   <td style="text-align:right;"> 0.0116762 </td>
    <td style="text-align:right;"> 11.514069 </td>
    <td style="text-align:right;"> 1.8 </td>
    <td style="text-align:right;"> 0.2072532 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> PC8 </td>
-   <td style="text-align:left;"> Site:Storage:Cankers </td>
-   <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 17.874099 </td>
-   <td style="text-align:right;"> 0.0215429 </td>
-   <td style="text-align:right;"> 8.576951 </td>
-   <td style="text-align:right;"> 1.8 </td>
-   <td style="text-align:right;"> 0.1543851 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> PC8 </td>
-   <td style="text-align:left;"> Site:Scion:Cankers </td>
-   <td style="text-align:right;"> 11 </td>
-   <td style="text-align:right;"> 9.508994 </td>
-   <td style="text-align:right;"> 0.0446713 </td>
-   <td style="text-align:right;"> 25.096088 </td>
-   <td style="text-align:right;"> 1.8 </td>
-   <td style="text-align:right;"> 0.4517296 </td>
+   <td style="text-align:left;"> PC9 </td>
+   <td style="text-align:left;"> Storage </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 4.114180 </td>
+   <td style="text-align:right;"> 0.0493937 </td>
+   <td style="text-align:right;"> 3.907370 </td>
+   <td style="text-align:right;"> 1.7 </td>
+   <td style="text-align:right;"> 0.0664253 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC9 </td>
    <td style="text-align:left;"> Site:Storage </td>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 12.342364 </td>
-   <td style="text-align:right;"> 0.0356715 </td>
+   <td style="text-align:right;"> 16.075611 </td>
+   <td style="text-align:right;"> 0.0000081 </td>
    <td style="text-align:right;"> 30.535060 </td>
    <td style="text-align:right;"> 1.7 </td>
    <td style="text-align:right;"> 0.5190960 </td>
@@ -3613,11 +3359,6 @@ pcs_factors %>%
    <th style="text-align:left;"> Site:Cankers </th>
    <th style="text-align:left;"> Storage:Cankers </th>
    <th style="text-align:left;"> Scion:Cankers </th>
-   <th style="text-align:left;"> Site:Storage:Scion </th>
-   <th style="text-align:left;"> Site:Storage:Cankers </th>
-   <th style="text-align:left;"> Site:Scion:Cankers </th>
-   <th style="text-align:left;"> Storage:Scion:Cankers </th>
-   <th style="text-align:left;"> Site:Storage:Scion:Cankers </th>
    <th style="text-align:left;"> Residuals </th>
   </tr>
  </thead>
@@ -3629,43 +3370,33 @@ pcs_factors %>%
    <td style="text-align:left;"> 0.03 </td>
    <td style="text-align:left;"> 0.26 </td>
    <td style="text-align:left;"> 0.16 </td>
-   <td style="text-align:left;"> 0.58 </td>
+   <td style="text-align:left;"> 0.58** </td>
    <td style="text-align:left;"> 0.62 </td>
    <td style="text-align:left;"> 0.2 </td>
    <td style="text-align:left;"> 0.01 </td>
    <td style="text-align:left;"> 0.04 </td>
    <td style="text-align:left;"> 0.23 </td>
-   <td style="text-align:left;"> 0.61 </td>
-   <td style="text-align:left;"> 0.08 </td>
-   <td style="text-align:left;"> 0.25 </td>
-   <td style="text-align:left;"> 0.28 </td>
-   <td style="text-align:left;"> 0.53 </td>
-   <td style="text-align:left;"> 0.21 </td>
+   <td style="text-align:left;"> 1.95 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC2 </td>
    <td style="text-align:right;"> 21.2 </td>
-   <td style="text-align:left;"> 13.98** </td>
+   <td style="text-align:left;"> 13.98*** </td>
    <td style="text-align:left;"> 0.2 </td>
    <td style="text-align:left;"> 0.08 </td>
    <td style="text-align:left;"> 0.14 </td>
-   <td style="text-align:left;"> 1.65 </td>
+   <td style="text-align:left;"> 1.65*** </td>
    <td style="text-align:left;"> 0.58 </td>
    <td style="text-align:left;"> 0.21 </td>
    <td style="text-align:left;"> 0.21 </td>
    <td style="text-align:left;"> 0.03 </td>
    <td style="text-align:left;"> 0.37 </td>
-   <td style="text-align:left;"> 0.93 </td>
-   <td style="text-align:left;"> 0.07 </td>
-   <td style="text-align:left;"> 1.04 </td>
-   <td style="text-align:left;"> 1.08 </td>
-   <td style="text-align:left;"> 0.37 </td>
-   <td style="text-align:left;"> 0.28 </td>
+   <td style="text-align:left;"> 3.76 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC3 </td>
    <td style="text-align:right;"> 8.4 </td>
-   <td style="text-align:left;"> 0.87 </td>
+   <td style="text-align:left;"> 0.87* </td>
    <td style="text-align:left;"> 0.07 </td>
    <td style="text-align:left;"> 0.48 </td>
    <td style="text-align:left;"> 0.01 </td>
@@ -3675,12 +3406,7 @@ pcs_factors %>%
    <td style="text-align:left;"> 0.1 </td>
    <td style="text-align:left;"> 0.14 </td>
    <td style="text-align:left;"> 0.7 </td>
-   <td style="text-align:left;"> 1.89 </td>
-   <td style="text-align:left;"> 0.1 </td>
-   <td style="text-align:left;"> 0.92 </td>
-   <td style="text-align:left;"> 0.5 </td>
-   <td style="text-align:left;"> 0.14 </td>
-   <td style="text-align:left;"> 0.64 </td>
+   <td style="text-align:left;"> 4.19 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC4 </td>
@@ -3689,24 +3415,19 @@ pcs_factors %>%
    <td style="text-align:left;"> 0.03 </td>
    <td style="text-align:left;"> 0.14 </td>
    <td style="text-align:left;"> &lt;0.01 </td>
-   <td style="text-align:left;"> 0.34* </td>
+   <td style="text-align:left;"> 0.34 </td>
    <td style="text-align:left;"> 0.38 </td>
    <td style="text-align:left;"> 0.21 </td>
    <td style="text-align:left;"> 0.08 </td>
    <td style="text-align:left;"> 0.07 </td>
    <td style="text-align:left;"> 0.38 </td>
-   <td style="text-align:left;"> 0.46 </td>
-   <td style="text-align:left;"> 0.08 </td>
-   <td style="text-align:left;"> 0.72 </td>
-   <td style="text-align:left;"> 0.34 </td>
-   <td style="text-align:left;"> 0.47* </td>
-   <td style="text-align:left;"> 0.03 </td>
+   <td style="text-align:left;"> 2.11 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC5 </td>
    <td style="text-align:right;"> 3.3 </td>
    <td style="text-align:left;"> 0.07 </td>
-   <td style="text-align:left;"> 0.19* </td>
+   <td style="text-align:left;"> 0.19 </td>
    <td style="text-align:left;"> 0.11 </td>
    <td style="text-align:left;"> 0.1 </td>
    <td style="text-align:left;"> 0.1 </td>
@@ -3715,12 +3436,7 @@ pcs_factors %>%
    <td style="text-align:left;"> 0.08 </td>
    <td style="text-align:left;"> 0.13 </td>
    <td style="text-align:left;"> 0.09 </td>
-   <td style="text-align:left;"> 0.24 </td>
-   <td style="text-align:left;"> 0.23 </td>
-   <td style="text-align:left;"> 0.38 </td>
-   <td style="text-align:left;"> 0.41 </td>
-   <td style="text-align:left;"> 0.61 </td>
-   <td style="text-align:left;"> 0.05 </td>
+   <td style="text-align:left;"> 1.92 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC6 </td>
@@ -3735,12 +3451,7 @@ pcs_factors %>%
    <td style="text-align:left;"> 0.2 </td>
    <td style="text-align:left;"> &lt;0.01 </td>
    <td style="text-align:left;"> 0.25 </td>
-   <td style="text-align:left;"> 0.4 </td>
-   <td style="text-align:left;"> 0.1 </td>
-   <td style="text-align:left;"> 0.49 </td>
-   <td style="text-align:left;"> 0.14 </td>
-   <td style="text-align:left;"> 0.08 </td>
-   <td style="text-align:left;"> 0.26 </td>
+   <td style="text-align:left;"> 1.48 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC7 </td>
@@ -3755,12 +3466,7 @@ pcs_factors %>%
    <td style="text-align:left;"> &lt;0.01 </td>
    <td style="text-align:left;"> &lt;0.01 </td>
    <td style="text-align:left;"> 0.05 </td>
-   <td style="text-align:left;"> 0.27 </td>
-   <td style="text-align:left;"> 0.04 </td>
-   <td style="text-align:left;"> 0.41 </td>
-   <td style="text-align:left;"> 0.21 </td>
-   <td style="text-align:left;"> 0.13 </td>
-   <td style="text-align:left;"> 0.11 </td>
+   <td style="text-align:left;"> 1.16 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC8 </td>
@@ -3775,32 +3481,22 @@ pcs_factors %>%
    <td style="text-align:left;"> &lt;0.01 </td>
    <td style="text-align:left;"> &lt;0.01 </td>
    <td style="text-align:left;"> 0.17 </td>
-   <td style="text-align:left;"> 0.1 </td>
-   <td style="text-align:left;"> 0.15* </td>
-   <td style="text-align:left;"> 0.45* </td>
-   <td style="text-align:left;"> 0.05 </td>
-   <td style="text-align:left;"> 0.04 </td>
-   <td style="text-align:left;"> 0.01 </td>
+   <td style="text-align:left;"> 0.81 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC9 </td>
    <td style="text-align:right;"> 1.7 </td>
    <td style="text-align:left;"> 0.02 </td>
-   <td style="text-align:left;"> 0.07 </td>
+   <td style="text-align:left;"> 0.07* </td>
    <td style="text-align:left;"> 0.11 </td>
    <td style="text-align:left;"> &lt;0.01 </td>
-   <td style="text-align:left;"> 0.52* </td>
+   <td style="text-align:left;"> 0.52*** </td>
    <td style="text-align:left;"> 0.15 </td>
    <td style="text-align:left;"> 0.08 </td>
    <td style="text-align:left;"> &lt;0.01 </td>
    <td style="text-align:left;"> 0.01 </td>
    <td style="text-align:left;"> 0.1 </td>
-   <td style="text-align:left;"> 0.11 </td>
-   <td style="text-align:left;"> 0.07 </td>
-   <td style="text-align:left;"> 0.14 </td>
-   <td style="text-align:left;"> 0.1 </td>
-   <td style="text-align:left;"> 0.14 </td>
-   <td style="text-align:left;"> 0.06 </td>
+   <td style="text-align:left;"> 0.63 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC10 </td>
@@ -3815,12 +3511,7 @@ pcs_factors %>%
    <td style="text-align:left;"> 0.01 </td>
    <td style="text-align:left;"> &lt;0.01 </td>
    <td style="text-align:left;"> 0.17 </td>
-   <td style="text-align:left;"> 0.2 </td>
-   <td style="text-align:left;"> 0.03 </td>
-   <td style="text-align:left;"> 0.26 </td>
-   <td style="text-align:left;"> 0.22 </td>
-   <td style="text-align:left;"> 0.06 </td>
-   <td style="text-align:left;"> 0.27 </td>
+   <td style="text-align:left;"> 1.06 </td>
   </tr>
 </tbody>
 </table>
@@ -4418,7 +4109,15 @@ asv_canker_anova_summary <- asv_canker_anova_results %>%
     "Site:Storage:Scion:Cankers_var", "Site:Storage:Scion:Cankers_p.adj"
   ) %>%
   data.table()
+```
 
+```
+# Error in `select()`:
+# ! Can't select columns that don't exist.
+# ✖ Column `Site:Storage:Scion_var` doesn't exist.
+```
+
+``` r
 cat(
   "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
   "Cankers:", nrow(asv_canker_anova_results[Factor == "Cankers" & p.adj < 0.05, ]), "\n",
@@ -4435,7 +4134,7 @@ cat(
 ```
 # Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values 
 # 
-#  Cankers: 250 
+#  Cankers: 9 
 #  Total ASVs: 995
 ```
 
@@ -4454,23 +4153,39 @@ cat(
 ```
 
 ```
-# 269 ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Cankers and its interactions.
+# 14 ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Cankers and its interactions.
 ```
 
 ``` r
 # Summary of ASVs with significant Scion effect
 fun_significant_canker <- asv_canker_anova_summary[ASV %in% canker_asvs$ASV, ] %>%
   arrange(desc(Abundance))
+```
 
+```
+# Error in eval(expr, envir, enclos): object 'asv_canker_anova_summary' not found
+```
+
+``` r
 kbl(fun_significant_canker) %>%
   kable_styling("striped") %>%
   save_kable("tables/FUN_asvs_design_canker.html")
+```
 
+```
+# Error in eval(expr, envir, enclos): object 'fun_significant_canker' not found
+```
+
+``` r
 asv_canker_anova_summary %>%
   arrange(desc(Abundance)) %>%
   kbl() %>%
   kable_styling("striped") %>%
   save_kable("tables/FUN_asvs_design_canker_all.html")
+```
+
+```
+# Error in eval(expr, envir, enclos): object 'asv_canker_anova_summary' not found
 ```
 
 ## Canker counts
@@ -5720,7 +5435,7 @@ cat("Model formula: ", deparse(update(design_with_canker, log_copy_number ~ .)),
 ```
 
 ```
-# Model formula:  log_copy_number ~ Site + Storage + Scion + Cankers + Site:Storage +      Site:Scion + Storage:Scion + Site:Cankers + Storage:Cankers +      Scion:Cankers + Site:Storage:Scion + Site:Storage:Cankers +      Site:Scion:Cankers + Storage:Scion:Cankers + Site:Storage:Scion:Cankers
+# Model formula:  log_copy_number ~ Site + Storage + Scion + Cankers + Site:Storage +      Site:Scion + Storage:Scion + Site:Cankers + Storage:Cankers +      Scion:Cankers
 ```
 
 ``` r
@@ -5729,23 +5444,18 @@ summary(abundance_canker_anova)
 ```
 
 ```
-#                            Df Sum Sq Mean Sq F value Pr(>F)  
-# Site                        2 1.8693  0.9347  23.979 0.0143 *
-# Storage                     1 0.0599  0.0599   1.536 0.3033  
-# Scion                       6 0.5203  0.0867   2.225 0.2731  
-# Cankers                     1 0.0006  0.0006   0.015 0.9098  
-# Site:Storage                2 0.0832  0.0416   1.068 0.4465  
-# Site:Scion                 12 0.2195  0.0183   0.469 0.8504  
-# Storage:Scion               6 0.1795  0.0299   0.768 0.6430  
-# Site:Cankers                2 0.0576  0.0288   0.739 0.5484  
-# Storage:Cankers             1 0.0468  0.0468   1.200 0.3534  
-# Scion:Cankers               6 0.1694  0.0282   0.724 0.6638  
-# Site:Storage:Scion         12 0.2627  0.0219   0.562 0.7956  
-# Site:Storage:Cankers        2 0.1119  0.0559   1.435 0.3653  
-# Site:Scion:Cankers         11 0.5008  0.0455   1.168 0.5078  
-# Storage:Scion:Cankers       6 0.2933  0.0489   1.254 0.4612  
-# Site:Storage:Scion:Cankers  6 0.1489  0.0248   0.637 0.7085  
-# Residuals                   3 0.1169  0.0390                 
+#                 Df Sum Sq Mean Sq F value   Pr(>F)    
+# Site             2 1.8693  0.9347  26.061 5.67e-08 ***
+# Storage          1 0.0599  0.0599   1.670   0.2037    
+# Scion            6 0.5203  0.0867   2.418   0.0435 *  
+# Cankers          1 0.0006  0.0006   0.016   0.8985    
+# Site:Storage     2 0.0832  0.0416   1.160   0.3237    
+# Site:Scion      12 0.2195  0.0183   0.510   0.8957    
+# Storage:Scion    6 0.1795  0.0299   0.834   0.5507    
+# Site:Cankers     2 0.0576  0.0288   0.803   0.4551    
+# Storage:Cankers  1 0.0468  0.0468   1.304   0.2602    
+# Scion:Cankers    6 0.1694  0.0282   0.787   0.5850    
+# Residuals       40 1.4346  0.0359                     
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
@@ -5778,8 +5488,8 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 1.8693344 </td>
    <td style="text-align:right;"> 0.9346672 </td>
-   <td style="text-align:right;"> 23.9789542 </td>
-   <td style="text-align:right;"> 0.0142845 </td>
+   <td style="text-align:right;"> 26.0614432 </td>
+   <td style="text-align:right;"> 0.0000001 </td>
    <td style="text-align:right;"> 40.2808617 </td>
   </tr>
   <tr>
@@ -5787,8 +5497,8 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 0.0598882 </td>
    <td style="text-align:right;"> 0.0598882 </td>
-   <td style="text-align:right;"> 1.5364361 </td>
-   <td style="text-align:right;"> 0.3032760 </td>
+   <td style="text-align:right;"> 1.6698702 </td>
+   <td style="text-align:right;"> 0.2036918 </td>
    <td style="text-align:right;"> 1.2904851 </td>
   </tr>
   <tr>
@@ -5796,8 +5506,8 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 0.5202960 </td>
    <td style="text-align:right;"> 0.0867160 </td>
-   <td style="text-align:right;"> 2.2247053 </td>
-   <td style="text-align:right;"> 0.2731474 </td>
+   <td style="text-align:right;"> 2.4179132 </td>
+   <td style="text-align:right;"> 0.0434910 </td>
    <td style="text-align:right;"> 11.2114621 </td>
   </tr>
   <tr>
@@ -5805,8 +5515,8 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 0.0005911 </td>
    <td style="text-align:right;"> 0.0005911 </td>
-   <td style="text-align:right;"> 0.0151638 </td>
-   <td style="text-align:right;"> 0.9097817 </td>
+   <td style="text-align:right;"> 0.0164808 </td>
+   <td style="text-align:right;"> 0.8984936 </td>
    <td style="text-align:right;"> 0.0127364 </td>
   </tr>
   <tr>
@@ -5814,8 +5524,8 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 0.0832292 </td>
    <td style="text-align:right;"> 0.0416146 </td>
-   <td style="text-align:right;"> 1.0676253 </td>
-   <td style="text-align:right;"> 0.4465185 </td>
+   <td style="text-align:right;"> 1.1603449 </td>
+   <td style="text-align:right;"> 0.3237018 </td>
    <td style="text-align:right;"> 1.7934422 </td>
   </tr>
   <tr>
@@ -5823,8 +5533,8 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 0.2194944 </td>
    <td style="text-align:right;"> 0.0182912 </td>
-   <td style="text-align:right;"> 0.4692621 </td>
-   <td style="text-align:right;"> 0.8504242 </td>
+   <td style="text-align:right;"> 0.5100159 </td>
+   <td style="text-align:right;"> 0.8957429 </td>
    <td style="text-align:right;"> 4.7297183 </td>
   </tr>
   <tr>
@@ -5832,8 +5542,8 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 0.1795479 </td>
    <td style="text-align:right;"> 0.0299246 </td>
-   <td style="text-align:right;"> 0.7677189 </td>
-   <td style="text-align:right;"> 0.6430271 </td>
+   <td style="text-align:right;"> 0.8343927 </td>
+   <td style="text-align:right;"> 0.5506600 </td>
    <td style="text-align:right;"> 3.8689403 </td>
   </tr>
   <tr>
@@ -5841,8 +5551,8 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 0.0575936 </td>
    <td style="text-align:right;"> 0.0287968 </td>
-   <td style="text-align:right;"> 0.7387844 </td>
-   <td style="text-align:right;"> 0.5484265 </td>
+   <td style="text-align:right;"> 0.8029453 </td>
+   <td style="text-align:right;"> 0.4550964 </td>
    <td style="text-align:right;"> 1.2410414 </td>
   </tr>
   <tr>
@@ -5850,8 +5560,8 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 0.0467824 </td>
    <td style="text-align:right;"> 0.0467824 </td>
-   <td style="text-align:right;"> 1.2002062 </td>
-   <td style="text-align:right;"> 0.3533522 </td>
+   <td style="text-align:right;"> 1.3044400 </td>
+   <td style="text-align:right;"> 0.2601947 </td>
    <td style="text-align:right;"> 1.0080786 </td>
   </tr>
   <tr>
@@ -5859,63 +5569,18 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 0.1694341 </td>
    <td style="text-align:right;"> 0.0282390 </td>
-   <td style="text-align:right;"> 0.7244742 </td>
-   <td style="text-align:right;"> 0.6637796 </td>
+   <td style="text-align:right;"> 0.7873923 </td>
+   <td style="text-align:right;"> 0.5850378 </td>
    <td style="text-align:right;"> 3.6510073 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Storage:Scion </td>
-   <td style="text-align:right;"> 12 </td>
-   <td style="text-align:right;"> 0.2627480 </td>
-   <td style="text-align:right;"> 0.0218957 </td>
-   <td style="text-align:right;"> 0.5617349 </td>
-   <td style="text-align:right;"> 0.7956027 </td>
-   <td style="text-align:right;"> 5.6617561 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Storage:Cankers </td>
-   <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 0.1118764 </td>
-   <td style="text-align:right;"> 0.0559382 </td>
-   <td style="text-align:right;"> 1.4350983 </td>
-   <td style="text-align:right;"> 0.3653448 </td>
-   <td style="text-align:right;"> 2.4107388 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Scion:Cankers </td>
-   <td style="text-align:right;"> 11 </td>
-   <td style="text-align:right;"> 0.5007944 </td>
-   <td style="text-align:right;"> 0.0455268 </td>
-   <td style="text-align:right;"> 1.1679924 </td>
-   <td style="text-align:right;"> 0.5078014 </td>
-   <td style="text-align:right;"> 10.7912371 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Storage:Scion:Cankers </td>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 0.2933055 </td>
-   <td style="text-align:right;"> 0.0488842 </td>
-   <td style="text-align:right;"> 1.2541289 </td>
-   <td style="text-align:right;"> 0.4612436 </td>
-   <td style="text-align:right;"> 6.3202164 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Storage:Scion:Cankers </td>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 0.1488992 </td>
-   <td style="text-align:right;"> 0.0248165 </td>
-   <td style="text-align:right;"> 0.6366698 </td>
-   <td style="text-align:right;"> 0.7084815 </td>
-   <td style="text-align:right;"> 3.2085147 </td>
-  </tr>
-  <tr>
    <td style="text-align:left;"> Residuals </td>
-   <td style="text-align:right;"> 3 </td>
-   <td style="text-align:right;"> 0.1169359 </td>
-   <td style="text-align:right;"> 0.0389786 </td>
+   <td style="text-align:right;"> 40 </td>
+   <td style="text-align:right;"> 1.4345594 </td>
+   <td style="text-align:right;"> 0.0358640 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> 2.5197635 </td>
+   <td style="text-align:right;"> 30.9122265 </td>
   </tr>
 </tbody>
 </table>
@@ -6363,7 +6028,7 @@ cat("Model formula: ", deparse(design_with_canker), "\n")
 ```
 
 ```
-# Model formula:  y ~ Site * Storage * Scion * Cankers
+# Model formula:  y ~ Site + Storage + Scion + Cankers + Site:Storage + Site:Scion +      Storage:Scion + Cankers:Site + Cankers:Storage + Cankers:Scion
 ```
 
 ``` r
@@ -6384,23 +6049,18 @@ summary(result)
 
 ```
 # Component 1 :
-#                            Df R Sum Sq R Mean Sq Iter Pr(Prob)    
-# Site                        2  19947.7    9973.9 5000  0.00060 ***
-# Storage                     1     58.2      58.2  303  0.25083    
-# Site:Storage                2   3190.2    1595.1 5000  0.01340 *  
-# Scion                       6   1339.7     223.3 5000  0.05580 .  
-# Site:Scion                 12   5577.6     464.8 5000  0.03700 *  
-# Storage:Scion               6    912.5     152.1 5000  0.09260 .  
-# Site:Storage:Scion         12   2111.6     176.0 5000  0.07380 .  
-# Cankers                     1     60.5      60.5  196  0.34184    
-# Site:Cankers                2   1336.0     668.0 5000  0.02180 *  
-# Storage:Cankers             1    326.0     326.0 2289  0.04194 *  
-# Site:Storage:Cankers        2     98.1      49.1 1189  0.16232    
-# Scion:Cankers               6   2660.7     443.5 5000  0.03240 *  
-# Site:Scion:Cankers         11   3505.0     318.6 5000  0.04100 *  
-# Storage:Scion:Cankers       6    544.0      90.7 2366  0.16906    
-# Site:Storage:Scion:Cankers  6   2819.3     469.9 5000  0.03100 *  
-# Residuals                   3     61.0      20.3                  
+#                 Df R Sum Sq R Mean Sq Iter Pr(Prob)    
+# Site             2  19947.7    9973.9 5000  < 2e-16 ***
+# Storage          1     58.2      58.2   51  0.86275    
+# Site:Storage     2   3190.2    1595.1 5000  0.00240 ** 
+# Scion            6   1339.7     223.3  691  0.51809    
+# Site:Scion      12   5577.6     464.8 4492  0.04052 *  
+# Storage:Scion    6    912.5     152.1  254  0.75197    
+# Cankers          1      7.9       7.9   51  0.86275    
+# Site:Cankers     2   1180.5     590.3 2132  0.07270 .  
+# Storage:Cankers  1    595.0     595.0 1442  0.06519 .  
+# Scion:Cankers    6   2762.1     460.4 5000  0.10600    
+# Residuals       40   8976.5     224.4                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -6430,146 +6090,101 @@ df %>%
   <tr>
    <td style="text-align:left;"> Site </td>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 19947.73251 </td>
-   <td style="text-align:right;"> 9973.86626 </td>
+   <td style="text-align:right;"> 19947.732514 </td>
+   <td style="text-align:right;"> 9973.866257 </td>
    <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0006000 </td>
+   <td style="text-align:right;"> 0.0000000 </td>
    <td style="text-align:right;"> 44.7780778 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Storage </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 58.16910 </td>
-   <td style="text-align:right;"> 58.16910 </td>
-   <td style="text-align:right;"> 303 </td>
-   <td style="text-align:right;"> 0.2508251 </td>
+   <td style="text-align:right;"> 58.169104 </td>
+   <td style="text-align:right;"> 58.169104 </td>
+   <td style="text-align:right;"> 51 </td>
+   <td style="text-align:right;"> 0.8627451 </td>
    <td style="text-align:right;"> 0.1305763 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Site:Storage </td>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 3190.23423 </td>
-   <td style="text-align:right;"> 1595.11712 </td>
+   <td style="text-align:right;"> 3190.234234 </td>
+   <td style="text-align:right;"> 1595.117117 </td>
    <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0134000 </td>
+   <td style="text-align:right;"> 0.0024000 </td>
    <td style="text-align:right;"> 7.1613431 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Scion </td>
    <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 1339.73320 </td>
-   <td style="text-align:right;"> 223.28887 </td>
-   <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0558000 </td>
+   <td style="text-align:right;"> 1339.733199 </td>
+   <td style="text-align:right;"> 223.288867 </td>
+   <td style="text-align:right;"> 691 </td>
+   <td style="text-align:right;"> 0.5180897 </td>
    <td style="text-align:right;"> 3.0073933 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Site:Scion </td>
    <td style="text-align:right;"> 12 </td>
-   <td style="text-align:right;"> 5577.60595 </td>
-   <td style="text-align:right;"> 464.80050 </td>
-   <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0370000 </td>
+   <td style="text-align:right;"> 5577.605949 </td>
+   <td style="text-align:right;"> 464.800496 </td>
+   <td style="text-align:right;"> 4492 </td>
+   <td style="text-align:right;"> 0.0405165 </td>
    <td style="text-align:right;"> 12.5204443 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Storage:Scion </td>
    <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 912.45904 </td>
-   <td style="text-align:right;"> 152.07651 </td>
-   <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0926000 </td>
+   <td style="text-align:right;"> 912.459044 </td>
+   <td style="text-align:right;"> 152.076507 </td>
+   <td style="text-align:right;"> 254 </td>
+   <td style="text-align:right;"> 0.7519685 </td>
    <td style="text-align:right;"> 2.0482610 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Storage:Scion </td>
-   <td style="text-align:right;"> 12 </td>
-   <td style="text-align:right;"> 2111.55346 </td>
-   <td style="text-align:right;"> 175.96279 </td>
-   <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0738000 </td>
-   <td style="text-align:right;"> 4.7399525 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Cankers </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 60.47750 </td>
-   <td style="text-align:right;"> 60.47750 </td>
-   <td style="text-align:right;"> 196 </td>
-   <td style="text-align:right;"> 0.3418367 </td>
-   <td style="text-align:right;"> 0.1357581 </td>
+   <td style="text-align:right;"> 7.943258 </td>
+   <td style="text-align:right;"> 7.943258 </td>
+   <td style="text-align:right;"> 51 </td>
+   <td style="text-align:right;"> 0.8627451 </td>
+   <td style="text-align:right;"> 0.0178308 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Site:Cankers </td>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 1335.95350 </td>
-   <td style="text-align:right;"> 667.97675 </td>
-   <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0218000 </td>
-   <td style="text-align:right;"> 2.9989088 </td>
+   <td style="text-align:right;"> 1180.530290 </td>
+   <td style="text-align:right;"> 590.265145 </td>
+   <td style="text-align:right;"> 2132 </td>
+   <td style="text-align:right;"> 0.0727017 </td>
+   <td style="text-align:right;"> 2.6500194 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Storage:Cankers </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 326.00439 </td>
-   <td style="text-align:right;"> 326.00439 </td>
-   <td style="text-align:right;"> 2289 </td>
-   <td style="text-align:right;"> 0.0419397 </td>
-   <td style="text-align:right;"> 0.7318050 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Storage:Cankers </td>
-   <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 98.10014 </td>
-   <td style="text-align:right;"> 49.05007 </td>
-   <td style="text-align:right;"> 1189 </td>
-   <td style="text-align:right;"> 0.1623213 </td>
-   <td style="text-align:right;"> 0.2202123 </td>
+   <td style="text-align:right;"> 594.966068 </td>
+   <td style="text-align:right;"> 594.966068 </td>
+   <td style="text-align:right;"> 1442 </td>
+   <td style="text-align:right;"> 0.0651872 </td>
+   <td style="text-align:right;"> 1.3355622 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 2660.70952 </td>
-   <td style="text-align:right;"> 443.45159 </td>
+   <td style="text-align:right;"> 2762.126818 </td>
+   <td style="text-align:right;"> 460.354470 </td>
    <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0324000 </td>
-   <td style="text-align:right;"> 5.9726818 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Scion:Cankers </td>
-   <td style="text-align:right;"> 11 </td>
-   <td style="text-align:right;"> 3505.00795 </td>
-   <td style="text-align:right;"> 318.63709 </td>
-   <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0410000 </td>
-   <td style="text-align:right;"> 7.8679378 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Storage:Scion:Cankers </td>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 543.99521 </td>
-   <td style="text-align:right;"> 90.66587 </td>
-   <td style="text-align:right;"> 2366 </td>
-   <td style="text-align:right;"> 0.1690617 </td>
-   <td style="text-align:right;"> 1.2211443 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Storage:Scion:Cankers </td>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 2819.25180 </td>
-   <td style="text-align:right;"> 469.87530 </td>
-   <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0310000 </td>
-   <td style="text-align:right;"> 6.3285727 </td>
+   <td style="text-align:right;"> 0.1060000 </td>
+   <td style="text-align:right;"> 6.2003403 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Residuals </td>
-   <td style="text-align:right;"> 3 </td>
-   <td style="text-align:right;"> 61.00000 </td>
-   <td style="text-align:right;"> 20.33333 </td>
+   <td style="text-align:right;"> 40 </td>
+   <td style="text-align:right;"> 8976.487022 </td>
+   <td style="text-align:right;"> 224.412175 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> 0.1369310 </td>
+   <td style="text-align:right;"> 20.1501516 </td>
   </tr>
 </tbody>
 </table>
@@ -6592,23 +6207,18 @@ summary(result)
 
 ```
 # Component 1 :
-#                            Df R Sum Sq R Mean Sq Iter Pr(Prob)    
-# Site                        2  23123.2   11561.6 5000  < 2e-16 ***
-# Storage                     1    107.5     107.5  477  0.17400    
-# Site:Storage                2    850.7     425.4 2688  0.08185 .  
-# Scion                       6   1025.4     170.9 1214  0.30807    
-# Site:Scion                 12   3930.7     327.6 5000  0.10300    
-# Storage:Scion               6    725.7     120.9  835  0.34491    
-# Site:Storage:Scion         12   2203.7     183.6 5000  0.23820    
-# Cankers                     1    119.1     119.1  542  0.15683    
-# Site:Cankers                2   2941.6    1470.8 5000  0.01920 *  
-# Storage:Cankers             1    621.3     621.3 1302  0.07143 .  
-# Site:Storage:Cankers        2   1163.2     581.6 4598  0.05350 .  
-# Scion:Cankers               6   1723.7     287.3 1631  0.15144    
-# Site:Scion:Cankers         11   4364.8     396.8 5000  0.07300 .  
-# Storage:Scion:Cankers       6   1901.0     316.8 1297  0.17656    
-# Site:Storage:Scion:Cankers  6    371.3      61.9 1211  0.60116    
-# Residuals                   3    225.0      75.0                  
+#                 Df R Sum Sq R Mean Sq Iter Pr(Prob)    
+# Site             2  23123.2   11561.6 5000   <2e-16 ***
+# Storage          1    107.5     107.5  130   0.4385    
+# Site:Storage     2    850.7     425.4 1173   0.1373    
+# Scion            6   1025.4     170.9  382   0.6492    
+# Site:Scion      12   3930.7     327.6 5000   0.2170    
+# Storage:Scion    6    725.7     120.9  244   0.7090    
+# Cankers          1    182.5     182.5  283   0.2615    
+# Site:Cankers     2   2709.7    1354.9 5000   0.0110 *  
+# Storage:Cankers  1    375.0     375.0  397   0.2015    
+# Scion:Cankers    6   2393.0     398.8 5000   0.1888    
+# Residuals       40   9974.5     249.4                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -6639,7 +6249,7 @@ df %>%
    <td style="text-align:left;"> Site </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 23123.1855 </td>
-   <td style="text-align:right;"> 11561.59275 </td>
+   <td style="text-align:right;"> 11561.5928 </td>
    <td style="text-align:right;"> 5000 </td>
    <td style="text-align:right;"> 0.0000000 </td>
    <td style="text-align:right;"> 50.9343845 </td>
@@ -6648,136 +6258,91 @@ df %>%
    <td style="text-align:left;"> Storage </td>
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 107.5243 </td>
-   <td style="text-align:right;"> 107.52427 </td>
-   <td style="text-align:right;"> 477 </td>
-   <td style="text-align:right;"> 0.1740042 </td>
+   <td style="text-align:right;"> 107.5243 </td>
+   <td style="text-align:right;"> 130 </td>
+   <td style="text-align:right;"> 0.4384615 </td>
    <td style="text-align:right;"> 0.2368481 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Site:Storage </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 850.7448 </td>
-   <td style="text-align:right;"> 425.37238 </td>
-   <td style="text-align:right;"> 2688 </td>
-   <td style="text-align:right;"> 0.0818452 </td>
+   <td style="text-align:right;"> 425.3724 </td>
+   <td style="text-align:right;"> 1173 </td>
+   <td style="text-align:right;"> 0.1372549 </td>
    <td style="text-align:right;"> 1.8739702 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Scion </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 1025.4058 </td>
-   <td style="text-align:right;"> 170.90097 </td>
-   <td style="text-align:right;"> 1214 </td>
-   <td style="text-align:right;"> 0.3080725 </td>
+   <td style="text-align:right;"> 170.9010 </td>
+   <td style="text-align:right;"> 382 </td>
+   <td style="text-align:right;"> 0.6492147 </td>
    <td style="text-align:right;"> 2.2587033 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Site:Scion </td>
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 3930.7425 </td>
-   <td style="text-align:right;"> 327.56188 </td>
+   <td style="text-align:right;"> 327.5619 </td>
    <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.1030000 </td>
+   <td style="text-align:right;"> 0.2170000 </td>
    <td style="text-align:right;"> 8.6584070 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Storage:Scion </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 725.6609 </td>
-   <td style="text-align:right;"> 120.94348 </td>
-   <td style="text-align:right;"> 835 </td>
-   <td style="text-align:right;"> 0.3449102 </td>
+   <td style="text-align:right;"> 120.9435 </td>
+   <td style="text-align:right;"> 244 </td>
+   <td style="text-align:right;"> 0.7090164 </td>
    <td style="text-align:right;"> 1.5984428 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Storage:Scion </td>
-   <td style="text-align:right;"> 12 </td>
-   <td style="text-align:right;"> 2203.7237 </td>
-   <td style="text-align:right;"> 183.64365 </td>
-   <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.2382000 </td>
-   <td style="text-align:right;"> 4.8542322 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Cankers </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 119.0561 </td>
-   <td style="text-align:right;"> 119.05606 </td>
-   <td style="text-align:right;"> 542 </td>
-   <td style="text-align:right;"> 0.1568266 </td>
-   <td style="text-align:right;"> 0.2622496 </td>
+   <td style="text-align:right;"> 182.4523 </td>
+   <td style="text-align:right;"> 182.4523 </td>
+   <td style="text-align:right;"> 283 </td>
+   <td style="text-align:right;"> 0.2614841 </td>
+   <td style="text-align:right;"> 0.4018952 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Site:Cankers </td>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 2941.5850 </td>
-   <td style="text-align:right;"> 1470.79248 </td>
+   <td style="text-align:right;"> 2709.7440 </td>
+   <td style="text-align:right;"> 1354.8720 </td>
    <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0192000 </td>
-   <td style="text-align:right;"> 6.4795493 </td>
+   <td style="text-align:right;"> 0.0110000 </td>
+   <td style="text-align:right;"> 5.9688637 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Storage:Cankers </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 621.3349 </td>
-   <td style="text-align:right;"> 621.33490 </td>
-   <td style="text-align:right;"> 1302 </td>
-   <td style="text-align:right;"> 0.0714286 </td>
-   <td style="text-align:right;"> 1.3686397 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Storage:Cankers </td>
-   <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 1163.1600 </td>
-   <td style="text-align:right;"> 581.58000 </td>
-   <td style="text-align:right;"> 4598 </td>
-   <td style="text-align:right;"> 0.0535015 </td>
-   <td style="text-align:right;"> 2.5621400 </td>
+   <td style="text-align:right;"> 375.0416 </td>
+   <td style="text-align:right;"> 375.0416 </td>
+   <td style="text-align:right;"> 397 </td>
+   <td style="text-align:right;"> 0.2015113 </td>
+   <td style="text-align:right;"> 0.8261195 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 1723.7385 </td>
-   <td style="text-align:right;"> 287.28975 </td>
-   <td style="text-align:right;"> 1631 </td>
-   <td style="text-align:right;"> 0.1514408 </td>
-   <td style="text-align:right;"> 3.7969491 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Scion:Cankers </td>
-   <td style="text-align:right;"> 11 </td>
-   <td style="text-align:right;"> 4364.7693 </td>
-   <td style="text-align:right;"> 396.79721 </td>
+   <td style="text-align:right;"> 2393.0267 </td>
+   <td style="text-align:right;"> 398.8378 </td>
    <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0730000 </td>
-   <td style="text-align:right;"> 9.6144555 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Storage:Scion:Cankers </td>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 1901.0075 </td>
-   <td style="text-align:right;"> 316.83458 </td>
-   <td style="text-align:right;"> 1297 </td>
-   <td style="text-align:right;"> 0.1765613 </td>
-   <td style="text-align:right;"> 4.1874268 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Storage:Scion:Cankers </td>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 371.3488 </td>
-   <td style="text-align:right;"> 61.89147 </td>
-   <td style="text-align:right;"> 1211 </td>
-   <td style="text-align:right;"> 0.6011561 </td>
-   <td style="text-align:right;"> 0.8179851 </td>
+   <td style="text-align:right;"> 0.1888000 </td>
+   <td style="text-align:right;"> 5.2712177 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Residuals </td>
-   <td style="text-align:right;"> 3 </td>
-   <td style="text-align:right;"> 225.0000 </td>
-   <td style="text-align:right;"> 75.00000 </td>
+   <td style="text-align:right;"> 40 </td>
+   <td style="text-align:right;"> 9974.4591 </td>
+   <td style="text-align:right;"> 249.3615 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> 0.4956167 </td>
+   <td style="text-align:right;"> 21.9711481 </td>
   </tr>
 </tbody>
 </table>
@@ -6800,23 +6365,18 @@ summary(result)
 
 ```
 # Component 1 :
-#                            Df R Sum Sq R Mean Sq Iter Pr(Prob)    
-# Site                        2  21042.0   10521.0 5000  0.00040 ***
-# Storage                     1     11.7      11.7   51  0.82353    
-# Site:Storage                2   1383.1     691.5 5000  0.03440 *  
-# Scion                       6   2047.5     341.2 3590  0.08858 .  
-# Site:Scion                 12   3877.8     323.1 4482  0.08791 .  
-# Storage:Scion               6   1014.4     169.1 2578  0.19705    
-# Site:Storage:Scion         12   3377.6     281.5 5000  0.08520 .  
-# Cankers                     1     86.9      86.9  115  0.46957    
-# Site:Cankers                2   3089.6    1544.8 5000  0.01840 *  
-# Storage:Cankers             1    432.7     432.7  648  0.13426    
-# Site:Storage:Cankers        2   1415.6     707.8 5000  0.03720 *  
-# Scion:Cankers               6   1853.4     308.9 5000  0.07480 .  
-# Site:Scion:Cankers         11   4387.5     398.9 5000  0.06900 .  
-# Storage:Scion:Cankers       6   1309.2     218.2 3597  0.13956    
-# Site:Storage:Scion:Cankers  6    388.1      64.7  472  0.43856    
-# Residuals                   3    201.0      67.0                  
+#                 Df R Sum Sq R Mean Sq Iter Pr(Prob)    
+# Site             2  21042.0   10521.0 5000  < 2e-16 ***
+# Storage          1     11.7      11.7   51  0.84314    
+# Site:Storage     2   1383.1     691.5 4307  0.05619 .  
+# Scion            6   2047.5     341.2 1109  0.37962    
+# Site:Scion      12   3877.8     323.1 3435  0.39214    
+# Storage:Scion    6   1014.4     169.1  790  0.75570    
+# Cankers          1    118.5     118.5   51  0.94118    
+# Site:Cankers     2   3017.2    1508.6 5000  0.00480 ** 
+# Storage:Cankers  1    165.5     165.5  104  0.49038    
+# Scion:Cankers    6   2877.6     479.6 5000  0.12040    
+# Residuals       40  10362.8     259.1                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -6849,7 +6409,7 @@ df %>%
    <td style="text-align:right;"> 21041.97439 </td>
    <td style="text-align:right;"> 10520.98720 </td>
    <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0004000 </td>
+   <td style="text-align:right;"> 0.0000000 </td>
    <td style="text-align:right;"> 45.8252231 </td>
   </tr>
   <tr>
@@ -6858,7 +6418,7 @@ df %>%
    <td style="text-align:right;"> 11.68134 </td>
    <td style="text-align:right;"> 11.68134 </td>
    <td style="text-align:right;"> 51 </td>
-   <td style="text-align:right;"> 0.8235294 </td>
+   <td style="text-align:right;"> 0.8431373 </td>
    <td style="text-align:right;"> 0.0254396 </td>
   </tr>
   <tr>
@@ -6866,8 +6426,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 1383.06144 </td>
    <td style="text-align:right;"> 691.53072 </td>
-   <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0344000 </td>
+   <td style="text-align:right;"> 4307 </td>
+   <td style="text-align:right;"> 0.0561876 </td>
    <td style="text-align:right;"> 3.0120319 </td>
   </tr>
   <tr>
@@ -6875,8 +6435,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2047.47993 </td>
    <td style="text-align:right;"> 341.24666 </td>
-   <td style="text-align:right;"> 3590 </td>
-   <td style="text-align:right;"> 0.0885794 </td>
+   <td style="text-align:right;"> 1109 </td>
+   <td style="text-align:right;"> 0.3796213 </td>
    <td style="text-align:right;"> 4.4590029 </td>
   </tr>
   <tr>
@@ -6884,8 +6444,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 3877.77886 </td>
    <td style="text-align:right;"> 323.14824 </td>
-   <td style="text-align:right;"> 4482 </td>
-   <td style="text-align:right;"> 0.0879072 </td>
+   <td style="text-align:right;"> 3435 </td>
+   <td style="text-align:right;"> 0.3921397 </td>
    <td style="text-align:right;"> 8.4450289 </td>
   </tr>
   <tr>
@@ -6893,99 +6453,54 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 1014.35808 </td>
    <td style="text-align:right;"> 169.05968 </td>
-   <td style="text-align:right;"> 2578 </td>
-   <td style="text-align:right;"> 0.1970520 </td>
+   <td style="text-align:right;"> 790 </td>
+   <td style="text-align:right;"> 0.7556962 </td>
    <td style="text-align:right;"> 2.2090696 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Storage:Scion </td>
-   <td style="text-align:right;"> 12 </td>
-   <td style="text-align:right;"> 3377.55346 </td>
-   <td style="text-align:right;"> 281.46279 </td>
-   <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0852000 </td>
-   <td style="text-align:right;"> 7.3556377 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Cankers </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 86.90551 </td>
-   <td style="text-align:right;"> 86.90551 </td>
-   <td style="text-align:right;"> 115 </td>
-   <td style="text-align:right;"> 0.4695652 </td>
-   <td style="text-align:right;"> 0.1892629 </td>
+   <td style="text-align:right;"> 118.53077 </td>
+   <td style="text-align:right;"> 118.53077 </td>
+   <td style="text-align:right;"> 51 </td>
+   <td style="text-align:right;"> 0.9411765 </td>
+   <td style="text-align:right;"> 0.2581364 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Site:Cankers </td>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 3089.57848 </td>
-   <td style="text-align:right;"> 1544.78924 </td>
+   <td style="text-align:right;"> 3017.15968 </td>
+   <td style="text-align:right;"> 1508.57984 </td>
    <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0184000 </td>
-   <td style="text-align:right;"> 6.7284857 </td>
+   <td style="text-align:right;"> 0.0048000 </td>
+   <td style="text-align:right;"> 6.5707720 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Storage:Cankers </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 432.72053 </td>
-   <td style="text-align:right;"> 432.72053 </td>
-   <td style="text-align:right;"> 648 </td>
-   <td style="text-align:right;"> 0.1342593 </td>
-   <td style="text-align:right;"> 0.9423790 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Storage:Cankers </td>
-   <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 1415.61484 </td>
-   <td style="text-align:right;"> 707.80742 </td>
-   <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0372000 </td>
-   <td style="text-align:right;"> 3.0829268 </td>
+   <td style="text-align:right;"> 165.47167 </td>
+   <td style="text-align:right;"> 165.47167 </td>
+   <td style="text-align:right;"> 104 </td>
+   <td style="text-align:right;"> 0.4903846 </td>
+   <td style="text-align:right;"> 0.3603643 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 1853.38992 </td>
-   <td style="text-align:right;"> 308.89832 </td>
+   <td style="text-align:right;"> 2877.60198 </td>
+   <td style="text-align:right;"> 479.60033 </td>
    <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0748000 </td>
-   <td style="text-align:right;"> 4.0363136 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Scion:Cankers </td>
-   <td style="text-align:right;"> 11 </td>
-   <td style="text-align:right;"> 4387.51805 </td>
-   <td style="text-align:right;"> 398.86528 </td>
-   <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0690000 </td>
-   <td style="text-align:right;"> 9.5551392 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Storage:Scion:Cankers </td>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 1309.16891 </td>
-   <td style="text-align:right;"> 218.19482 </td>
-   <td style="text-align:right;"> 3597 </td>
-   <td style="text-align:right;"> 0.1395607 </td>
-   <td style="text-align:right;"> 2.8511088 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Site:Storage:Scion:Cankers </td>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 388.10376 </td>
-   <td style="text-align:right;"> 64.68396 </td>
-   <td style="text-align:right;"> 472 </td>
-   <td style="text-align:right;"> 0.4385593 </td>
-   <td style="text-align:right;"> 0.8452126 </td>
+   <td style="text-align:right;"> 0.1204000 </td>
+   <td style="text-align:right;"> 6.2668431 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Residuals </td>
-   <td style="text-align:right;"> 3 </td>
-   <td style="text-align:right;"> 201.00000 </td>
-   <td style="text-align:right;"> 67.00000 </td>
+   <td style="text-align:right;"> 40 </td>
+   <td style="text-align:right;"> 10362.78936 </td>
+   <td style="text-align:right;"> 259.06973 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> 0.4377379 </td>
+   <td style="text-align:right;"> 22.5680882 </td>
   </tr>
 </tbody>
 </table>
@@ -7653,215 +7168,171 @@ pca_summary
 
 ```
 # $PC1
-#                            Df Sum Sq Mean Sq F value   Pr(>F)    
-# Site                        2 186046   93023 215.475 0.000575 ***
-# Storage                     1      2       2   0.004 0.956214    
-# Scion                       6   3688     615   1.424 0.415693    
-# Cankers                     1     74      74   0.170 0.707575    
-# Site:Storage                2   3018    1509   3.495 0.164545    
-# Site:Scion                 12   8019     668   1.548 0.399771    
-# Storage:Scion               6   1599     267   0.617 0.718705    
-# Site:Cankers                2    591     295   0.684 0.569075    
-# Storage:Cankers             1    177     177   0.409 0.567815    
-# Scion:Cankers               6   2237     373   0.863 0.600017    
-# Site:Storage:Scion         12   6551     546   1.265 0.477952    
-# Site:Storage:Cankers        2    208     104   0.241 0.799892    
-# Site:Scion:Cankers         11   4697     427   0.989 0.575478    
-# Storage:Scion:Cankers       6   2516     419   0.971 0.556194    
-# Site:Storage:Scion:Cankers  6   3107     518   1.200 0.477537    
-# Residuals                   3   1295     432                     
+#                 Df Sum Sq Mean Sq F value Pr(>F)    
+# Site             2 186046   93023 202.510 <2e-16 ***
+# Storage          1      2       2   0.003 0.9542    
+# Scion            6   3688     615   1.338 0.2632    
+# Cankers          1     74      74   0.160 0.6912    
+# Site:Storage     2   3018    1509   3.285 0.0478 *  
+# Site:Scion      12   8019     668   1.455 0.1825    
+# Storage:Scion    6   1599     267   0.580 0.7437    
+# Site:Cankers     2    591     295   0.643 0.5310    
+# Storage:Cankers  1    177     177   0.385 0.5386    
+# Scion:Cankers    6   2237     373   0.811 0.5673    
+# Residuals       40  18374     459                   
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC2
-#                            Df Sum Sq Mean Sq  F value   Pr(>F)    
-# Site                        2 130756   65378 2214.507 1.76e-05 ***
-# Storage                     1    184     184    6.222   0.0881 .  
-# Scion                       6   1286     214    7.261   0.0661 .  
-# Cankers                     1     28      28    0.940   0.4039    
-# Site:Storage                2    620     310   10.501   0.0442 *  
-# Site:Scion                 12   4421     368   12.479   0.0304 *  
-# Storage:Scion               6    799     133    4.510   0.1220    
-# Site:Cankers                2    417     209    7.063   0.0733 .  
-# Storage:Cankers             1      1       1    0.020   0.8973    
-# Scion:Cankers               6   1869     311   10.550   0.0399 *  
-# Site:Storage:Scion         12   2827     236    7.979   0.0567 .  
-# Site:Storage:Cankers        2    289     145    4.899   0.1135    
-# Site:Scion:Cankers         11   3070     279    9.453   0.0450 *  
-# Storage:Scion:Cankers       6   2166     361   12.230   0.0325 *  
-# Site:Storage:Scion:Cankers  6    993     166    5.608   0.0927 .  
-# Residuals                   3     89      30                      
+#                 Df Sum Sq Mean Sq F value Pr(>F)    
+# Site             2 130756   65378 277.199 <2e-16 ***
+# Storage          1    184     184   0.779  0.383    
+# Scion            6   1286     214   0.909  0.498    
+# Cankers          1     28      28   0.118  0.733    
+# Site:Storage     2    620     310   1.314  0.280    
+# Site:Scion      12   4421     368   1.562  0.143    
+# Storage:Scion    6    799     133   0.565  0.756    
+# Site:Cankers     2    417     209   0.884  0.421    
+# Storage:Cankers  1      1       1   0.002  0.961    
+# Scion:Cankers    6   1869     311   1.321  0.271    
+# Residuals       40   9434     236                   
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC3
-#                            Df Sum Sq Mean Sq F value Pr(>F)  
-# Site                        2   2270    1135   1.680 0.3240  
-# Storage                     1     62      62   0.091 0.7823  
-# Scion                       6  14682    2447   3.621 0.1591  
-# Cankers                     1    298     298   0.441 0.5541  
-# Site:Storage                2  14440    7220  10.684 0.0432 *
-# Site:Scion                 12  11151     929   1.375 0.4449  
-# Storage:Scion               6   8828    1471   2.177 0.2793  
-# Site:Cankers                2    778     389   0.575 0.6145  
-# Storage:Cankers             1     83      83   0.123 0.7491  
-# Scion:Cankers               6   1727     288   0.426 0.8281  
-# Site:Storage:Scion         12   4292     358   0.529 0.8148  
-# Site:Storage:Cankers        2   5088    2544   3.764 0.1521  
-# Site:Scion:Cankers         11  10672     970   1.436 0.4267  
-# Storage:Scion:Cankers       6   4717     786   1.163 0.4889  
-# Site:Storage:Scion:Cankers  6   5139     857   1.268 0.4574  
-# Residuals                   3   2027     676                 
+#                 Df Sum Sq Mean Sq F value   Pr(>F)    
+# Site             2   2270    1135   1.422 0.253201    
+# Storage          1     62      62   0.077 0.782435    
+# Scion            6  14682    2447   3.065 0.014576 *  
+# Cankers          1    298     298   0.373 0.544625    
+# Site:Storage     2  14440    7220   9.043 0.000575 ***
+# Site:Scion      12  11151     929   1.164 0.340581    
+# Storage:Scion    6   8828    1471   1.843 0.115171    
+# Site:Cankers     2    778     389   0.487 0.618093    
+# Storage:Cankers  1     83      83   0.104 0.748775    
+# Scion:Cankers    6   1727     288   0.360 0.899475    
+# Residuals       40  31935     798                     
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC4
-#                            Df Sum Sq Mean Sq F value Pr(>F)  
-# Site                        2   5865  2932.6   6.691 0.0784 .
-# Storage                     1    448   448.0   1.022 0.3864  
-# Scion                       6   2902   483.6   1.103 0.5085  
-# Cankers                     1    281   280.5   0.640 0.4822  
-# Site:Storage                2    450   224.8   0.513 0.6433  
-# Site:Scion                 12  14005  1167.1   2.663 0.2277  
-# Storage:Scion               6   2035   339.2   0.774 0.6401  
-# Site:Cankers                2   2264  1132.1   2.583 0.2227  
-# Storage:Cankers             1     58    58.5   0.133 0.7391  
-# Scion:Cankers               6   2137   356.2   0.813 0.6223  
-# Site:Storage:Scion         12   8112   676.0   1.543 0.4011  
-# Site:Storage:Cankers        2    269   134.6   0.307 0.7562  
-# Site:Scion:Cankers         11   2759   250.8   0.572 0.7849  
-# Storage:Scion:Cankers       6   2148   358.1   0.817 0.6204  
-# Site:Storage:Scion:Cankers  6   4172   695.4   1.587 0.3782  
-# Residuals                   3   1315   438.3                 
+#                 Df Sum Sq Mean Sq F value  Pr(>F)   
+# Site             2   5865  2932.6   6.248 0.00435 **
+# Storage          1    448   448.0   0.955 0.33444   
+# Scion            6   2902   483.6   1.030 0.42010   
+# Cankers          1    281   280.5   0.598 0.44401   
+# Site:Storage     2    450   224.8   0.479 0.62296   
+# Site:Scion      12  14005  1167.1   2.486 0.01542 * 
+# Storage:Scion    6   2035   339.2   0.723 0.63384   
+# Site:Cankers     2   2264  1132.1   2.412 0.10257   
+# Storage:Cankers  1     58    58.5   0.125 0.72596   
+# Scion:Cankers    6   2137   356.2   0.759 0.60643   
+# Residuals       40  18776   469.4                   
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC5
-#                            Df Sum Sq Mean Sq F value  Pr(>F)   
-# Site                        2     41      21   0.318 0.74941   
-# Storage                     1   4073    4073  62.779 0.00419 **
-# Scion                       6   1313     219   3.373 0.17293   
-# Cankers                     1    890     890  13.723 0.03417 * 
-# Site:Storage                2   4717    2359  36.357 0.00789 **
-# Site:Scion                 12   2365     197   3.037 0.19563   
-# Storage:Scion               6   1980     330   5.087 0.10495   
-# Site:Cankers                2   2037    1019  15.703 0.02575 * 
-# Storage:Cankers             1    414     414   6.380 0.08574 . 
-# Scion:Cankers               6   1135     189   2.916 0.20418   
-# Site:Storage:Scion         12   5358     446   6.882 0.06928 . 
-# Site:Storage:Cankers        2    251     126   1.938 0.28818   
-# Site:Scion:Cankers         11   3890     354   5.451 0.09459 . 
-# Storage:Scion:Cankers       6   2219     370   5.700 0.09078 . 
-# Site:Storage:Scion:Cankers  6   4577     763  11.759 0.03430 * 
-# Residuals                   3    195      65                   
+#                 Df Sum Sq Mean Sq F value  Pr(>F)   
+# Site             2     41      21   0.050 0.95124   
+# Storage          1   4073    4073   9.880 0.00314 **
+# Scion            6   1313     219   0.531 0.78148   
+# Cankers          1    890     890   2.160 0.14950   
+# Site:Storage     2   4717    2359   5.722 0.00653 **
+# Site:Scion      12   2365     197   0.478 0.91582   
+# Storage:Scion    6   1980     330   0.801 0.57530   
+# Site:Cankers     2   2037    1019   2.471 0.09729 . 
+# Storage:Cankers  1    414     414   1.004 0.32238   
+# Scion:Cankers    6   1135     189   0.459 0.83430   
+# Residuals       40  16490     412                   
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC6
-#                            Df Sum Sq Mean Sq F value Pr(>F)
-# Site                        2     11     5.7   0.009  0.991
-# Storage                     1   1229  1228.9   1.943  0.258
-# Scion                       6   4637   772.9   1.222  0.471
-# Cankers                     1      2     1.9   0.003  0.960
-# Site:Storage                2   1209   604.3   0.955  0.478
-# Site:Scion                 12   2261   188.4   0.298  0.945
-# Storage:Scion               6   2793   465.6   0.736  0.658
-# Site:Cankers                2     23    11.4   0.018  0.982
-# Storage:Cankers             1     50    50.4   0.080  0.796
-# Scion:Cankers               6   1665   277.4   0.439  0.821
-# Site:Storage:Scion         12   2062   171.9   0.272  0.957
-# Site:Storage:Cankers        2    810   405.2   0.640  0.587
-# Site:Scion:Cankers         11   3476   316.0   0.500  0.828
-# Storage:Scion:Cankers       6   1011   168.5   0.266  0.921
-# Site:Storage:Scion:Cankers  6    984   163.9   0.259  0.925
-# Residuals                   3   1898   632.6               
+#                 Df Sum Sq Mean Sq F value Pr(>F)  
+# Site             2     11     5.7   0.022 0.9779  
+# Storage          1   1229  1228.9   4.800 0.0343 *
+# Scion            6   4637   772.9   3.019 0.0157 *
+# Cankers          1      2     1.9   0.007 0.9323  
+# Site:Storage     2   1209   604.3   2.360 0.1074  
+# Site:Scion      12   2261   188.4   0.736 0.7085  
+# Storage:Scion    6   2793   465.6   1.818 0.1200  
+# Site:Cankers     2     23    11.4   0.044 0.9565  
+# Storage:Cankers  1     50    50.4   0.197 0.6596  
+# Scion:Cankers    6   1665   277.4   1.084 0.3886  
+# Residuals       40  10241   256.0                 
+# ---
+# Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC7
-#                            Df Sum Sq Mean Sq F value Pr(>F)
-# Site                        2    223   111.3   0.452  0.674
-# Storage                     1    212   211.5   0.859  0.422
-# Scion                       6   2014   335.6   1.363  0.431
-# Cankers                     1      1     0.5   0.002  0.965
-# Site:Storage                2   1415   707.6   2.873  0.201
-# Site:Scion                 12   1909   159.1   0.646  0.747
-# Storage:Scion               6    925   154.2   0.626  0.714
-# Site:Cankers                2    302   150.8   0.612  0.598
-# Storage:Cankers             1    245   245.0   0.995  0.392
-# Scion:Cankers               6   1695   282.4   1.147  0.494
-# Site:Storage:Scion         12   1728   144.0   0.584  0.782
-# Site:Storage:Cankers        2    916   458.0   1.859  0.298
-# Site:Scion:Cankers         11   4162   378.4   1.536  0.401
-# Storage:Scion:Cankers       6   1188   198.0   0.804  0.626
-# Site:Storage:Scion:Cankers  6   1232   205.3   0.834  0.613
-# Residuals                   3    739   246.3               
+#                 Df Sum Sq Mean Sq F value Pr(>F)  
+# Site             2    223   111.3   0.447 0.6429  
+# Storage          1    212   211.5   0.849 0.3623  
+# Scion            6   2014   335.6   1.347 0.2594  
+# Cankers          1      1     0.5   0.002 0.9629  
+# Site:Storage     2   1415   707.6   2.840 0.0702 .
+# Site:Scion      12   1909   159.1   0.639 0.7966  
+# Storage:Scion    6    925   154.2   0.619 0.7138  
+# Site:Cankers     2    302   150.8   0.606 0.5507  
+# Storage:Cankers  1    245   245.0   0.984 0.3273  
+# Scion:Cankers    6   1695   282.4   1.134 0.3607  
+# Residuals       40   9964   249.1                 
+# ---
+# Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC8
-#                            Df Sum Sq Mean Sq F value Pr(>F)
-# Site                        2  148.0    74.0   0.252  0.792
-# Storage                     1  501.2   501.2   1.704  0.283
-# Scion                       6  722.1   120.3   0.409  0.838
-# Cankers                     1   15.5    15.5   0.053  0.833
-# Site:Storage                2  252.9   126.4   0.430  0.685
-# Site:Scion                 12 1393.4   116.1   0.395  0.894
-# Storage:Scion               6 1717.8   286.3   0.974  0.555
-# Site:Cankers                2 2187.7  1093.8   3.719  0.154
-# Storage:Cankers             1   91.6    91.6   0.312  0.616
-# Scion:Cankers               6 1213.7   202.3   0.688  0.682
-# Site:Storage:Scion         12 3122.2   260.2   0.885  0.624
-# Site:Storage:Cankers        2  728.1   364.1   1.238  0.406
-# Site:Scion:Cankers         11 3089.9   280.9   0.955  0.590
-# Storage:Scion:Cankers       6 1158.5   193.1   0.657  0.698
-# Site:Storage:Scion:Cankers  6 1758.3   293.0   0.996  0.547
-# Residuals                   3  882.3   294.1               
+#                 Df Sum Sq Mean Sq F value Pr(>F)  
+# Site             2    148    74.0   0.276 0.7605  
+# Storage          1    501   501.2   1.867 0.1795  
+# Scion            6    722   120.3   0.448 0.8419  
+# Cankers          1     15    15.5   0.058 0.8116  
+# Site:Storage     2    253   126.4   0.471 0.6279  
+# Site:Scion      12   1393   116.1   0.433 0.9405  
+# Storage:Scion    6   1718   286.3   1.066 0.3986  
+# Site:Cankers     2   2188  1093.8   4.074 0.0245 *
+# Storage:Cankers  1     92    91.6   0.341 0.5624  
+# Scion:Cankers    6   1214   202.3   0.753 0.6105  
+# Residuals       40  10739   268.5                 
+# ---
+# Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC9
-#                            Df Sum Sq Mean Sq F value Pr(>F)  
-# Site                        2    320   160.2   0.604 0.6022  
-# Storage                     1    160   159.6   0.601 0.4946  
-# Scion                       6    777   129.5   0.488 0.7914  
-# Cankers                     1     68    67.8   0.256 0.6480  
-# Site:Storage                2   3731  1865.5   7.028 0.0738 .
-# Site:Scion                 12   2017   168.1   0.633 0.7542  
-# Storage:Scion               6    889   148.1   0.558 0.7514  
-# Site:Cankers                2     96    48.0   0.181 0.8430  
-# Storage:Cankers             1    153   153.4   0.578 0.5025  
-# Scion:Cankers               6    268    44.6   0.168 0.9687  
-# Site:Storage:Scion         12   1404   117.0   0.441 0.8673  
-# Site:Storage:Cankers        2   1400   700.0   2.637 0.2183  
-# Site:Scion:Cankers         11   3204   291.2   1.097 0.5331  
-# Storage:Scion:Cankers       6    478    79.7   0.300 0.9021  
-# Site:Storage:Scion:Cankers  6    824   137.4   0.518 0.7742  
-# Residuals                   3    796   265.4                 
+#                 Df Sum Sq Mean Sq F value   Pr(>F)    
+# Site             2    320   160.2   0.790 0.460583    
+# Storage          1    160   159.6   0.787 0.380175    
+# Scion            6    777   129.5   0.639 0.698140    
+# Cankers          1     68    67.8   0.335 0.566178    
+# Site:Storage     2   3731  1865.5   9.205 0.000514 ***
+# Site:Scion      12   2017   168.1   0.829 0.620440    
+# Storage:Scion    6    889   148.1   0.731 0.627587    
+# Site:Cankers     2     96    48.0   0.237 0.790182    
+# Storage:Cankers  1    153   153.4   0.757 0.389537    
+# Scion:Cankers    6    268    44.6   0.220 0.968101    
+# Residuals       40   8106   202.7                     
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC10
-#                            Df Sum Sq Mean Sq F value Pr(>F)  
-# Site                        2  110.9    55.5   0.355 0.7274  
-# Storage                     1  256.1   256.1   1.638 0.2906  
-# Scion                       6  914.6   152.4   0.975 0.5548  
-# Cankers                     1  272.0   272.0   1.739 0.2788  
-# Site:Storage                2 2172.0  1086.0   6.945 0.0749 .
-# Site:Scion                 12 2323.1   193.6   1.238 0.4864  
-# Storage:Scion               6 1874.9   312.5   1.998 0.3044  
-# Site:Cankers                2   70.3    35.2   0.225 0.8110  
-# Storage:Cankers             1   26.7    26.7   0.171 0.7072  
-# Scion:Cankers               6 1104.3   184.0   1.177 0.4846  
-# Site:Storage:Scion         12 2572.0   214.3   1.371 0.4461  
-# Site:Storage:Cankers        2  641.3   320.6   2.051 0.2746  
-# Site:Scion:Cankers         11 1546.9   140.6   0.899 0.6142  
-# Storage:Scion:Cankers       6  638.8   106.5   0.681 0.6855  
-# Site:Storage:Scion:Cankers  6  775.2   129.2   0.826 0.6163  
-# Residuals                   3  469.1   156.4                 
+#                 Df Sum Sq Mean Sq F value  Pr(>F)   
+# Site             2    111    55.5   0.334 0.71811   
+# Storage          1    256   256.1   1.542 0.22152   
+# Scion            6    915   152.4   0.918 0.49231   
+# Cankers          1    272   272.0   1.638 0.20801   
+# Site:Storage     2   2172  1086.0   6.539 0.00349 **
+# Site:Scion      12   2323   193.6   1.166 0.33939   
+# Storage:Scion    6   1875   312.5   1.881 0.10794   
+# Site:Cankers     2     70    35.2   0.212 0.81010   
+# Storage:Cankers  1     27    26.7   0.161 0.69061   
+# Scion:Cankers    6   1104   184.0   1.108 0.37476   
+# Residuals       40   6643   166.1                   
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
@@ -7928,131 +7399,141 @@ pcs_factors_tidy[
    <td style="text-align:left;"> PC1 </td>
    <td style="text-align:left;"> Site </td>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 215.475473 </td>
-   <td style="text-align:right;"> 0.0005748 </td>
-   <td style="text-align:right;"> 83.1218441 </td>
+   <td style="text-align:right;"> 202.509822 </td>
+   <td style="text-align:right;"> 0.0000000 </td>
+   <td style="text-align:right;"> 83.121844 </td>
    <td style="text-align:right;"> 18.6 </td>
    <td style="text-align:right;"> 15.4606630 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> PC1 </td>
+   <td style="text-align:left;"> Site:Storage </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 3.285046 </td>
+   <td style="text-align:right;"> 0.0477593 </td>
+   <td style="text-align:right;"> 1.348375 </td>
+   <td style="text-align:right;"> 18.6 </td>
+   <td style="text-align:right;"> 0.2507977 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC2 </td>
    <td style="text-align:left;"> Site </td>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 2214.506642 </td>
-   <td style="text-align:right;"> 0.0000176 </td>
-   <td style="text-align:right;"> 87.2788600 </td>
+   <td style="text-align:right;"> 277.199470 </td>
+   <td style="text-align:right;"> 0.0000000 </td>
+   <td style="text-align:right;"> 87.278860 </td>
    <td style="text-align:right;"> 12.7 </td>
    <td style="text-align:right;"> 11.0844152 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> PC2 </td>
-   <td style="text-align:left;"> Site:Storage </td>
-   <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 10.500962 </td>
-   <td style="text-align:right;"> 0.0441889 </td>
-   <td style="text-align:right;"> 0.4138673 </td>
-   <td style="text-align:right;"> 12.7 </td>
-   <td style="text-align:right;"> 0.0525612 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> PC2 </td>
-   <td style="text-align:left;"> Site:Scion </td>
-   <td style="text-align:right;"> 12 </td>
-   <td style="text-align:right;"> 12.479285 </td>
-   <td style="text-align:right;"> 0.0304367 </td>
-   <td style="text-align:right;"> 2.9510258 </td>
-   <td style="text-align:right;"> 12.7 </td>
-   <td style="text-align:right;"> 0.3747803 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> PC2 </td>
-   <td style="text-align:left;"> Scion:Cankers </td>
+   <td style="text-align:left;"> PC3 </td>
+   <td style="text-align:left;"> Scion </td>
    <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 10.549689 </td>
-   <td style="text-align:right;"> 0.0398625 </td>
-   <td style="text-align:right;"> 1.2473634 </td>
-   <td style="text-align:right;"> 12.7 </td>
-   <td style="text-align:right;"> 0.1584151 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> PC2 </td>
-   <td style="text-align:left;"> Site:Scion:Cankers </td>
-   <td style="text-align:right;"> 11 </td>
-   <td style="text-align:right;"> 9.452666 </td>
-   <td style="text-align:right;"> 0.0450402 </td>
-   <td style="text-align:right;"> 2.0490336 </td>
-   <td style="text-align:right;"> 12.7 </td>
-   <td style="text-align:right;"> 0.2602273 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> PC2 </td>
-   <td style="text-align:left;"> Storage:Scion:Cankers </td>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 12.229776 </td>
-   <td style="text-align:right;"> 0.0324740 </td>
-   <td style="text-align:right;"> 1.4460118 </td>
-   <td style="text-align:right;"> 12.7 </td>
-   <td style="text-align:right;"> 0.1836435 </td>
+   <td style="text-align:right;"> 3.064928 </td>
+   <td style="text-align:right;"> 0.0145764 </td>
+   <td style="text-align:right;"> 17.021901 </td>
+   <td style="text-align:right;"> 7.1 </td>
+   <td style="text-align:right;"> 1.2085550 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC3 </td>
    <td style="text-align:left;"> Site:Storage </td>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 10.683578 </td>
-   <td style="text-align:right;"> 0.0431991 </td>
-   <td style="text-align:right;"> 16.7409620 </td>
+   <td style="text-align:right;"> 9.043026 </td>
+   <td style="text-align:right;"> 0.0005751 </td>
+   <td style="text-align:right;"> 16.740962 </td>
    <td style="text-align:right;"> 7.1 </td>
    <td style="text-align:right;"> 1.1886083 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> PC4 </td>
+   <td style="text-align:left;"> Site </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 6.247708 </td>
+   <td style="text-align:right;"> 0.0043528 </td>
+   <td style="text-align:right;"> 11.916259 </td>
+   <td style="text-align:right;"> 4.0 </td>
+   <td style="text-align:right;"> 0.4766504 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> PC4 </td>
+   <td style="text-align:left;"> Site:Scion </td>
+   <td style="text-align:right;"> 12 </td>
+   <td style="text-align:right;"> 2.486364 </td>
+   <td style="text-align:right;"> 0.0154216 </td>
+   <td style="text-align:right;"> 28.453463 </td>
+   <td style="text-align:right;"> 4.0 </td>
+   <td style="text-align:right;"> 1.1381385 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC5 </td>
    <td style="text-align:left;"> Storage </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 62.778740 </td>
-   <td style="text-align:right;"> 0.0041917 </td>
-   <td style="text-align:right;"> 11.4869663 </td>
+   <td style="text-align:right;"> 9.879594 </td>
+   <td style="text-align:right;"> 0.0031445 </td>
+   <td style="text-align:right;"> 11.486966 </td>
    <td style="text-align:right;"> 3.0 </td>
    <td style="text-align:right;"> 0.3446090 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC5 </td>
-   <td style="text-align:left;"> Cankers </td>
-   <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 13.723187 </td>
-   <td style="text-align:right;"> 0.0341717 </td>
-   <td style="text-align:right;"> 2.5110058 </td>
-   <td style="text-align:right;"> 3.0 </td>
-   <td style="text-align:right;"> 0.0753302 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> PC5 </td>
    <td style="text-align:left;"> Site:Storage </td>
    <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 36.356874 </td>
-   <td style="text-align:right;"> 0.0078871 </td>
-   <td style="text-align:right;"> 13.3048285 </td>
+   <td style="text-align:right;"> 5.721542 </td>
+   <td style="text-align:right;"> 0.0065262 </td>
+   <td style="text-align:right;"> 13.304828 </td>
    <td style="text-align:right;"> 3.0 </td>
    <td style="text-align:right;"> 0.3991449 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> PC5 </td>
-   <td style="text-align:left;"> Site:Cankers </td>
-   <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 15.703276 </td>
-   <td style="text-align:right;"> 0.0257466 </td>
-   <td style="text-align:right;"> 5.7466269 </td>
-   <td style="text-align:right;"> 3.0 </td>
-   <td style="text-align:right;"> 0.1723988 </td>
+   <td style="text-align:left;"> PC6 </td>
+   <td style="text-align:left;"> Storage </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 4.799872 </td>
+   <td style="text-align:right;"> 0.0343487 </td>
+   <td style="text-align:right;"> 5.094552 </td>
+   <td style="text-align:right;"> 2.1 </td>
+   <td style="text-align:right;"> 0.1069856 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> PC5 </td>
-   <td style="text-align:left;"> Site:Storage:Scion:Cankers </td>
+   <td style="text-align:left;"> PC6 </td>
+   <td style="text-align:left;"> Scion </td>
    <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 11.759193 </td>
-   <td style="text-align:right;"> 0.0342983 </td>
-   <td style="text-align:right;"> 12.9098595 </td>
-   <td style="text-align:right;"> 3.0 </td>
-   <td style="text-align:right;"> 0.3872958 </td>
+   <td style="text-align:right;"> 3.018893 </td>
+   <td style="text-align:right;"> 0.0157452 </td>
+   <td style="text-align:right;"> 19.225394 </td>
+   <td style="text-align:right;"> 2.1 </td>
+   <td style="text-align:right;"> 0.4037333 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> PC8 </td>
+   <td style="text-align:left;"> Site:Cankers </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 4.074157 </td>
+   <td style="text-align:right;"> 0.0245233 </td>
+   <td style="text-align:right;"> 11.524320 </td>
+   <td style="text-align:right;"> 1.6 </td>
+   <td style="text-align:right;"> 0.1843891 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> PC9 </td>
+   <td style="text-align:left;"> Site:Storage </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 9.205488 </td>
+   <td style="text-align:right;"> 0.0005144 </td>
+   <td style="text-align:right;"> 22.497108 </td>
+   <td style="text-align:right;"> 1.3 </td>
+   <td style="text-align:right;"> 0.2924624 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> PC10 </td>
+   <td style="text-align:left;"> Site:Storage </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 6.539066 </td>
+   <td style="text-align:right;"> 0.0034905 </td>
+   <td style="text-align:right;"> 13.774722 </td>
+   <td style="text-align:right;"> 1.3 </td>
+   <td style="text-align:right;"> 0.1790714 </td>
   </tr>
 </tbody>
 </table>
@@ -8090,11 +7571,6 @@ pcs_factors %>%
    <th style="text-align:left;"> Site:Cankers </th>
    <th style="text-align:left;"> Storage:Cankers </th>
    <th style="text-align:left;"> Scion:Cankers </th>
-   <th style="text-align:left;"> Site:Storage:Scion </th>
-   <th style="text-align:left;"> Site:Storage:Cankers </th>
-   <th style="text-align:left;"> Site:Scion:Cankers </th>
-   <th style="text-align:left;"> Storage:Scion:Cankers </th>
-   <th style="text-align:left;"> Site:Storage:Scion:Cankers </th>
    <th style="text-align:left;"> Residuals </th>
   </tr>
  </thead>
@@ -8106,18 +7582,13 @@ pcs_factors %>%
    <td style="text-align:left;"> &lt;0.01 </td>
    <td style="text-align:left;"> 0.31 </td>
    <td style="text-align:left;"> &lt;0.01 </td>
-   <td style="text-align:left;"> 0.25 </td>
+   <td style="text-align:left;"> 0.25* </td>
    <td style="text-align:left;"> 0.67 </td>
    <td style="text-align:left;"> 0.13 </td>
    <td style="text-align:left;"> 0.05 </td>
    <td style="text-align:left;"> 0.01 </td>
    <td style="text-align:left;"> 0.19 </td>
-   <td style="text-align:left;"> 0.54 </td>
-   <td style="text-align:left;"> 0.02 </td>
-   <td style="text-align:left;"> 0.39 </td>
-   <td style="text-align:left;"> 0.21 </td>
-   <td style="text-align:left;"> 0.26 </td>
-   <td style="text-align:left;"> 0.11 </td>
+   <td style="text-align:left;"> 1.53 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC2 </td>
@@ -8126,58 +7597,43 @@ pcs_factors %>%
    <td style="text-align:left;"> 0.02 </td>
    <td style="text-align:left;"> 0.11 </td>
    <td style="text-align:left;"> &lt;0.01 </td>
-   <td style="text-align:left;"> 0.05* </td>
-   <td style="text-align:left;"> 0.37* </td>
+   <td style="text-align:left;"> 0.05 </td>
+   <td style="text-align:left;"> 0.37 </td>
    <td style="text-align:left;"> 0.07 </td>
    <td style="text-align:left;"> 0.04 </td>
    <td style="text-align:left;"> &lt;0.01 </td>
-   <td style="text-align:left;"> 0.16* </td>
-   <td style="text-align:left;"> 0.24 </td>
-   <td style="text-align:left;"> 0.02 </td>
-   <td style="text-align:left;"> 0.26* </td>
-   <td style="text-align:left;"> 0.18* </td>
-   <td style="text-align:left;"> 0.08 </td>
-   <td style="text-align:left;"> &lt;0.01 </td>
+   <td style="text-align:left;"> 0.16 </td>
+   <td style="text-align:left;"> 0.8 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC3 </td>
    <td style="text-align:right;"> 7.1 </td>
    <td style="text-align:left;"> 0.19 </td>
    <td style="text-align:left;"> &lt;0.01 </td>
-   <td style="text-align:left;"> 1.21 </td>
+   <td style="text-align:left;"> 1.21* </td>
    <td style="text-align:left;"> 0.02 </td>
-   <td style="text-align:left;"> 1.19* </td>
+   <td style="text-align:left;"> 1.19*** </td>
    <td style="text-align:left;"> 0.92 </td>
    <td style="text-align:left;"> 0.73 </td>
    <td style="text-align:left;"> 0.06 </td>
    <td style="text-align:left;"> &lt;0.01 </td>
    <td style="text-align:left;"> 0.14 </td>
-   <td style="text-align:left;"> 0.35 </td>
-   <td style="text-align:left;"> 0.42 </td>
-   <td style="text-align:left;"> 0.88 </td>
-   <td style="text-align:left;"> 0.39 </td>
-   <td style="text-align:left;"> 0.42 </td>
-   <td style="text-align:left;"> 0.17 </td>
+   <td style="text-align:left;"> 2.63 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC4 </td>
    <td style="text-align:right;"> 4.0 </td>
-   <td style="text-align:left;"> 0.48 </td>
+   <td style="text-align:left;"> 0.48** </td>
    <td style="text-align:left;"> 0.04 </td>
    <td style="text-align:left;"> 0.24 </td>
    <td style="text-align:left;"> 0.02 </td>
    <td style="text-align:left;"> 0.04 </td>
-   <td style="text-align:left;"> 1.14 </td>
+   <td style="text-align:left;"> 1.14* </td>
    <td style="text-align:left;"> 0.17 </td>
    <td style="text-align:left;"> 0.18 </td>
    <td style="text-align:left;"> &lt;0.01 </td>
    <td style="text-align:left;"> 0.17 </td>
-   <td style="text-align:left;"> 0.66 </td>
-   <td style="text-align:left;"> 0.02 </td>
-   <td style="text-align:left;"> 0.22 </td>
-   <td style="text-align:left;"> 0.17 </td>
-   <td style="text-align:left;"> 0.34 </td>
-   <td style="text-align:left;"> 0.11 </td>
+   <td style="text-align:left;"> 1.53 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC5 </td>
@@ -8185,26 +7641,21 @@ pcs_factors %>%
    <td style="text-align:left;"> &lt;0.01 </td>
    <td style="text-align:left;"> 0.34** </td>
    <td style="text-align:left;"> 0.11 </td>
-   <td style="text-align:left;"> 0.08* </td>
+   <td style="text-align:left;"> 0.08 </td>
    <td style="text-align:left;"> 0.4** </td>
    <td style="text-align:left;"> 0.2 </td>
    <td style="text-align:left;"> 0.17 </td>
-   <td style="text-align:left;"> 0.17* </td>
+   <td style="text-align:left;"> 0.17 </td>
    <td style="text-align:left;"> 0.04 </td>
    <td style="text-align:left;"> 0.1 </td>
-   <td style="text-align:left;"> 0.45 </td>
-   <td style="text-align:left;"> 0.02 </td>
-   <td style="text-align:left;"> 0.33 </td>
-   <td style="text-align:left;"> 0.19 </td>
-   <td style="text-align:left;"> 0.39* </td>
-   <td style="text-align:left;"> 0.02 </td>
+   <td style="text-align:left;"> 1.4 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC6 </td>
    <td style="text-align:right;"> 2.1 </td>
    <td style="text-align:left;"> &lt;0.01 </td>
-   <td style="text-align:left;"> 0.11 </td>
-   <td style="text-align:left;"> 0.4 </td>
+   <td style="text-align:left;"> 0.11* </td>
+   <td style="text-align:left;"> 0.4* </td>
    <td style="text-align:left;"> &lt;0.01 </td>
    <td style="text-align:left;"> 0.11 </td>
    <td style="text-align:left;"> 0.2 </td>
@@ -8212,12 +7663,7 @@ pcs_factors %>%
    <td style="text-align:left;"> &lt;0.01 </td>
    <td style="text-align:left;"> &lt;0.01 </td>
    <td style="text-align:left;"> 0.14 </td>
-   <td style="text-align:left;"> 0.18 </td>
-   <td style="text-align:left;"> 0.07 </td>
-   <td style="text-align:left;"> 0.3 </td>
-   <td style="text-align:left;"> 0.09 </td>
-   <td style="text-align:left;"> 0.09 </td>
-   <td style="text-align:left;"> 0.17 </td>
+   <td style="text-align:left;"> 0.89 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC7 </td>
@@ -8232,12 +7678,7 @@ pcs_factors %>%
    <td style="text-align:left;"> 0.03 </td>
    <td style="text-align:left;"> 0.02 </td>
    <td style="text-align:left;"> 0.16 </td>
-   <td style="text-align:left;"> 0.16 </td>
-   <td style="text-align:left;"> 0.09 </td>
-   <td style="text-align:left;"> 0.4 </td>
-   <td style="text-align:left;"> 0.11 </td>
-   <td style="text-align:left;"> 0.12 </td>
-   <td style="text-align:left;"> 0.07 </td>
+   <td style="text-align:left;"> 0.95 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC8 </td>
@@ -8249,15 +7690,10 @@ pcs_factors %>%
    <td style="text-align:left;"> 0.02 </td>
    <td style="text-align:left;"> 0.12 </td>
    <td style="text-align:left;"> 0.14 </td>
-   <td style="text-align:left;"> 0.18 </td>
+   <td style="text-align:left;"> 0.18* </td>
    <td style="text-align:left;"> &lt;0.01 </td>
    <td style="text-align:left;"> 0.1 </td>
-   <td style="text-align:left;"> 0.26 </td>
-   <td style="text-align:left;"> 0.06 </td>
-   <td style="text-align:left;"> 0.26 </td>
-   <td style="text-align:left;"> 0.1 </td>
-   <td style="text-align:left;"> 0.15 </td>
-   <td style="text-align:left;"> 0.07 </td>
+   <td style="text-align:left;"> 0.91 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC9 </td>
@@ -8266,18 +7702,13 @@ pcs_factors %>%
    <td style="text-align:left;"> 0.01 </td>
    <td style="text-align:left;"> 0.06 </td>
    <td style="text-align:left;"> &lt;0.01 </td>
-   <td style="text-align:left;"> 0.29 </td>
+   <td style="text-align:left;"> 0.29*** </td>
    <td style="text-align:left;"> 0.16 </td>
    <td style="text-align:left;"> 0.07 </td>
    <td style="text-align:left;"> &lt;0.01 </td>
    <td style="text-align:left;"> 0.01 </td>
    <td style="text-align:left;"> 0.02 </td>
-   <td style="text-align:left;"> 0.11 </td>
-   <td style="text-align:left;"> 0.11 </td>
-   <td style="text-align:left;"> 0.25 </td>
-   <td style="text-align:left;"> 0.04 </td>
-   <td style="text-align:left;"> 0.06 </td>
-   <td style="text-align:left;"> 0.06 </td>
+   <td style="text-align:left;"> 0.64 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC10 </td>
@@ -8286,18 +7717,13 @@ pcs_factors %>%
    <td style="text-align:left;"> 0.02 </td>
    <td style="text-align:left;"> 0.08 </td>
    <td style="text-align:left;"> 0.02 </td>
-   <td style="text-align:left;"> 0.18 </td>
+   <td style="text-align:left;"> 0.18** </td>
    <td style="text-align:left;"> 0.19 </td>
    <td style="text-align:left;"> 0.15 </td>
    <td style="text-align:left;"> &lt;0.01 </td>
    <td style="text-align:left;"> &lt;0.01 </td>
    <td style="text-align:left;"> 0.09 </td>
-   <td style="text-align:left;"> 0.21 </td>
-   <td style="text-align:left;"> 0.05 </td>
-   <td style="text-align:left;"> 0.13 </td>
-   <td style="text-align:left;"> 0.05 </td>
-   <td style="text-align:left;"> 0.06 </td>
-   <td style="text-align:left;"> 0.04 </td>
+   <td style="text-align:left;"> 0.55 </td>
   </tr>
 </tbody>
 </table>
@@ -8858,7 +8284,15 @@ asv_canker_anova_summary <- asv_canker_anova_results %>%
     "Site:Storage:Scion:Cankers_var", "Site:Storage:Scion:Cankers_p.adj"
   ) %>%
   data.table()
+```
 
+```
+# Error in `select()`:
+# ! Can't select columns that don't exist.
+# ✖ Column `Site:Storage:Scion_var` doesn't exist.
+```
+
+``` r
 cat(
   "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
   "Cankers:", nrow(asv_canker_anova_results[Factor == "Cankers" & p.adj < 0.05, ]), "\n",
@@ -8875,7 +8309,7 @@ cat(
 ```
 # Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values 
 # 
-#  Cankers: 860 
+#  Cankers: 31 
 #  Total ASVs: 5883
 ```
 
@@ -8894,23 +8328,39 @@ cat(
 ```
 
 ```
-# 958 ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Cankers and its interactions.
+# 143 ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Cankers and its interactions.
 ```
 
 ``` r
 # Summary of ASVs with significant Scion effect
 bac_significant_canker <- asv_canker_anova_summary[ASV %in% canker_asvs$ASV, ] %>%
   arrange(desc(Abundance))
+```
 
+```
+# Error in eval(expr, envir, enclos): object 'asv_canker_anova_summary' not found
+```
+
+``` r
 kbl(bac_significant_canker) %>%
   kable_styling("striped") %>%
   save_kable("tables/BAC_asvs_design_canker.html")
+```
 
+```
+# Error in eval(expr, envir, enclos): object 'bac_significant_canker' not found
+```
+
+``` r
 asv_canker_anova_summary %>%
   arrange(desc(Abundance)) %>%
   kbl() %>%
   kable_styling("striped") %>%
   save_kable("tables/BAC_asvs_design_canker_all.html")
+```
+
+```
+# Error in eval(expr, envir, enclos): object 'asv_canker_anova_summary' not found
 ```
 
 ## Canker counts

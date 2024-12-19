@@ -71,7 +71,7 @@ HEIGHT <- 9
 FACTORS <-            c("Site", "Storage", "Scion")
 DESIGN <-             y ~ Site + Storage + Scion
 FULL_DESIGN <-        y ~ Site * Storage * Scion
-design_with_canker <- y ~ Site * Storage * Scion * Cankers
+design_with_canker <- y ~ Site + Storage + Scion + Cankers + Site:Storage + Site:Scion + Storage:Scion + Cankers:Site + Cankers:Storage + Cankers:Scion
 canker_design <-      "Cankers ~ Site * Storage * Scion"
 
 # Control
