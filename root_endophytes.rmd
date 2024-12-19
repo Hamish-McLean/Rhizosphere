@@ -396,7 +396,7 @@ cankers <- canker_data %>%
     Storage = first(Storage),
     Scion = first(Scion),
     Cankers_sum = sum(total_cankers),
-    Cankers = mean(total_cankers, na.rm = TRUE)
+    Cankers = round(mean(total_cankers, na.rm = TRUE))
   ) %>% 
   column_to_rownames("code")
 
