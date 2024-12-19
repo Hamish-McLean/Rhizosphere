@@ -6,7 +6,7 @@ output:
     cache: false
 ---
 
-Built with R version  4.3.1.
+Built with R version  4.3.3.
 
 
 
@@ -15,7 +15,7 @@ Built with R version  4.3.1.
 ### Libraries
 
 
-```r
+``` r
 # library(car)
 library(cowplot)
 library(data.table)
@@ -29,7 +29,7 @@ library(kableExtra)
 library(knitr)
 library(lmPerm)
 library(MASS)
-library(matrixcalc)
+# library(matrixcalc)
 library(pscl)
 # library(rcompanion)
 library(seqinr)
@@ -44,7 +44,7 @@ library(metafuncs)
 ### Functions and constants
 
 
-```r
+``` r
 ALPHA <-        0.1   # DESeq2 alpha value
 OTUFILTER <-    0.01  # Remove OTUs with proportion of total reads below value
 READFILTER <-   0.05  # Remove samples with read sum < sample_median_reads*READFILTER 
@@ -65,15 +65,15 @@ HEIGHT <- 9
 FACTORS <-            c("Site", "Storage", "Scion")
 DESIGN <-             y ~ Site + Storage + Scion
 FULL_DESIGN <-        y ~ Site * Storage * Scion
-design_with_canker <- y ~ Site * Storage * Scion * Cankers_avg
+design_with_canker <- y ~ Site * Storage * Scion * Cankers
 canker_design <-      "Cankers ~ Site * Storage * Scion"
 
 # Control
-ASV_MODELS <- FALSE # Toggle for ASV model cells
+ASV_MODELS <- TRUE # Toggle for ASV model cells
 ```
 
 
-```r
+``` r
 # colour blind palette
 cbPalette <- c(
   "#000000", "#E69F00", "#56B4E9", "#009E73", 
@@ -98,7 +98,7 @@ Site names are encoded as follows according to previous work:
 - WWF (Pluckley) -> 3
 
 
-```r
+``` r
 metadata <- "sample_metadata.txt"
 
 # Load data
@@ -147,7 +147,7 @@ rownames(ubiome_BAC$countData) <- gsub("OTU", "ASV", rownames(ubiome_BAC$countDa
 ### Global removals
 
 
-```r
+``` r
 # Sample "A2-7" removed due to missampling.
 ubiome_BAC$colData <- ubiome_BAC$colData[!rownames(ubiome_BAC$colData) %in% "HMA27", ]
 ubiome_BAC$countData <- ubiome_BAC$countData[, !colnames(ubiome_BAC$countData) %in% "HMA27"]
@@ -164,7 +164,7 @@ Chloroplast and Eukaryote  taxa are filtered from bacterial `taxData`.
 Corresponding ASVs are removed from `countData`.
 
 
-```r
+``` r
 # Filter Plant, Chloroplast, and Eukaryote ASVs
 
 # Fungi: Plantae ASVs
@@ -175,7 +175,7 @@ cat("Fungi:", length(grep("Plantae", ubiome_FUN$taxData$kingdom)), "Plantae ASVs
 # Fungi: 0 Plantae ASVs
 ```
 
-```r
+``` r
 # Bacteria: Chloroplast (Streptophyta) and Eukaryote ASVs
 cat(
   "Bacteria:", length(grep("Streptophyta", ubiome_BAC$taxData$genus)), "Chloroplast ASVs;", 
@@ -187,7 +187,7 @@ cat(
 # Bacteria: 37 Chloroplast ASVs; 188 Eukaryote ASVs
 ```
 
-```r
+``` r
 # Filter Chloroplast and Eukaryote
 filt <- rownames(
   ubiome_BAC$taxData[
@@ -205,7 +205,7 @@ cat("Bacteria: removing", length(filt), "ASVs")
 # Bacteria: removing 198 ASVs
 ```
 
-```r
+``` r
 ubiome_BAC$taxData <- ubiome_BAC$taxData[!rownames(ubiome_BAC$taxData) %in% filt, ]
 ubiome_BAC$countData <- ubiome_BAC$countData[!rownames(ubiome_BAC$countData) %in% filt, ]
 ```
@@ -217,7 +217,7 @@ Plot rarefaction curves.
 Remove samples with read count below 5 % of median.
 
 
-```r
+``` r
 invisible(mapply(assign, names(ubiome_BAC), ubiome_BAC, MoreArgs = list(envir = globalenv())))
 rare_bac <- gfunc(countData, colData, "Bacteria")
 # rare_bac <- gfunc(as.data.frame(counts(dds)), as.data.frame(colData(dds)), "Bacteria ZOTU")
@@ -253,7 +253,7 @@ cat("Bacteria: ",sum(filt),"sample(s) removed\n")
 Number of ASVs which account for 50 %, 80 %, and 99 % of total reads.
 
 
-```r
+``` r
 asv_propotions <- function(countData, proportion){
   i <- sum(countData)
   y <- rowSums(countData)
@@ -312,7 +312,7 @@ top_asvs %>%
 Remove ASVs with read count below 1 % of total reads.
 
 
-```r
+``` r
 # Fungi
 keep <- filter_otus(ubiome_FUN$countData, OTUFILTER)
 cat(
@@ -330,7 +330,7 @@ cat(
 #   - remaining ASVs: 995
 ```
 
-```r
+``` r
 ubiome_FUN$taxData <- ubiome_FUN$taxData[rownames(ubiome_FUN$taxData) %in% keep,]
 ubiome_FUN$countData <- ubiome_FUN$countData[rownames(ubiome_FUN$countData) %in% keep,]
 
@@ -351,7 +351,7 @@ cat(
 #   - remaining ASVs: 5883
 ```
 
-```r
+``` r
 ubiome_BAC$taxData <- ubiome_BAC$taxData[rownames(ubiome_BAC$taxData) %in% keep,]
 ubiome_BAC$countData <- ubiome_BAC$countData[rownames(ubiome_BAC$countData) %in% keep,]
 ```
@@ -364,7 +364,7 @@ Copy number is calculated per mg of root sample from the qPCR data.
 ### Prepare qPCR abundance data
 
 
-```r
+``` r
 abundance <- fread("mean_abundance.csv")
 
 # Add sample ID to abundance data
@@ -395,7 +395,7 @@ ubiome_BAC$colData <- merge(
 
 #### Remove outliers
 
-```r
+``` r
 # Detect outliers with std > threshold from the median
 detect_outliers <- function(x, val, threshold, na.rm = TRUE) {
   med_x <- median(x[[val]], na.rm = na.rm)
@@ -427,7 +427,7 @@ Sample A1-3 is removed from the fungal data due to abnormally high copy number.
 Canker count data for sampled trees only.
 
 
-```r
+``` r
 # Canker count data for sampled trees only
 
 canker_data <- fread("canker_data.csv", select = c(1:5, 7:34))
@@ -470,7 +470,7 @@ canker_data %>% group_by(code) %>% summarise(n = n()) %>% filter(n != 2)
 # # ℹ 2 variables: code <chr>, n <int>
 ```
 
-```r
+``` r
 # Sum of total cankers for each pair of trees with matching code
 cankers <- canker_data %>% 
   group_by(code) %>% 
@@ -478,22 +478,22 @@ cankers <- canker_data %>%
     Site = first(Site),
     Storage = first(Storage),
     Scion = first(Scion),
-    Cankers = sum(total_cankers),
-    Cankers_avg = mean(total_cankers, na.rm = TRUE)
+    Cankers_sum = sum(total_cankers),
+    Cankers = mean(total_cankers, na.rm = TRUE)
   ) %>% 
   column_to_rownames("code")
 
 # Add total canker count to colData for both FUN and BAC
 ubiome_FUN$colData <- merge(
   ubiome_FUN$colData, 
-  cankers[, c("Cankers", "Cankers_avg")], 
+  cankers[, c("Cankers", "Cankers_sum")],, 
   by = 0,
   all.x = TRUE
 ) %>% column_to_rownames("Row.names")
 
 ubiome_BAC$colData <- merge(
   ubiome_BAC$colData, 
-  cankers[, c("Cankers", "Cankers_avg")], 
+  cankers[, c("Cankers", "Cankers_sum")], 
   by = 0,
   all.x = T
 ) %>% column_to_rownames("Row.names")
@@ -502,7 +502,7 @@ ubiome_BAC$colData <- merge(
 Summary stats
 
 
-```r
+``` r
 # png("figures/hist.png", width = 800, height = 600)
 # hist(cankers$Cankers, breaks = 20, main = "Total canker count", xlab = "Total canker count")
 # dev.off()
@@ -518,7 +518,7 @@ cankers_hist
 
 ![](root_endophytes_files/figure-html/canker summary-1.png)<!-- -->
 
-```r
+``` r
 ggsave(filename = "cankers_hist.png", plot = cankers_hist, path = "figures/")
 
 cankers_box <- ggboxplot(
@@ -532,7 +532,7 @@ cankers_box
 
 ![](root_endophytes_files/figure-html/canker summary-2.png)<!-- -->
 
-```r
+``` r
 ggsave(filename = "cankers_box.png", plot = cankers_box, path = "figures/")
 
 cankers_bar <- ggbarplot(
@@ -546,14 +546,14 @@ cankers_bar
 
 ![](root_endophytes_files/figure-html/canker summary-3.png)<!-- -->
 
-```r
+``` r
 ggsave(filename = "cankers_bar.png", plot = cankers_bar, path = "figures/")
 ```
 
 GLM
 
 
-```r
+``` r
 # Effect of Site, Scion, and Storage on canker count
 
 # Formula
@@ -569,7 +569,7 @@ plot(canker_lm)
 
 ![](root_endophytes_files/figure-html/canker GLM-1.png)<!-- -->
 
-```r
+``` r
 # Residual checking
 res <- resid(canker_lm, type = "pearson")
 
@@ -581,7 +581,7 @@ poisson_plot <- plot(simulateResiduals(canker_poisson), title = "Poisson model")
 
 ![](root_endophytes_files/figure-html/canker GLM-2.png)<!-- -->
 
-```r
+``` r
 # Model overdispersed
 
 # Negative binomial model
@@ -594,7 +594,7 @@ plot(sim, title = "Negative binomial model")
 
 ![](root_endophytes_files/figure-html/canker GLM-3.png)<!-- -->
 
-```r
+``` r
 # canker_model_plots <- ggarrange(lm_plot, poisson_plot, negbin_plot, ncol = 3)
 
 # ggsave(filename = "canker_model_plots.png", plot = canker_model_plots, path = "figures/")
@@ -612,11 +612,11 @@ testZeroInflation(sim)
 # 	simulation under H0 = fitted model
 # 
 # data:  simulationOutput
-# ratioObsSim = 0.77399, p-value = 0.76
+# ratioObsSim = 0.60314, p-value = 0.08
 # alternative hypothesis: two.sided
 ```
 
-```r
+``` r
 nagelkerke(canker_negbin)
 ```
 
@@ -624,7 +624,7 @@ nagelkerke(canker_negbin)
 # Error in nagelkerke(canker_negbin): could not find function "nagelkerke"
 ```
 
-```r
+``` r
 # Model good fit
 
 canker_anova <- anova(canker_negbin, test = "Chisq") %>% data.frame()
@@ -635,24 +635,15 @@ canker_anova
 ```
 
 ```
-#                    Df     Deviance Resid..Df Resid..Dev     Pr..Chi.
-# NULL               NA           NA        73  314.98196           NA
-# Site                2 118.75744595        71  196.22452 1.629852e-26
-# Storage             1   0.02066259        70  196.20386 8.857019e-01
-# Scion               6  24.29375368        64  171.91010 4.611042e-04
-# Site:Storage        2  28.86115598        62  143.04895 5.406044e-07
-# Site:Scion         12  31.65405909        50  111.39489 1.564383e-03
-# Storage:Scion       6   7.40666778        44  103.98822 2.848693e-01
-# Site:Storage:Scion 11  26.62949240        33   77.35873 5.225415e-03
-#                       Perc..Dev
-# NULL                         NA
-# Site               37.702935303
-# Storage             0.006559927
-# Scion               7.712744377
-# Site:Storage        9.162796386
-# Site:Scion         10.049483066
-# Storage:Scion       2.351457744
-# Site:Storage:Scion  8.454291190
+#                    Df   Deviance Resid..Df Resid..Dev     Pr..Chi.  Perc..Dev
+# NULL               NA         NA        79  308.70768           NA         NA
+# Site                2 108.732607        77  199.97508 2.449144e-24 35.2218663
+# Storage             1   2.013466        76  197.96161 1.559088e-01  0.6522241
+# Scion               6  13.580311        70  184.38130 3.469231e-02  4.3990843
+# Site:Storage        2  33.610808        68  150.77049 5.029280e-08 10.8875838
+# Site:Scion         12  28.449202        56  122.32129 4.752789e-03  9.2155795
+# Storage:Scion       6   8.870999        50  113.45029 1.809641e-01  2.8735918
+# Site:Storage:Scion 12  26.545910        38   86.90438 8.977251e-03  8.5990441
 ```
 
 ![](root_endophytes_files/figure-html/canker GLM-4.png)<!-- -->
@@ -660,7 +651,7 @@ canker_anova
 ## Create DESeq objects
 
 
-```r
+``` r
 # Make sure countData and colData still match, if they do, create DESeq objects, if not throw error
 if(identical(colnames(ubiome_FUN$countData), rownames(ubiome_FUN$colData))) {
   # Create DESeq object
@@ -675,7 +666,7 @@ if(identical(colnames(ubiome_FUN$countData), rownames(ubiome_FUN$colData))) {
 # [1] "FUN DESeq object created"
 ```
 
-```r
+``` r
 if(identical(colnames(ubiome_BAC$countData), rownames(ubiome_BAC$colData))) {
   # Create DESeq object
   ubiome_BAC$dds <- ubiom_to_des(ubiome_BAC)
@@ -696,7 +687,7 @@ Absolute abundance normalisation using DESeq2 size factors.
 Values are centred around the mean of the copy number.
 
 
-```r
+``` r
 # Normalise count data using DESeq2 size factors
 
 ubiome_FUN$dds$sizeFactor <- ubiome_FUN$dds$copy_number / mean(ubiome_FUN$dds$copy_number)
@@ -704,7 +695,7 @@ ubiome_BAC$dds$sizeFactor <- ubiome_BAC$dds$copy_number / mean(ubiome_BAC$dds$co
 ```
 
 
-```r
+``` r
 # Save environment
 save.image("data_loaded.RData")
 ```
@@ -714,7 +705,7 @@ save.image("data_loaded.RData")
 <!-- #=============================================================================== -->
 
 
-```r
+``` r
 # Unpack fungi data
 invisible(mapply(assign, names(ubiome_FUN), ubiome_FUN, MoreArgs = list(envir = globalenv())))
 ```
@@ -724,7 +715,7 @@ invisible(mapply(assign, names(ubiome_FUN), ubiome_FUN, MoreArgs = list(envir = 
 ### Read and sample summary
 
 
-```r
+``` r
 cat(
   "Raw reads", "\n\n",
   "Total raw reads:\t\t", sum(countData), "\n",
@@ -745,7 +736,7 @@ cat(
 #  Min raw reads per sample:	 38472
 ```
 
-```r
+``` r
 #colSums(countData)
 
 nct <- counts(dds, normalize = T)
@@ -768,14 +759,14 @@ cat("Normalised reads", "\n\n",
 #  Max normalised reads per sample:	 881441.3
 ```
 
-```r
+``` r
 #round(colSums(counts(dds,normalize = T)),0)
 ```
 
 ### ASV summary 
 
 
-```r
+``` r
 cat(
   "Total ASVs:\t\t", nrow(taxData),"\n\n",
   "Raw reads per ASV summary", "\n\n",
@@ -797,7 +788,7 @@ cat(
 #  ASV raw Max reads:		 714327
 ```
 
-```r
+``` r
 cat(
   "Normalised reads per ASV summary","\n\n",
   "Mean normalised reads per ASV:\t\t", mean(rowSums(nct)),"\n",
@@ -816,7 +807,7 @@ cat(
 #  ASV normalised Max reads:		 1509459
 ```
 
-```r
+``` r
 y <- rowSums(nct)
 y <- y[order(y, decreasing = T)]
 # proportion
@@ -829,7 +820,7 @@ cat("Top " ,TOPOTU, "ASVs:\n")
 # Top  10 ASVs:
 ```
 
-```r
+``` r
 data.frame(
   counts = y[1:TOPOTU], 
   proportion = xy[1:TOPOTU], 
@@ -919,7 +910,7 @@ data.frame(
 Proportion of ASVs which can be assigned (with the given confidence) at each taxonomic rank.
 
 
-```r
+``` r
 # Proportion of ASVs which can be assigned (with the given confidence) at each taxonomic rank
 
 tx <- copy(taxData)
@@ -996,7 +987,7 @@ data.table(
 % of reads which can be assigned to each taxonomic ranks
 
 
-```r
+``` r
 tx <-taxData[rownames(dds),]
 nc <- counts(dds, normalize = T)
 ac <- sum(nc)
@@ -1071,7 +1062,7 @@ data.table(
 Plots of proportion of normalised reads assigned to members of phylum and class.
 
 
-```r
+``` r
 dat <- list(as.data.frame(counts(dds, normalize = T)), taxData, as.data.frame(colData(dds)))
 
 design <- c("Site", "Storage")
@@ -1096,7 +1087,7 @@ fun_phylum_plot
 
 ![](root_endophytes_files/figure-html/FUN taxonomy plots-1.png)<!-- -->
 
-```r
+``` r
 md2 <- getSummedTaxa(dat, conf = TAXCONF, design = design, taxon = "class", cutoff = 0.1)
 
 md2[, Site := factor(Site, levels = c(1, 2, 3))]
@@ -1122,7 +1113,7 @@ Plot copy number for each sample grouped by site, Scion, and Storage.
 Test the effect of site, Scion, and Storage on copy number using ANOVA.
 
 
-```r
+``` r
 # abundance_plot <- ggplot(
 #   data = as.data.frame(colData(dds)), 
 #   aes(x = site, y = log_copy_number, colour = Scion, shape = Storage)
@@ -1145,7 +1136,7 @@ fun_abundance_box
 
 ![](root_endophytes_files/figure-html/FUN size-1.png)<!-- -->
 
-```r
+``` r
 fun_abundance_bar <- ggbarplot(
   data = as.data.frame(colData(dds)), x = "Storage", y = "log_copy_number", 
   fill = "Site", add = "mean_se", 
@@ -1163,7 +1154,7 @@ fun_abundance_bar
 
 ![](root_endophytes_files/figure-html/FUN size-2.png)<!-- -->
 
-```r
+``` r
 # Formula for ANOVA
 formula <- update(FULL_DESIGN, log_copy_number ~ .)
 
@@ -1176,7 +1167,7 @@ plot(abundance_anova)
 
 ![](root_endophytes_files/figure-html/FUN size-3.png)<!-- -->
 
-```r
+``` r
 png("figures/fun_abundance_norm.png", width = 800, height = 600)
 par(mfrow = c(2, 2))
 plot(abundance_anova)
@@ -1188,7 +1179,7 @@ dev.off()
 #   2
 ```
 
-```r
+``` r
 # Results
 summary(abundance_anova)
 ```
@@ -1207,7 +1198,7 @@ summary(abundance_anova)
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-```r
+``` r
 abundance_results <- abundance_anova %>% summary() %>% unclass() %>% data.frame()
 total_variance <- sum(abundance_results$Sum.Sq)
 abundance_results$Perc.Var <- abundance_results$Sum.Sq / total_variance * 100
@@ -1308,41 +1299,41 @@ abundance_results %>%
 ### Communtiy size with canker count
 
 
-```r
+``` r
 cat("Model formula: ", deparse(update(design_with_canker, log_copy_number ~ .)), "\n")
 ```
 
 ```
-# Model formula:  log_copy_number ~ Site + Storage + Scion + Cankers_avg + Site:Storage +      Site:Scion + Storage:Scion + Site:Cankers_avg + Storage:Cankers_avg +      Scion:Cankers_avg + Site:Storage:Scion + Site:Storage:Cankers_avg +      Site:Scion:Cankers_avg + Storage:Scion:Cankers_avg + Site:Storage:Scion:Cankers_avg
+# Model formula:  log_copy_number ~ Site + Storage + Scion + Cankers + Site:Storage +      Site:Scion + Storage:Scion + Site:Cankers + Storage:Cankers +      Scion:Cankers + Site:Storage:Scion + Site:Storage:Cankers +      Site:Scion:Cankers + Storage:Scion:Cankers + Site:Storage:Scion:Cankers
 ```
 
-```r
+``` r
 abundance_canker_anova <- aov(update(design_with_canker, log_copy_number ~ .), data = as.data.frame(colData(dds)))
 summary(abundance_canker_anova)
 ```
 
 ```
-#                                Df Sum Sq Mean Sq F value Pr(>F)
-# Site                            2 0.7796  0.3898   2.936  0.254
-# Storage                         1 0.5749  0.5749   4.330  0.173
-# Scion                           6 0.5805  0.0968   0.729  0.677
-# Cankers_avg                     1 0.0535  0.0535   0.403  0.590
-# Site:Storage                    2 0.6134  0.3067   2.310  0.302
-# Site:Scion                     12 1.0006  0.0834   0.628  0.756
-# Storage:Scion                   6 0.4149  0.0692   0.521  0.773
-# Site:Cankers_avg                2 0.1945  0.0972   0.732  0.577
-# Storage:Cankers_avg             1 0.0068  0.0068   0.052  0.841
-# Scion:Cankers_avg               6 0.3071  0.0512   0.386  0.846
-# Site:Storage:Scion             12 1.6865  0.1405   1.058  0.584
-# Site:Storage:Cankers_avg        2 0.0154  0.0077   0.058  0.945
-# Site:Scion:Cankers_avg         11 0.9994  0.0909   0.684  0.726
-# Storage:Scion:Cankers_avg       6 0.3317  0.0553   0.416  0.829
-# Site:Storage:Scion:Cankers_avg  6 0.6835  0.1139   0.858  0.626
-# Residuals                       2 0.2656  0.1328               
+#                            Df Sum Sq Mean Sq F value Pr(>F)
+# Site                        2 0.7796  0.3898   2.936  0.254
+# Storage                     1 0.5749  0.5749   4.330  0.173
+# Scion                       6 0.5805  0.0968   0.729  0.677
+# Cankers                     1 0.0535  0.0535   0.403  0.590
+# Site:Storage                2 0.6134  0.3067   2.310  0.302
+# Site:Scion                 12 1.0006  0.0834   0.628  0.756
+# Storage:Scion               6 0.4149  0.0692   0.521  0.773
+# Site:Cankers                2 0.1945  0.0972   0.732  0.577
+# Storage:Cankers             1 0.0068  0.0068   0.052  0.841
+# Scion:Cankers               6 0.3071  0.0512   0.386  0.846
+# Site:Storage:Scion         12 1.6865  0.1405   1.058  0.584
+# Site:Storage:Cankers        2 0.0154  0.0077   0.058  0.945
+# Site:Scion:Cankers         11 0.9994  0.0909   0.684  0.726
+# Storage:Scion:Cankers       6 0.3317  0.0553   0.416  0.829
+# Site:Storage:Scion:Cankers  6 0.6835  0.1139   0.858  0.626
+# Residuals                   2 0.2656  0.1328               
 # 2 observations deleted due to missingness
 ```
 
-```r
+``` r
 abundance_canker_results <- abundance_canker_anova %>% summary() %>% unclass() %>% data.frame()
 total_variance <- sum(abundance_canker_results$Sum.Sq)
 abundance_canker_results$Perc.Var <- abundance_canker_results$Sum.Sq / total_variance * 100
@@ -1392,7 +1383,7 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 6.8230675 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Cankers_avg </td>
+   <td style="text-align:left;"> Cankers </td>
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 0.0535216 </td>
    <td style="text-align:right;"> 0.0535216 </td>
@@ -1428,7 +1419,7 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 4.8770035 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Cankers </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 0.1944529 </td>
    <td style="text-align:right;"> 0.0972265 </td>
@@ -1437,7 +1428,7 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 2.2855342 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Storage:Cankers_avg </td>
+   <td style="text-align:left;"> Storage:Cankers </td>
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 0.0068485 </td>
    <td style="text-align:right;"> 0.0068485 </td>
@@ -1446,7 +1437,7 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 0.0804946 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 0.3071454 </td>
    <td style="text-align:right;"> 0.0511909 </td>
@@ -1464,7 +1455,7 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 19.8223513 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Storage:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Storage:Cankers </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 0.0154115 </td>
    <td style="text-align:right;"> 0.0077057 </td>
@@ -1473,7 +1464,7 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 0.1811415 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Scion:Cankers </td>
    <td style="text-align:right;"> 11 </td>
    <td style="text-align:right;"> 0.9993989 </td>
    <td style="text-align:right;"> 0.0908544 </td>
@@ -1482,7 +1473,7 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 11.7465981 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Storage:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Storage:Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 0.3316671 </td>
    <td style="text-align:right;"> 0.0552778 </td>
@@ -1491,7 +1482,7 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 3.8983032 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Storage:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Storage:Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 0.6835050 </td>
    <td style="text-align:right;"> 0.1139175 </td>
@@ -1516,7 +1507,7 @@ abundance_canker_results %>%
 ### Alpha diversity plot
 
 
-```r
+``` r
 # plot alpha diversity - plot_alpha will convert normalised abundances to integer values
 
 fun_alpha_plot <- plot_alpha(
@@ -1535,19 +1526,19 @@ ggsave(
 ```
 
 ```
-# Error in `geom_errorbar()` at metafuncs/R/plot_phylo.R:243:11:
+# Error in `geom_errorbar()`:
 # ! Problem while computing aesthetics.
 # ℹ Error occurred in the 2nd layer.
 # Caused by error:
 # ! object 'se' not found
 ```
 
-```r
+``` r
 fun_alpha_plot
 ```
 
 ```
-# Error in `geom_errorbar()` at metafuncs/R/plot_phylo.R:243:11:
+# Error in `geom_errorbar()`:
 # ! Problem while computing aesthetics.
 # ℹ Error occurred in the 2nd layer.
 # Caused by error:
@@ -1557,7 +1548,7 @@ fun_alpha_plot
 ### Permutation based anova on α-diversity index ranks
 
 
-```r
+``` r
 # get the diversity index data
 all_alpha_ord <- plot_alpha(
   counts(dds, normalize = F),
@@ -1586,26 +1577,26 @@ result <- aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T)
 # [1] "Settings:  sequential SS "
 ```
 
-```r
+``` r
 summary(result)
 ```
 
 ```
 # Component 1 :
-#                    Df R Sum Sq R Mean Sq Iter Pr(Prob)    
-# Site                2  11554.5    5777.2 5000  < 2e-16 ***
-# Storage             1   2056.4    2056.4 2597  0.03735 *  
-# Site:Storage        2    812.4     406.2  483  0.32298    
-# Scion               6    875.7     145.9  218  0.98165    
-# Site:Scion         12   2817.7     234.8  644  0.98758    
-# Storage:Scion       6   2046.5     341.1  925  0.83676    
-# Site:Storage:Scion 12   2735.3     227.9  529  0.99811    
-# Residuals          39  21381.5     548.2                  
+#                    Df R Sum Sq R Mean Sq Iter Pr(Prob)   
+# Site                2  11554.5    5777.2 5000  0.00280 **
+# Storage             1   2056.4    2056.4 1681  0.05651 . 
+# Site:Storage        2    812.4     406.2  406  0.38177   
+# Scion               6    875.7     145.9  269  1.00000   
+# Site:Scion         12   2817.7     234.8  563  0.97513   
+# Storage:Scion       6   2046.5     341.1  843  0.71056   
+# Site:Storage:Scion 12   2735.3     227.9 1577  0.91883   
+# Residuals          39  21381.5     548.2                 
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-```r
+``` r
 df <- result %>% summary() %>% unclass() %>% data.frame()
 total_variance <- sum(df$R.Sum.Sq)
 df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
@@ -1633,7 +1624,7 @@ df %>%
    <td style="text-align:right;"> 11554.4684 </td>
    <td style="text-align:right;"> 5777.2342 </td>
    <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0000000 </td>
+   <td style="text-align:right;"> 0.0028000 </td>
    <td style="text-align:right;"> 26.094102 </td>
   </tr>
   <tr>
@@ -1641,8 +1632,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 2056.4245 </td>
    <td style="text-align:right;"> 2056.4245 </td>
-   <td style="text-align:right;"> 2597 </td>
-   <td style="text-align:right;"> 0.0373508 </td>
+   <td style="text-align:right;"> 1681 </td>
+   <td style="text-align:right;"> 0.0565140 </td>
    <td style="text-align:right;"> 4.644139 </td>
   </tr>
   <tr>
@@ -1650,8 +1641,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 812.3544 </td>
    <td style="text-align:right;"> 406.1772 </td>
-   <td style="text-align:right;"> 483 </td>
-   <td style="text-align:right;"> 0.3229814 </td>
+   <td style="text-align:right;"> 406 </td>
+   <td style="text-align:right;"> 0.3817734 </td>
    <td style="text-align:right;"> 1.834585 </td>
   </tr>
   <tr>
@@ -1659,8 +1650,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 875.6763 </td>
    <td style="text-align:right;"> 145.9461 </td>
-   <td style="text-align:right;"> 218 </td>
-   <td style="text-align:right;"> 0.9816514 </td>
+   <td style="text-align:right;"> 269 </td>
+   <td style="text-align:right;"> 1.0000000 </td>
    <td style="text-align:right;"> 1.977589 </td>
   </tr>
   <tr>
@@ -1668,8 +1659,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2817.7201 </td>
    <td style="text-align:right;"> 234.8100 </td>
-   <td style="text-align:right;"> 644 </td>
-   <td style="text-align:right;"> 0.9875776 </td>
+   <td style="text-align:right;"> 563 </td>
+   <td style="text-align:right;"> 0.9751332 </td>
    <td style="text-align:right;"> 6.363415 </td>
   </tr>
   <tr>
@@ -1677,8 +1668,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2046.5389 </td>
    <td style="text-align:right;"> 341.0898 </td>
-   <td style="text-align:right;"> 925 </td>
-   <td style="text-align:right;"> 0.8367568 </td>
+   <td style="text-align:right;"> 843 </td>
+   <td style="text-align:right;"> 0.7105575 </td>
    <td style="text-align:right;"> 4.621813 </td>
   </tr>
   <tr>
@@ -1686,8 +1677,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2735.3173 </td>
    <td style="text-align:right;"> 227.9431 </td>
-   <td style="text-align:right;"> 529 </td>
-   <td style="text-align:right;"> 0.9981096 </td>
+   <td style="text-align:right;"> 1577 </td>
+   <td style="text-align:right;"> 0.9188332 </td>
    <td style="text-align:right;"> 6.177320 </td>
   </tr>
   <tr>
@@ -1702,7 +1693,7 @@ df %>%
 </tbody>
 </table>
 
-```r
+``` r
 # Shannon
 
 setkey(all_alpha_ord, shannon)
@@ -1714,7 +1705,7 @@ result <- aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T)
 # [1] "Settings:  sequential SS "
 ```
 
-```r
+``` r
 summary(result)
 ```
 
@@ -1722,18 +1713,18 @@ summary(result)
 # Component 1 :
 #                    Df R Sum Sq R Mean Sq Iter Pr(Prob)    
 # Site                2  12291.8    6145.9 5000  < 2e-16 ***
-# Storage             1   1077.6    1077.6  574  0.14983    
-# Site:Storage        2   2320.4    1160.2 2320  0.09224 .  
-# Scion               6    570.9      95.1  149  1.00000    
-# Site:Scion         12   3082.1     256.8  372  0.90054    
-# Storage:Scion       6   2730.6     455.1 2347  0.35407    
-# Site:Storage:Scion 12   5311.1     442.6 2322  0.40956    
+# Storage             1   1077.6    1077.6  373  0.21180    
+# Site:Storage        2   2320.4    1160.2 2044  0.05822 .  
+# Scion               6    570.9      95.1   75  0.97333    
+# Site:Scion         12   3082.1     256.8 1026  0.77680    
+# Storage:Scion       6   2730.6     455.1 4482  0.38242    
+# Site:Storage:Scion 12   5311.1     442.6 1128  0.46099    
 # Residuals          39  16895.5     433.2                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-```r
+``` r
 df <- result %>% summary() %>% unclass() %>% data.frame()
 total_variance <- sum(df$R.Sum.Sq)
 df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
@@ -1769,8 +1760,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 1077.5749 </td>
    <td style="text-align:right;"> 1077.57489 </td>
-   <td style="text-align:right;"> 574 </td>
-   <td style="text-align:right;"> 0.1498258 </td>
+   <td style="text-align:right;"> 373 </td>
+   <td style="text-align:right;"> 0.2117962 </td>
    <td style="text-align:right;"> 2.433548 </td>
   </tr>
   <tr>
@@ -1778,8 +1769,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 2320.4220 </td>
    <td style="text-align:right;"> 1160.21098 </td>
-   <td style="text-align:right;"> 2320 </td>
-   <td style="text-align:right;"> 0.0922414 </td>
+   <td style="text-align:right;"> 2044 </td>
+   <td style="text-align:right;"> 0.0582192 </td>
    <td style="text-align:right;"> 5.240339 </td>
   </tr>
   <tr>
@@ -1787,8 +1778,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 570.8675 </td>
    <td style="text-align:right;"> 95.14458 </td>
-   <td style="text-align:right;"> 149 </td>
-   <td style="text-align:right;"> 1.0000000 </td>
+   <td style="text-align:right;"> 75 </td>
+   <td style="text-align:right;"> 0.9733333 </td>
    <td style="text-align:right;"> 1.289222 </td>
   </tr>
   <tr>
@@ -1796,8 +1787,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 3082.1462 </td>
    <td style="text-align:right;"> 256.84552 </td>
-   <td style="text-align:right;"> 372 </td>
-   <td style="text-align:right;"> 0.9005376 </td>
+   <td style="text-align:right;"> 1026 </td>
+   <td style="text-align:right;"> 0.7768031 </td>
    <td style="text-align:right;"> 6.960583 </td>
   </tr>
   <tr>
@@ -1805,8 +1796,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2730.6068 </td>
    <td style="text-align:right;"> 455.10114 </td>
-   <td style="text-align:right;"> 2347 </td>
-   <td style="text-align:right;"> 0.3540690 </td>
+   <td style="text-align:right;"> 4482 </td>
+   <td style="text-align:right;"> 0.3824186 </td>
    <td style="text-align:right;"> 6.166682 </td>
   </tr>
   <tr>
@@ -1814,8 +1805,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 5311.1323 </td>
    <td style="text-align:right;"> 442.59435 </td>
-   <td style="text-align:right;"> 2322 </td>
-   <td style="text-align:right;"> 0.4095607 </td>
+   <td style="text-align:right;"> 1128 </td>
+   <td style="text-align:right;"> 0.4609929 </td>
    <td style="text-align:right;"> 11.994427 </td>
   </tr>
   <tr>
@@ -1830,7 +1821,7 @@ df %>%
 </tbody>
 </table>
 
-```r
+``` r
 # Simpson
 
 setkey(all_alpha_ord, simpson)
@@ -1842,7 +1833,7 @@ result <- aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T)
 # [1] "Settings:  sequential SS "
 ```
 
-```r
+``` r
 summary(result)
 ```
 
@@ -1850,18 +1841,18 @@ summary(result)
 # Component 1 :
 #                    Df R Sum Sq R Mean Sq Iter Pr(Prob)    
 # Site                2  12937.5    6468.8 5000  < 2e-16 ***
-# Storage             1    764.2     764.2  336  0.23214    
-# Site:Storage        2   2484.2    1242.1 2705  0.06285 .  
-# Scion               6   1188.1     198.0   91  1.00000    
-# Site:Scion         12   2027.8     169.0  170  1.00000    
-# Storage:Scion       6   2529.6     421.6 1968  0.41209    
-# Site:Storage:Scion 12   5334.6     444.6 1902  0.50158    
+# Storage             1    764.2     764.2  809  0.11001    
+# Site:Storage        2   2484.2    1242.1 2037  0.05106 .  
+# Scion               6   1188.1     198.0  676  0.84320    
+# Site:Scion         12   2027.8     169.0  140  0.99286    
+# Storage:Scion       6   2529.6     421.6 1626  0.47970    
+# Site:Storage:Scion 12   5334.6     444.6 2700  0.40519    
 # Residuals          39  17014.0     436.3                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-```r
+``` r
 df <- result %>% summary() %>% unclass() %>% data.frame()
 total_variance <- sum(df$R.Sum.Sq)
 df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
@@ -1897,8 +1888,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 764.2007 </td>
    <td style="text-align:right;"> 764.2007 </td>
-   <td style="text-align:right;"> 336 </td>
-   <td style="text-align:right;"> 0.2321429 </td>
+   <td style="text-align:right;"> 809 </td>
+   <td style="text-align:right;"> 0.1100124 </td>
    <td style="text-align:right;"> 1.725837 </td>
   </tr>
   <tr>
@@ -1906,8 +1897,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 2484.2454 </td>
    <td style="text-align:right;"> 1242.1227 </td>
-   <td style="text-align:right;"> 2705 </td>
-   <td style="text-align:right;"> 0.0628466 </td>
+   <td style="text-align:right;"> 2037 </td>
+   <td style="text-align:right;"> 0.0510555 </td>
    <td style="text-align:right;"> 5.610310 </td>
   </tr>
   <tr>
@@ -1915,8 +1906,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 1188.0542 </td>
    <td style="text-align:right;"> 198.0090 </td>
-   <td style="text-align:right;"> 91 </td>
-   <td style="text-align:right;"> 1.0000000 </td>
+   <td style="text-align:right;"> 676 </td>
+   <td style="text-align:right;"> 0.8431953 </td>
    <td style="text-align:right;"> 2.683049 </td>
   </tr>
   <tr>
@@ -1924,8 +1915,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2027.7819 </td>
    <td style="text-align:right;"> 168.9818 </td>
-   <td style="text-align:right;"> 170 </td>
-   <td style="text-align:right;"> 1.0000000 </td>
+   <td style="text-align:right;"> 140 </td>
+   <td style="text-align:right;"> 0.9928571 </td>
    <td style="text-align:right;"> 4.579453 </td>
   </tr>
   <tr>
@@ -1933,8 +1924,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2529.5940 </td>
    <td style="text-align:right;"> 421.5990 </td>
-   <td style="text-align:right;"> 1968 </td>
-   <td style="text-align:right;"> 0.4120935 </td>
+   <td style="text-align:right;"> 1626 </td>
+   <td style="text-align:right;"> 0.4797048 </td>
    <td style="text-align:right;"> 5.712724 </td>
   </tr>
   <tr>
@@ -1942,8 +1933,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 5334.6194 </td>
    <td style="text-align:right;"> 444.5516 </td>
-   <td style="text-align:right;"> 1902 </td>
-   <td style="text-align:right;"> 0.5015773 </td>
+   <td style="text-align:right;"> 2700 </td>
+   <td style="text-align:right;"> 0.4051852 </td>
    <td style="text-align:right;"> 12.047469 </td>
   </tr>
   <tr>
@@ -1961,15 +1952,15 @@ df %>%
 #### Permutation based anova on α-diversity index ranks iwth canker lesion counts
 
 
-```r
+``` r
 cat("Model formula: ", deparse(design_with_canker), "\n")
 ```
 
 ```
-# Model formula:  y ~ Site * Storage * Scion * Cankers_avg
+# Model formula:  y ~ Site * Storage * Scion * Cankers
 ```
 
-```r
+``` r
 # Chao1
 
 setkey(all_alpha_ord, S.chao1)
@@ -1981,32 +1972,34 @@ result <- aovp(update(design_with_canker, measure ~ .), all_alpha_ord, seqs = T)
 # [1] "Settings:  sequential SS : numeric variables centered"
 ```
 
-```r
+``` r
 summary(result)
 ```
 
 ```
 # Component 1 :
-#                                Df R Sum Sq R Mean Sq Iter Pr(Prob)
-# Site                            2  10705.9    5353.0 1500   0.1000
-# Storage                         1   2000.3    2000.3  644   0.1351
-# Site:Storage                    2   1102.9     551.5  452   0.3827
-# Scion                           6   1343.8     224.0  577   0.7400
-# Site:Scion                     12   2791.5     232.6  441   0.6735
-# Storage:Scion                   6   2435.1     405.9  435   0.4644
-# Site:Storage:Scion             12   3159.0     263.3  452   0.5420
-# Cankers_avg                     1    415.1     415.1  356   0.2219
-# Site:Cankers_avg                2     20.2      10.1   51   1.0000
-# Storage:Cankers_avg             1   1561.8    1561.8   51   0.6863
-# Site:Storage:Cankers_avg        2   1058.1     529.1  410   0.2634
-# Scion:Cankers_avg               6   1908.3     318.0  321   0.6075
-# Site:Scion:Cankers_avg         11   6842.5     622.0  616   0.4643
-# Storage:Scion:Cankers_avg       6   3845.5     640.9  587   0.5451
-# Site:Storage:Scion:Cankers_avg  6   2415.9     402.7  351   0.4387
-# Residuals                       2   1341.0     670.5
+#                            Df R Sum Sq R Mean Sq Iter Pr(Prob)  
+# Site                        2  10705.9    5353.0 1668  0.07434 .
+# Storage                     1   2000.3    2000.3   69  0.59420  
+# Site:Storage                2   1102.9     551.5  409  0.37653  
+# Scion                       6   1343.8     224.0  309  0.71197  
+# Site:Scion                 12   2791.5     232.6   80  1.00000  
+# Storage:Scion               6   2435.1     405.9  571  0.49737  
+# Site:Storage:Scion         12   3159.0     263.3  398  0.68844  
+# Cankers                     1    415.1     415.1  210  0.32381  
+# Site:Cankers                2     20.2      10.1   51  0.90196  
+# Storage:Cankers             1   1561.8    1561.8  550  0.15455  
+# Site:Storage:Cankers        2   1058.1     529.1  202  0.41584  
+# Scion:Cankers               6   1908.3     318.0  406  0.62562  
+# Site:Scion:Cankers         11   6842.5     622.0  556  0.40468  
+# Storage:Scion:Cankers       6   3845.5     640.9  512  0.37109  
+# Site:Storage:Scion:Cankers  6   2415.9     402.7  183  0.51913  
+# Residuals                   2   1341.0     670.5                
+# ---
+# Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-```r
+``` r
 df <- result %>% summary() %>% unclass() %>% data.frame()
 total_variance <- sum(df$R.Sum.Sq)
 df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
@@ -2033,8 +2026,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 10705.9449 </td>
    <td style="text-align:right;"> 5352.97245 </td>
-   <td style="text-align:right;"> 1500 </td>
-   <td style="text-align:right;"> 0.1000000 </td>
+   <td style="text-align:right;"> 1668 </td>
+   <td style="text-align:right;"> 0.0743405 </td>
    <td style="text-align:right;"> 24.9282204 </td>
   </tr>
   <tr>
@@ -2042,8 +2035,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 2000.3072 </td>
    <td style="text-align:right;"> 2000.30721 </td>
-   <td style="text-align:right;"> 644 </td>
-   <td style="text-align:right;"> 0.1350932 </td>
+   <td style="text-align:right;"> 69 </td>
+   <td style="text-align:right;"> 0.5942029 </td>
    <td style="text-align:right;"> 4.6576084 </td>
   </tr>
   <tr>
@@ -2051,8 +2044,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 1102.9006 </td>
    <td style="text-align:right;"> 551.45030 </td>
-   <td style="text-align:right;"> 452 </td>
-   <td style="text-align:right;"> 0.3827434 </td>
+   <td style="text-align:right;"> 409 </td>
+   <td style="text-align:right;"> 0.3765281 </td>
    <td style="text-align:right;"> 2.5680451 </td>
   </tr>
   <tr>
@@ -2060,8 +2053,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 1343.7982 </td>
    <td style="text-align:right;"> 223.96637 </td>
-   <td style="text-align:right;"> 577 </td>
-   <td style="text-align:right;"> 0.7400347 </td>
+   <td style="text-align:right;"> 309 </td>
+   <td style="text-align:right;"> 0.7119741 </td>
    <td style="text-align:right;"> 3.1289624 </td>
   </tr>
   <tr>
@@ -2069,8 +2062,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2791.4755 </td>
    <td style="text-align:right;"> 232.62296 </td>
-   <td style="text-align:right;"> 441 </td>
-   <td style="text-align:right;"> 0.6734694 </td>
+   <td style="text-align:right;"> 80 </td>
+   <td style="text-align:right;"> 1.0000000 </td>
    <td style="text-align:right;"> 6.4998015 </td>
   </tr>
   <tr>
@@ -2078,8 +2071,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2435.1465 </td>
    <td style="text-align:right;"> 405.85776 </td>
-   <td style="text-align:right;"> 435 </td>
-   <td style="text-align:right;"> 0.4643678 </td>
+   <td style="text-align:right;"> 571 </td>
+   <td style="text-align:right;"> 0.4973730 </td>
    <td style="text-align:right;"> 5.6701085 </td>
   </tr>
   <tr>
@@ -2087,80 +2080,80 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 3159.0156 </td>
    <td style="text-align:right;"> 263.25130 </td>
-   <td style="text-align:right;"> 452 </td>
-   <td style="text-align:right;"> 0.5420354 </td>
+   <td style="text-align:right;"> 398 </td>
+   <td style="text-align:right;"> 0.6884422 </td>
    <td style="text-align:right;"> 7.3555990 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Cankers_avg </td>
+   <td style="text-align:left;"> Cankers </td>
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 415.1424 </td>
    <td style="text-align:right;"> 415.14239 </td>
-   <td style="text-align:right;"> 356 </td>
-   <td style="text-align:right;"> 0.2219101 </td>
+   <td style="text-align:right;"> 210 </td>
+   <td style="text-align:right;"> 0.3238095 </td>
    <td style="text-align:right;"> 0.9666369 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Cankers </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 20.1605 </td>
    <td style="text-align:right;"> 10.08025 </td>
    <td style="text-align:right;"> 51 </td>
-   <td style="text-align:right;"> 1.0000000 </td>
+   <td style="text-align:right;"> 0.9019608 </td>
    <td style="text-align:right;"> 0.0469426 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Storage:Cankers_avg </td>
+   <td style="text-align:left;"> Storage:Cankers </td>
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 1561.8470 </td>
    <td style="text-align:right;"> 1561.84700 </td>
-   <td style="text-align:right;"> 51 </td>
-   <td style="text-align:right;"> 0.6862745 </td>
+   <td style="text-align:right;"> 550 </td>
+   <td style="text-align:right;"> 0.1545455 </td>
    <td style="text-align:right;"> 3.6366773 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Storage:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Storage:Cankers </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 1058.1441 </td>
    <td style="text-align:right;"> 529.07203 </td>
-   <td style="text-align:right;"> 410 </td>
-   <td style="text-align:right;"> 0.2634146 </td>
+   <td style="text-align:right;"> 202 </td>
+   <td style="text-align:right;"> 0.4158416 </td>
    <td style="text-align:right;"> 2.4638319 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 1908.2741 </td>
    <td style="text-align:right;"> 318.04568 </td>
-   <td style="text-align:right;"> 321 </td>
-   <td style="text-align:right;"> 0.6074766 </td>
+   <td style="text-align:right;"> 406 </td>
+   <td style="text-align:right;"> 0.6256158 </td>
    <td style="text-align:right;"> 4.4433142 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Scion:Cankers </td>
    <td style="text-align:right;"> 11 </td>
    <td style="text-align:right;"> 6842.5059 </td>
    <td style="text-align:right;"> 622.04599 </td>
-   <td style="text-align:right;"> 616 </td>
-   <td style="text-align:right;"> 0.4642857 </td>
+   <td style="text-align:right;"> 556 </td>
+   <td style="text-align:right;"> 0.4046763 </td>
    <td style="text-align:right;"> 15.9324091 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Storage:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Storage:Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 3845.5229 </td>
    <td style="text-align:right;"> 640.92048 </td>
-   <td style="text-align:right;"> 587 </td>
-   <td style="text-align:right;"> 0.5451448 </td>
+   <td style="text-align:right;"> 512 </td>
+   <td style="text-align:right;"> 0.3710938 </td>
    <td style="text-align:right;"> 8.9540945 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Storage:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Storage:Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2415.9032 </td>
    <td style="text-align:right;"> 402.65053 </td>
-   <td style="text-align:right;"> 351 </td>
-   <td style="text-align:right;"> 0.4387464 </td>
+   <td style="text-align:right;"> 183 </td>
+   <td style="text-align:right;"> 0.5191257 </td>
    <td style="text-align:right;"> 5.6253015 </td>
   </tr>
   <tr>
@@ -2175,7 +2168,7 @@ df %>%
 </tbody>
 </table>
 
-```r
+``` r
 # Shannon
 
 setkey(all_alpha_ord, shannon)
@@ -2187,34 +2180,34 @@ result <- aovp(update(design_with_canker, measure ~ .), all_alpha_ord, seqs = T)
 # [1] "Settings:  sequential SS : numeric variables centered"
 ```
 
-```r
+``` r
 summary(result)
 ```
 
 ```
 # Component 1 :
-#                                Df R Sum Sq R Mean Sq Iter Pr(Prob)   
-# Site                            2  13852.6    6926.3 5000  0.00380 **
-# Storage                         1   1251.7    1251.7 2716  0.03571 * 
-# Site:Storage                    2   1768.4     884.2 3981  0.05300 . 
-# Scion                           6    762.0     127.0  541  0.51571   
-# Site:Scion                     12   2630.3     219.2 2022  0.17606   
-# Storage:Scion                   6   2739.4     456.6 3159  0.11301   
-# Site:Storage:Scion             12   5030.0     419.2 5000  0.10940   
-# Cankers_avg                     1      9.8       9.8   51  1.00000   
-# Site:Cankers_avg                2    529.4     264.7  446  0.22197   
-# Storage:Cankers_avg             1    696.9     696.9 1778  0.05343 . 
-# Site:Storage:Cankers_avg        2    155.7      77.9  299  0.25084   
-# Scion:Cankers_avg               6   3388.6     564.8 2727  0.08801 . 
-# Site:Scion:Cankers_avg         11   4309.5     391.8 1240  0.16048   
-# Storage:Scion:Cankers_avg       6   2011.2     335.2 2115  0.16359   
-# Site:Storage:Scion:Cankers_avg  6   4297.9     716.3 5000  0.06500 . 
-# Residuals                       2    102.5      51.3                 
+#                            Df R Sum Sq R Mean Sq Iter Pr(Prob)   
+# Site                        2  13852.6    6926.3 5000  0.00220 **
+# Storage                     1   1251.7    1251.7 3291  0.02978 * 
+# Site:Storage                2   1768.4     884.2 3908  0.05655 . 
+# Scion                       6    762.0     127.0  269  0.61710   
+# Site:Scion                 12   2630.3     219.2 2837  0.17201   
+# Storage:Scion               6   2739.4     456.6 5000  0.07860 . 
+# Site:Storage:Scion         12   5030.0     419.2 5000  0.08040 . 
+# Cankers                     1      9.8       9.8   51  0.86275   
+# Site:Cankers                2    529.4     264.7 1366  0.09883 . 
+# Storage:Cankers             1    696.9     696.9  881  0.10216   
+# Site:Storage:Cankers        2    155.7      77.9   51  0.88235   
+# Scion:Cankers               6   3388.6     564.8 3324  0.10108   
+# Site:Scion:Cankers         11   4309.5     391.8 3593  0.09936 . 
+# Storage:Scion:Cankers       6   2011.2     335.2 2494  0.13352   
+# Site:Storage:Scion:Cankers  6   4297.9     716.3 5000  0.05700 . 
+# Residuals                   2    102.5      51.2                 
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-```r
+``` r
 df <- result %>% summary() %>% unclass() %>% data.frame()
 total_variance <- sum(df$R.Sum.Sq)
 df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
@@ -2242,7 +2235,7 @@ df %>%
    <td style="text-align:right;"> 13852.612808 </td>
    <td style="text-align:right;"> 6926.306404 </td>
    <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0038000 </td>
+   <td style="text-align:right;"> 0.0022000 </td>
    <td style="text-align:right;"> 31.8188282 </td>
   </tr>
   <tr>
@@ -2250,8 +2243,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 1251.719520 </td>
    <td style="text-align:right;"> 1251.719520 </td>
-   <td style="text-align:right;"> 2716 </td>
-   <td style="text-align:right;"> 0.0357143 </td>
+   <td style="text-align:right;"> 3291 </td>
+   <td style="text-align:right;"> 0.0297782 </td>
    <td style="text-align:right;"> 2.8751434 </td>
   </tr>
   <tr>
@@ -2259,8 +2252,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 1768.402487 </td>
    <td style="text-align:right;"> 884.201243 </td>
-   <td style="text-align:right;"> 3981 </td>
-   <td style="text-align:right;"> 0.0530018 </td>
+   <td style="text-align:right;"> 3908 </td>
+   <td style="text-align:right;"> 0.0565507 </td>
    <td style="text-align:right;"> 4.0619409 </td>
   </tr>
   <tr>
@@ -2268,8 +2261,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 761.982295 </td>
    <td style="text-align:right;"> 126.997049 </td>
-   <td style="text-align:right;"> 541 </td>
-   <td style="text-align:right;"> 0.5157116 </td>
+   <td style="text-align:right;"> 269 </td>
+   <td style="text-align:right;"> 0.6171004 </td>
    <td style="text-align:right;"> 1.7502390 </td>
   </tr>
   <tr>
@@ -2277,8 +2270,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2630.335340 </td>
    <td style="text-align:right;"> 219.194612 </td>
-   <td style="text-align:right;"> 2022 </td>
-   <td style="text-align:right;"> 0.1760633 </td>
+   <td style="text-align:right;"> 2837 </td>
+   <td style="text-align:right;"> 0.1720127 </td>
    <td style="text-align:right;"> 6.0417619 </td>
   </tr>
   <tr>
@@ -2286,8 +2279,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2739.364304 </td>
    <td style="text-align:right;"> 456.560717 </td>
-   <td style="text-align:right;"> 3159 </td>
-   <td style="text-align:right;"> 0.1130104 </td>
+   <td style="text-align:right;"> 5000 </td>
+   <td style="text-align:right;"> 0.0786000 </td>
    <td style="text-align:right;"> 6.2921965 </td>
   </tr>
   <tr>
@@ -2296,79 +2289,79 @@ df %>%
    <td style="text-align:right;"> 5029.981980 </td>
    <td style="text-align:right;"> 419.165165 </td>
    <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.1094000 </td>
+   <td style="text-align:right;"> 0.0804000 </td>
    <td style="text-align:right;"> 11.5536422 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Cankers_avg </td>
+   <td style="text-align:left;"> Cankers </td>
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 9.812724 </td>
    <td style="text-align:right;"> 9.812724 </td>
    <td style="text-align:right;"> 51 </td>
-   <td style="text-align:right;"> 1.0000000 </td>
+   <td style="text-align:right;"> 0.8627451 </td>
    <td style="text-align:right;"> 0.0225394 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Cankers </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 529.411140 </td>
    <td style="text-align:right;"> 264.705570 </td>
-   <td style="text-align:right;"> 446 </td>
-   <td style="text-align:right;"> 0.2219731 </td>
+   <td style="text-align:right;"> 1366 </td>
+   <td style="text-align:right;"> 0.0988287 </td>
    <td style="text-align:right;"> 1.2160336 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Storage:Cankers_avg </td>
+   <td style="text-align:left;"> Storage:Cankers </td>
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 696.866341 </td>
    <td style="text-align:right;"> 696.866341 </td>
-   <td style="text-align:right;"> 1778 </td>
-   <td style="text-align:right;"> 0.0534308 </td>
+   <td style="text-align:right;"> 881 </td>
+   <td style="text-align:right;"> 0.1021566 </td>
    <td style="text-align:right;"> 1.6006706 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Storage:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Storage:Cankers </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 155.747841 </td>
    <td style="text-align:right;"> 77.873920 </td>
-   <td style="text-align:right;"> 299 </td>
-   <td style="text-align:right;"> 0.2508361 </td>
+   <td style="text-align:right;"> 51 </td>
+   <td style="text-align:right;"> 0.8823529 </td>
    <td style="text-align:right;"> 0.3577458 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 3388.605006 </td>
    <td style="text-align:right;"> 564.767501 </td>
-   <td style="text-align:right;"> 2727 </td>
-   <td style="text-align:right;"> 0.0880088 </td>
+   <td style="text-align:right;"> 3324 </td>
+   <td style="text-align:right;"> 0.1010830 </td>
    <td style="text-align:right;"> 7.7834732 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Scion:Cankers </td>
    <td style="text-align:right;"> 11 </td>
    <td style="text-align:right;"> 4309.460060 </td>
    <td style="text-align:right;"> 391.769096 </td>
-   <td style="text-align:right;"> 1240 </td>
-   <td style="text-align:right;"> 0.1604839 </td>
+   <td style="text-align:right;"> 3593 </td>
+   <td style="text-align:right;"> 0.0993599 </td>
    <td style="text-align:right;"> 9.8986358 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Storage:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Storage:Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2011.198296 </td>
    <td style="text-align:right;"> 335.199716 </td>
-   <td style="text-align:right;"> 2115 </td>
-   <td style="text-align:right;"> 0.1635934 </td>
+   <td style="text-align:right;"> 2494 </td>
+   <td style="text-align:right;"> 0.1335204 </td>
    <td style="text-align:right;"> 4.6196320 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Storage:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Storage:Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 4297.898593 </td>
    <td style="text-align:right;"> 716.316432 </td>
    <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0650000 </td>
+   <td style="text-align:right;"> 0.0570000 </td>
    <td style="text-align:right;"> 9.8720796 </td>
   </tr>
   <tr>
@@ -2383,7 +2376,7 @@ df %>%
 </tbody>
 </table>
 
-```r
+``` r
 # Simpson
 
 setkey(all_alpha_ord, simpson)
@@ -2395,34 +2388,34 @@ result <- aovp(update(design_with_canker, measure ~ .), all_alpha_ord, seqs = T)
 # [1] "Settings:  sequential SS : numeric variables centered"
 ```
 
-```r
+``` r
 summary(result)
 ```
 
 ```
 # Component 1 :
-#                                Df R Sum Sq R Mean Sq Iter Pr(Prob)  
-# Site                            2  14033.2    7016.6 5000  0.02740 *
-# Storage                         1    717.3     717.3  829  0.10856  
-# Site:Storage                    2   2039.3    1019.6 1447  0.07256 .
-# Scion                           6   1448.1     241.3  699  0.34621  
-# Site:Scion                     12   1930.5     160.9  492  0.45935  
-# Storage:Scion                   6   2599.3     433.2 1718  0.23981  
-# Site:Storage:Scion             12   5182.9     431.9 1925  0.29091  
-# Cankers_avg                     1     10.1      10.1  100  0.50000  
-# Site:Cankers_avg                2   1161.9     581.0  463  0.19006  
-# Storage:Cankers_avg             1     65.8      65.8  137  0.42336  
-# Site:Storage:Cankers_avg        2    931.4     465.7  835  0.18323  
-# Scion:Cankers_avg               6   4566.3     761.1 1724  0.13747  
-# Site:Scion:Cankers_avg         11   3757.7     341.6  842  0.22803  
-# Storage:Scion:Cankers_avg       6    868.7     144.8  717  0.39191  
-# Site:Storage:Scion:Cankers_avg  6   4482.0     747.0 1913  0.18871  
-# Residuals                       2    305.0     152.5                
+#                            Df R Sum Sq R Mean Sq Iter Pr(Prob)  
+# Site                        2  14033.2    7016.6 5000   0.0142 *
+# Storage                     1    717.3     717.3  654   0.1330  
+# Site:Storage                2   2039.3    1019.6 1264   0.1044  
+# Scion                       6   1448.1     241.3  566   0.2102  
+# Site:Scion                 12   1930.5     160.9  359   0.5320  
+# Storage:Scion               6   2599.3     433.2 1137   0.2181  
+# Site:Storage:Scion         12   5182.9     431.9 1416   0.2613  
+# Cankers                     1     10.1      10.1   51   0.8039  
+# Site:Cankers                2   1161.9     581.0  564   0.2074  
+# Storage:Cankers             1     65.8      65.8  138   0.4203  
+# Site:Storage:Cankers        2    931.4     465.7  309   0.3074  
+# Scion:Cankers               6   4566.3     761.1 1683   0.1289  
+# Site:Scion:Cankers         11   3757.7     341.6  666   0.2883  
+# Storage:Scion:Cankers       6    868.7     144.8  631   0.6561  
+# Site:Storage:Scion:Cankers  6   4482.0     747.0 2624   0.1456  
+# Residuals                   2    305.0     152.5                
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-```r
+``` r
 df <- result %>% summary() %>% unclass() %>% data.frame()
 total_variance <- sum(df$R.Sum.Sq)
 df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
@@ -2450,7 +2443,7 @@ df %>%
    <td style="text-align:right;"> 14033.17393 </td>
    <td style="text-align:right;"> 7016.58697 </td>
    <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0274000 </td>
+   <td style="text-align:right;"> 0.0142000 </td>
    <td style="text-align:right;"> 31.8215849 </td>
   </tr>
   <tr>
@@ -2458,8 +2451,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 717.33454 </td>
    <td style="text-align:right;"> 717.33454 </td>
-   <td style="text-align:right;"> 829 </td>
-   <td style="text-align:right;"> 0.1085645 </td>
+   <td style="text-align:right;"> 654 </td>
+   <td style="text-align:right;"> 0.1330275 </td>
    <td style="text-align:right;"> 1.6266257 </td>
   </tr>
   <tr>
@@ -2467,8 +2460,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 2039.26202 </td>
    <td style="text-align:right;"> 1019.63101 </td>
-   <td style="text-align:right;"> 1447 </td>
-   <td style="text-align:right;"> 0.0725639 </td>
+   <td style="text-align:right;"> 1264 </td>
+   <td style="text-align:right;"> 0.1044304 </td>
    <td style="text-align:right;"> 4.6242247 </td>
   </tr>
   <tr>
@@ -2476,8 +2469,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 1448.08338 </td>
    <td style="text-align:right;"> 241.34723 </td>
-   <td style="text-align:right;"> 699 </td>
-   <td style="text-align:right;"> 0.3462089 </td>
+   <td style="text-align:right;"> 566 </td>
+   <td style="text-align:right;"> 0.2102473 </td>
    <td style="text-align:right;"> 3.2836697 </td>
   </tr>
   <tr>
@@ -2485,8 +2478,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 1930.46171 </td>
    <td style="text-align:right;"> 160.87181 </td>
-   <td style="text-align:right;"> 492 </td>
-   <td style="text-align:right;"> 0.4593496 </td>
+   <td style="text-align:right;"> 359 </td>
+   <td style="text-align:right;"> 0.5320334 </td>
    <td style="text-align:right;"> 4.3775094 </td>
   </tr>
   <tr>
@@ -2494,8 +2487,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2599.34969 </td>
    <td style="text-align:right;"> 433.22495 </td>
-   <td style="text-align:right;"> 1718 </td>
-   <td style="text-align:right;"> 0.2398137 </td>
+   <td style="text-align:right;"> 1137 </td>
+   <td style="text-align:right;"> 0.2181179 </td>
    <td style="text-align:right;"> 5.8942779 </td>
   </tr>
   <tr>
@@ -2503,80 +2496,80 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 5182.87903 </td>
    <td style="text-align:right;"> 431.90659 </td>
-   <td style="text-align:right;"> 1925 </td>
-   <td style="text-align:right;"> 0.2909091 </td>
+   <td style="text-align:right;"> 1416 </td>
+   <td style="text-align:right;"> 0.2612994 </td>
    <td style="text-align:right;"> 11.7526816 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Cankers_avg </td>
+   <td style="text-align:left;"> Cankers </td>
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 10.07038 </td>
    <td style="text-align:right;"> 10.07038 </td>
-   <td style="text-align:right;"> 100 </td>
-   <td style="text-align:right;"> 0.5000000 </td>
+   <td style="text-align:right;"> 51 </td>
+   <td style="text-align:right;"> 0.8039216 </td>
    <td style="text-align:right;"> 0.0228356 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Cankers </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 1161.91619 </td>
    <td style="text-align:right;"> 580.95809 </td>
-   <td style="text-align:right;"> 463 </td>
-   <td style="text-align:right;"> 0.1900648 </td>
+   <td style="text-align:right;"> 564 </td>
+   <td style="text-align:right;"> 0.2074468 </td>
    <td style="text-align:right;"> 2.6347578 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Storage:Cankers_avg </td>
+   <td style="text-align:left;"> Storage:Cankers </td>
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 65.79653 </td>
    <td style="text-align:right;"> 65.79653 </td>
-   <td style="text-align:right;"> 137 </td>
-   <td style="text-align:right;"> 0.4233577 </td>
+   <td style="text-align:right;"> 138 </td>
+   <td style="text-align:right;"> 0.4202899 </td>
    <td style="text-align:right;"> 0.1492000 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Storage:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Storage:Cankers </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 931.41896 </td>
    <td style="text-align:right;"> 465.70948 </td>
-   <td style="text-align:right;"> 835 </td>
-   <td style="text-align:right;"> 0.1832335 </td>
+   <td style="text-align:right;"> 309 </td>
+   <td style="text-align:right;"> 0.3074434 </td>
    <td style="text-align:right;"> 2.1120830 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 4566.30413 </td>
    <td style="text-align:right;"> 761.05069 </td>
-   <td style="text-align:right;"> 1724 </td>
-   <td style="text-align:right;"> 0.1374710 </td>
+   <td style="text-align:right;"> 1683 </td>
+   <td style="text-align:right;"> 0.1289364 </td>
    <td style="text-align:right;"> 10.3545381 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Scion:Cankers </td>
    <td style="text-align:right;"> 11 </td>
    <td style="text-align:right;"> 3757.71597 </td>
    <td style="text-align:right;"> 341.61054 </td>
-   <td style="text-align:right;"> 842 </td>
-   <td style="text-align:right;"> 0.2280285 </td>
+   <td style="text-align:right;"> 666 </td>
+   <td style="text-align:right;"> 0.2882883 </td>
    <td style="text-align:right;"> 8.5209859 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Storage:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Storage:Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 868.72796 </td>
    <td style="text-align:right;"> 144.78799 </td>
-   <td style="text-align:right;"> 717 </td>
-   <td style="text-align:right;"> 0.3919107 </td>
+   <td style="text-align:right;"> 631 </td>
+   <td style="text-align:right;"> 0.6561014 </td>
    <td style="text-align:right;"> 1.9699250 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Storage:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Storage:Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 4482.04988 </td>
    <td style="text-align:right;"> 747.00831 </td>
-   <td style="text-align:right;"> 1913 </td>
-   <td style="text-align:right;"> 0.1887088 </td>
+   <td style="text-align:right;"> 2624 </td>
+   <td style="text-align:right;"> 0.1455793 </td>
    <td style="text-align:right;"> 10.1634834 </td>
   </tr>
   <tr>
@@ -2596,7 +2589,7 @@ df %>%
 ### PCA
 
 
-```r
+``` r
 # Number of PCs to include
 n_pcs <- 10
 
@@ -2612,7 +2605,7 @@ formula = FULL_DESIGN
 #### Percent variation in first 10 PCs 
 
 
-```r
+``` r
 # Cumulative percentage of variance explained
 pca_cum_var <- data.frame(
   cumulative = cumsum(mypca$percentVar * 100),
@@ -2631,7 +2624,7 @@ fun_cum_pca
 
 ![](root_endophytes_files/figure-html/FUN PCA var-1.png)<!-- -->
 
-```r
+``` r
 pca_var <- data.frame(
   PC = paste0("PC", 1:n_pcs),
   perc_var = round(mypca$percentVar[1:n_pcs] * 100, 1)
@@ -2696,7 +2689,7 @@ pca_var %>%
 #### ANOVA of first 10 PCs
 
 
-```r
+``` r
 pca_summary <- apply(
   mypca$x[, 1:n_pcs], 2, 
   function(x){
@@ -2834,7 +2827,7 @@ pca_summary
 #### Percent variation in first 10 PCs for each factor
 
 
-```r
+``` r
 # Extract PC scores as a list of dataframes
 pcas <- lapply(pca_summary, function(i) data.frame(unclass(i)))
 
@@ -2984,7 +2977,7 @@ pcs_factors_tidy[
 </tbody>
 </table>
 
-```r
+``` r
 # Table with factors as columns and PCs as rows
 # pcs_factors <- dcast(pcs_factors_tidy, PC ~ Factor, value.var = "variance")
 pcs_factors <- pcs_factors_tidy %>%
@@ -3141,14 +3134,14 @@ pcs_factors %>%
 </tbody>
 </table>
 
-```r
+``` r
 # save_kable(kable(pcs_factors, format = "pandoc"), "tables/FUN_pca_factors.docx")
 ```
 
 #### PCA plot
 
 
-```r
+``` r
 fun_pca_plot <- plotOrd(
   fun_pca,
   colData(dds),
@@ -3171,7 +3164,7 @@ fun_pca_plot
 #### PCA sum of squares (% var)
 
 
-```r
+``` r
 sum_squares <- apply(mypca$x, 2 ,function(x) 
   summary(aov(update(formula, x ~ .), data = cbind(x, colData(dds))))[[1]][2]
 )
@@ -3192,7 +3185,7 @@ round(colSums(perVar) / sum(colSums(perVar)) * 100, 3)
 ### PCA with canker lesion counts
 
 
-```r
+``` r
 pca_summary <- apply(
   mypca$x[, 1:n_pcs], 2, 
   function(x){
@@ -3205,217 +3198,217 @@ pca_summary
 
 ```
 # $PC1
-#                                Df Sum Sq Mean Sq F value  Pr(>F)   
-# Site                            2  69121   34561 129.241 0.00768 **
-# Storage                         1     78      78   0.291 0.64358   
-# Scion                           6    793     132   0.494 0.78690   
-# Cankers_avg                     1    468     468   1.749 0.31695   
-# Site:Storage                    2   1758     879   3.287 0.23325   
-# Site:Scion                     12   1857     155   0.579 0.78094   
-# Storage:Scion                   6    602     100   0.375 0.85147   
-# Site:Cankers_avg                2     25      13   0.047 0.95497   
-# Storage:Cankers_avg             1    101     101   0.377 0.60158   
-# Scion:Cankers_avg               6    725     121   0.452 0.80941   
-# Site:Storage:Scion             12   1789     149   0.557 0.79185   
-# Site:Storage:Cankers_avg        2    233     117   0.436 0.69625   
-# Site:Scion:Cankers_avg         11    665      60   0.226 0.96109   
-# Storage:Scion:Cankers_avg       6    855     143   0.533 0.76712   
-# Site:Storage:Scion:Cankers_avg  6   1774     296   1.105 0.54644   
-# Residuals                       2    535     267                   
+#                            Df Sum Sq Mean Sq F value  Pr(>F)   
+# Site                        2  69121   34561 129.241 0.00768 **
+# Storage                     1     78      78   0.291 0.64358   
+# Scion                       6    793     132   0.494 0.78690   
+# Cankers                     1    468     468   1.749 0.31695   
+# Site:Storage                2   1758     879   3.287 0.23325   
+# Site:Scion                 12   1857     155   0.579 0.78094   
+# Storage:Scion               6    602     100   0.375 0.85147   
+# Site:Cankers                2     25      13   0.047 0.95497   
+# Storage:Cankers             1    101     101   0.377 0.60158   
+# Scion:Cankers               6    725     121   0.452 0.80941   
+# Site:Storage:Scion         12   1789     149   0.557 0.79185   
+# Site:Storage:Cankers        2    233     117   0.436 0.69625   
+# Site:Scion:Cankers         11    665      60   0.226 0.96109   
+# Storage:Scion:Cankers       6    855     143   0.533 0.76712   
+# Site:Storage:Scion:Cankers  6   1774     296   1.105 0.54644   
+# Residuals                   2    535     267                   
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC2
-#                                Df Sum Sq Mean Sq F value Pr(>F)  
-# Site                            2  42751   21376  54.590  0.018 *
-# Storage                         1    624     624   1.593  0.334  
-# Scion                           6    234      39   0.100  0.988  
-# Cankers_avg                     1    440     440   1.124  0.400  
-# Site:Storage                    2   5036    2518   6.430  0.135  
-# Site:Scion                     12   1762     147   0.375  0.890  
-# Storage:Scion                   6    631     105   0.268  0.911  
-# Site:Cankers_avg                2    660     330   0.842  0.543  
-# Storage:Cankers_avg             1     78      78   0.199  0.699  
-# Scion:Cankers_avg               6   1126     188   0.479  0.795  
-# Site:Storage:Scion             12   2895     241   0.616  0.762  
-# Site:Storage:Cankers_avg        2    187      94   0.239  0.807  
-# Site:Scion:Cankers_avg         11   3100     282   0.720  0.710  
-# Storage:Scion:Cankers_avg       6   3134     522   1.334  0.488  
-# Site:Storage:Scion:Cankers_avg  6   1394     232   0.594  0.737  
-# Residuals                       2    783     392                 
+#                            Df Sum Sq Mean Sq F value Pr(>F)  
+# Site                        2  42751   21376  54.590  0.018 *
+# Storage                     1    624     624   1.593  0.334  
+# Scion                       6    234      39   0.100  0.988  
+# Cankers                     1    440     440   1.124  0.400  
+# Site:Storage                2   5036    2518   6.430  0.135  
+# Site:Scion                 12   1762     147   0.375  0.890  
+# Storage:Scion               6    631     105   0.268  0.911  
+# Site:Cankers                2    660     330   0.842  0.543  
+# Storage:Cankers             1     78      78   0.199  0.699  
+# Scion:Cankers               6   1126     188   0.479  0.795  
+# Site:Storage:Scion         12   2895     241   0.616  0.762  
+# Site:Storage:Cankers        2    187      94   0.239  0.807  
+# Site:Scion:Cankers         11   3100     282   0.720  0.710  
+# Storage:Scion:Cankers       6   3134     522   1.334  0.488  
+# Site:Storage:Scion:Cankers  6   1394     232   0.594  0.737  
+# Residuals                   2    783     392                 
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC3
-#                                Df Sum Sq Mean Sq F value Pr(>F)
-# Site                            2   2617  1308.3   1.599  0.385
-# Storage                         1    218   217.9   0.266  0.657
-# Scion                           6   1456   242.6   0.297  0.896
-# Cankers_avg                     1     30    29.6   0.036  0.867
-# Site:Storage                    2   1626   813.0   0.994  0.502
-# Site:Scion                     12   2664   222.0   0.271  0.943
-# Storage:Scion                   6   1249   208.2   0.255  0.919
-# Site:Cankers_avg                2    328   163.9   0.200  0.833
-# Storage:Cankers_avg             1    445   445.4   0.545  0.537
-# Scion:Cankers_avg               6   2028   338.1   0.413  0.830
-# Site:Storage:Scion             12   5652   471.0   0.576  0.782
-# Site:Storage:Cankers_avg        2    249   124.4   0.152  0.868
-# Site:Scion:Cankers_avg         11   2992   272.0   0.332  0.909
-# Storage:Scion:Cankers_avg       6   1363   227.2   0.278  0.906
-# Site:Storage:Scion:Cankers_avg  6    712   118.7   0.145  0.972
-# Residuals                       2   1636   818.0               
+#                            Df Sum Sq Mean Sq F value Pr(>F)
+# Site                        2   2617  1308.3   1.599  0.385
+# Storage                     1    218   217.9   0.266  0.657
+# Scion                       6   1456   242.6   0.297  0.896
+# Cankers                     1     30    29.6   0.036  0.867
+# Site:Storage                2   1626   813.0   0.994  0.502
+# Site:Scion                 12   2664   222.0   0.271  0.943
+# Storage:Scion               6   1249   208.2   0.255  0.919
+# Site:Cankers                2    328   163.9   0.200  0.833
+# Storage:Cankers             1    445   445.4   0.545  0.537
+# Scion:Cankers               6   2028   338.1   0.413  0.830
+# Site:Storage:Scion         12   5652   471.0   0.576  0.782
+# Site:Storage:Cankers        2    249   124.4   0.152  0.868
+# Site:Scion:Cankers         11   2992   272.0   0.332  0.909
+# Storage:Scion:Cankers       6   1363   227.2   0.278  0.906
+# Site:Storage:Scion:Cankers  6    712   118.7   0.145  0.972
+# Residuals                   2   1636   818.0               
 # 2 observations deleted due to missingness
 # 
 # $PC4
-#                                Df Sum Sq Mean Sq F value Pr(>F)  
-# Site                            2 1229.4   614.7  30.089 0.0322 *
-# Storage                         1   89.8    89.8   4.394 0.1710  
-# Scion                           6  362.9    60.5   2.961 0.2739  
-# Cankers_avg                     1    0.0     0.0   0.002 0.9711  
-# Site:Storage                    2  880.8   440.4  21.556 0.0443 *
-# Site:Scion                     12  998.1    83.2   4.071 0.2139  
-# Storage:Scion                   6  560.6    93.4   4.573 0.1903  
-# Site:Cankers_avg                2  221.9   111.0   5.432 0.1555  
-# Storage:Cankers_avg             1  178.2   178.2   8.725 0.0980 .
-# Scion:Cankers_avg               6 1017.6   169.6   8.302 0.1114  
-# Site:Storage:Scion             12 1190.1    99.2   4.855 0.1833  
-# Site:Storage:Cankers_avg        2  231.5   115.7   5.665 0.1500  
-# Site:Scion:Cankers_avg         11 1944.0   176.7   8.651 0.1081  
-# Storage:Scion:Cankers_avg       6  831.1   138.5   6.780 0.1341  
-# Site:Storage:Scion:Cankers_avg  6 1291.7   215.3  10.538 0.0892 .
-# Residuals                       2   40.9    20.4                 
+#                            Df Sum Sq Mean Sq F value Pr(>F)  
+# Site                        2 1229.4   614.7  30.089 0.0322 *
+# Storage                     1   89.8    89.8   4.394 0.1710  
+# Scion                       6  362.9    60.5   2.961 0.2739  
+# Cankers                     1    0.0     0.0   0.002 0.9711  
+# Site:Storage                2  880.8   440.4  21.556 0.0443 *
+# Site:Scion                 12  998.1    83.2   4.071 0.2139  
+# Storage:Scion               6  560.6    93.4   4.573 0.1903  
+# Site:Cankers                2  221.9   111.0   5.432 0.1555  
+# Storage:Cankers             1  178.2   178.2   8.725 0.0980 .
+# Scion:Cankers               6 1017.6   169.6   8.302 0.1114  
+# Site:Storage:Scion         12 1190.1    99.2   4.855 0.1833  
+# Site:Storage:Cankers        2  231.5   115.7   5.665 0.1500  
+# Site:Scion:Cankers         11 1944.0   176.7   8.651 0.1081  
+# Storage:Scion:Cankers       6  831.1   138.5   6.780 0.1341  
+# Site:Storage:Scion:Cankers  6 1291.7   215.3  10.538 0.0892 .
+# Residuals                   2   40.9    20.4                 
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC5
-#                                Df Sum Sq Mean Sq F value Pr(>F)  
-# Site                            2  222.2   111.1   1.935 0.3408  
-# Storage                         1  564.4   564.4   9.827 0.0885 .
-# Scion                           6  341.1    56.9   0.990 0.5813  
-# Cankers_avg                     1  312.3   312.3   5.438 0.1450  
-# Site:Storage                    2  304.9   152.5   2.655 0.2736  
-# Site:Scion                     12 1021.2    85.1   1.482 0.4725  
-# Storage:Scion                   6  479.3    79.9   1.391 0.4751  
-# Site:Cankers_avg                2  247.8   123.9   2.157 0.3168  
-# Storage:Cankers_avg             1  379.6   379.6   6.610 0.1238  
-# Scion:Cankers_avg               6  269.9    45.0   0.783 0.6549  
-# Site:Storage:Scion             12  720.3    60.0   1.045 0.5884  
-# Site:Storage:Cankers_avg        2  687.4   343.7   5.984 0.1432  
-# Site:Scion:Cankers_avg         11 1145.9   104.2   1.814 0.4087  
-# Storage:Scion:Cankers_avg       6 1026.4   171.1   2.979 0.2726  
-# Site:Storage:Scion:Cankers_avg  6 2040.7   340.1   5.922 0.1515  
-# Residuals                       2  114.9    57.4                 
+#                            Df Sum Sq Mean Sq F value Pr(>F)  
+# Site                        2  222.2   111.1   1.935 0.3408  
+# Storage                     1  564.4   564.4   9.827 0.0885 .
+# Scion                       6  341.1    56.9   0.990 0.5813  
+# Cankers                     1  312.3   312.3   5.438 0.1450  
+# Site:Storage                2  304.9   152.5   2.655 0.2736  
+# Site:Scion                 12 1021.2    85.1   1.482 0.4725  
+# Storage:Scion               6  479.3    79.9   1.391 0.4751  
+# Site:Cankers                2  247.8   123.9   2.157 0.3168  
+# Storage:Cankers             1  379.6   379.6   6.610 0.1238  
+# Scion:Cankers               6  269.9    45.0   0.783 0.6549  
+# Site:Storage:Scion         12  720.3    60.0   1.045 0.5884  
+# Site:Storage:Cankers        2  687.4   343.7   5.984 0.1432  
+# Site:Scion:Cankers         11 1145.9   104.2   1.814 0.4087  
+# Storage:Scion:Cankers       6 1026.4   171.1   2.979 0.2726  
+# Site:Storage:Scion:Cankers  6 2040.7   340.1   5.922 0.1515  
+# Residuals                   2  114.9    57.4                 
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC6
-#                                Df Sum Sq Mean Sq F value Pr(>F)
-# Site                            2  152.5    76.3   0.205  0.830
-# Storage                         1  272.4   272.4   0.733  0.482
-# Scion                           6  216.3    36.0   0.097  0.989
-# Cankers_avg                     1   59.2    59.2   0.159  0.728
-# Site:Storage                    2  344.7   172.3   0.464  0.683
-# Site:Scion                     12  474.8    39.6   0.107  0.996
-# Storage:Scion                   6  539.6    89.9   0.242  0.926
-# Site:Cankers_avg                2  565.7   282.8   0.761  0.568
-# Storage:Cankers_avg             1   24.1    24.1   0.065  0.823
-# Scion:Cankers_avg               6  759.4   126.6   0.341  0.871
-# Site:Storage:Scion             12 1262.3   105.2   0.283  0.938
-# Site:Storage:Cankers_avg        2  333.9   167.0   0.450  0.690
-# Site:Scion:Cankers_avg         11 1459.6   132.7   0.357  0.896
-# Storage:Scion:Cankers_avg       6  368.1    61.3   0.165  0.964
-# Site:Storage:Scion:Cankers_avg  6  432.3    72.0   0.194  0.950
-# Residuals                       2  742.9   371.5               
+#                            Df Sum Sq Mean Sq F value Pr(>F)
+# Site                        2  152.5    76.3   0.205  0.830
+# Storage                     1  272.4   272.4   0.733  0.482
+# Scion                       6  216.3    36.0   0.097  0.989
+# Cankers                     1   59.2    59.2   0.159  0.728
+# Site:Storage                2  344.7   172.3   0.464  0.683
+# Site:Scion                 12  474.8    39.6   0.107  0.996
+# Storage:Scion               6  539.6    89.9   0.242  0.926
+# Site:Cankers                2  565.7   282.8   0.761  0.568
+# Storage:Cankers             1   24.1    24.1   0.065  0.823
+# Scion:Cankers               6  759.4   126.6   0.341  0.871
+# Site:Storage:Scion         12 1262.3   105.2   0.283  0.938
+# Site:Storage:Cankers        2  333.9   167.0   0.450  0.690
+# Site:Scion:Cankers         11 1459.6   132.7   0.357  0.896
+# Storage:Scion:Cankers       6  368.1    61.3   0.165  0.964
+# Site:Storage:Scion:Cankers  6  432.3    72.0   0.194  0.950
+# Residuals                   2  742.9   371.5               
 # 2 observations deleted due to missingness
 # 
 # $PC7
-#                                Df Sum Sq Mean Sq F value Pr(>F)
-# Site                            2   41.2   20.61   0.155  0.866
-# Storage                         1   13.6   13.62   0.102  0.780
-# Scion                           6  740.8  123.46   0.925  0.603
-# Cankers_avg                     1    8.1    8.13   0.061  0.828
-# Site:Storage                    2    5.0    2.49   0.019  0.982
-# Site:Scion                     12 1123.9   93.66   0.702  0.721
-# Storage:Scion                   6  222.1   37.01   0.277  0.906
-# Site:Cankers_avg                2    1.4    0.70   0.005  0.995
-# Storage:Cankers_avg             1   15.1   15.06   0.113  0.769
-# Scion:Cankers_avg               6  163.2   27.21   0.204  0.945
-# Site:Storage:Scion             12  846.2   70.52   0.529  0.807
-# Site:Storage:Cankers_avg        2  118.0   59.00   0.442  0.693
-# Site:Scion:Cankers_avg         11 1244.3  113.12   0.848  0.656
-# Storage:Scion:Cankers_avg       6  633.6  105.60   0.792  0.652
-# Site:Storage:Scion:Cankers_avg  6  563.1   93.85   0.703  0.688
-# Residuals                       2  266.8  133.41               
+#                            Df Sum Sq Mean Sq F value Pr(>F)
+# Site                        2   41.2   20.61   0.155  0.866
+# Storage                     1   13.6   13.62   0.102  0.780
+# Scion                       6  740.8  123.46   0.925  0.603
+# Cankers                     1    8.1    8.13   0.061  0.828
+# Site:Storage                2    5.0    2.49   0.019  0.982
+# Site:Scion                 12 1123.9   93.66   0.702  0.721
+# Storage:Scion               6  222.1   37.01   0.277  0.906
+# Site:Cankers                2    1.4    0.70   0.005  0.995
+# Storage:Cankers             1   15.1   15.06   0.113  0.769
+# Scion:Cankers               6  163.2   27.21   0.204  0.945
+# Site:Storage:Scion         12  846.2   70.52   0.529  0.807
+# Site:Storage:Cankers        2  118.0   59.00   0.442  0.693
+# Site:Scion:Cankers         11 1244.3  113.12   0.848  0.656
+# Storage:Scion:Cankers       6  633.6  105.60   0.792  0.652
+# Site:Storage:Scion:Cankers  6  563.1   93.85   0.703  0.688
+# Residuals                   2  266.8  133.41               
 # 2 observations deleted due to missingness
 # 
 # $PC8
-#                                Df Sum Sq Mean Sq F value Pr(>F)  
-# Site                            2    1.5     0.8   0.042 0.9598  
-# Storage                         1  435.7   435.7  24.216 0.0389 *
-# Scion                           6  161.7    26.9   1.497 0.4528  
-# Cankers_avg                     1  108.0   108.0   6.000 0.1340  
-# Site:Storage                    2  654.8   327.4  18.198 0.0521 .
-# Site:Scion                     12  603.2    50.3   2.794 0.2937  
-# Storage:Scion                   6  591.4    98.6   5.478 0.1624  
-# Site:Cankers_avg                2    9.8     4.9   0.273 0.7856  
-# Storage:Cankers_avg             1    9.4     9.4   0.522 0.5450  
-# Scion:Cankers_avg               6  561.6    93.6   5.202 0.1700  
-# Site:Storage:Scion             12  322.3    26.9   1.493 0.4701  
-# Site:Storage:Cankers_avg        2  455.1   227.5  12.646 0.0733 .
-# Site:Scion:Cankers_avg         11 1453.0   132.1   7.342 0.1259  
-# Storage:Scion:Cankers_avg       6  146.0    24.3   1.352 0.4836  
-# Site:Storage:Scion:Cankers_avg  6  143.4    23.9   1.329 0.4891  
-# Residuals                       2   36.0    18.0                 
+#                            Df Sum Sq Mean Sq F value Pr(>F)  
+# Site                        2    1.5     0.8   0.042 0.9598  
+# Storage                     1  435.7   435.7  24.216 0.0389 *
+# Scion                       6  161.7    26.9   1.497 0.4528  
+# Cankers                     1  108.0   108.0   6.000 0.1340  
+# Site:Storage                2  654.8   327.4  18.198 0.0521 .
+# Site:Scion                 12  603.2    50.3   2.794 0.2937  
+# Storage:Scion               6  591.4    98.6   5.478 0.1624  
+# Site:Cankers                2    9.8     4.9   0.273 0.7856  
+# Storage:Cankers             1    9.4     9.4   0.522 0.5450  
+# Scion:Cankers               6  561.6    93.6   5.202 0.1700  
+# Site:Storage:Scion         12  322.3    26.9   1.493 0.4701  
+# Site:Storage:Cankers        2  455.1   227.5  12.646 0.0733 .
+# Site:Scion:Cankers         11 1453.0   132.1   7.342 0.1259  
+# Storage:Scion:Cankers       6  146.0    24.3   1.352 0.4836  
+# Site:Storage:Scion:Cankers  6  143.4    23.9   1.329 0.4891  
+# Residuals                   2   36.0    18.0                 
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC9
-#                                Df Sum Sq Mean Sq F value Pr(>F)
-# Site                            2   58.9    29.4   0.318  0.758
-# Storage                         1  198.2   198.2   2.143  0.281
-# Scion                           6  336.4    56.1   0.606  0.731
-# Cankers_avg                     1   11.0    11.0   0.118  0.764
-# Site:Storage                    2 1547.8   773.9   8.370  0.107
-# Site:Scion                     12  439.3    36.6   0.396  0.879
-# Storage:Scion                   6  245.7    40.9   0.443  0.814
-# Site:Cankers_avg                2   16.2     8.1   0.088  0.919
-# Storage:Cankers_avg             1   42.2    42.2   0.456  0.569
-# Scion:Cankers_avg               6  299.3    49.9   0.540  0.764
-# Site:Storage:Scion             12  339.2    28.3   0.306  0.927
-# Site:Storage:Cankers_avg        2  216.5   108.3   1.171  0.461
-# Site:Scion:Cankers_avg         11  402.3    36.6   0.396  0.875
-# Storage:Scion:Cankers_avg       6  408.6    68.1   0.736  0.674
-# Site:Storage:Scion:Cankers_avg  6  325.0    54.2   0.586  0.741
-# Residuals                       2  184.9    92.5               
+#                            Df Sum Sq Mean Sq F value Pr(>F)
+# Site                        2   58.9    29.4   0.318  0.758
+# Storage                     1  198.2   198.2   2.143  0.281
+# Scion                       6  336.4    56.1   0.606  0.731
+# Cankers                     1   11.0    11.0   0.118  0.764
+# Site:Storage                2 1547.8   773.9   8.370  0.107
+# Site:Scion                 12  439.3    36.6   0.396  0.879
+# Storage:Scion               6  245.7    40.9   0.443  0.814
+# Site:Cankers                2   16.2     8.1   0.088  0.919
+# Storage:Cankers             1   42.2    42.2   0.456  0.569
+# Scion:Cankers               6  299.3    49.9   0.540  0.764
+# Site:Storage:Scion         12  339.2    28.3   0.306  0.927
+# Site:Storage:Cankers        2  216.5   108.3   1.171  0.461
+# Site:Scion:Cankers         11  402.3    36.6   0.396  0.875
+# Storage:Scion:Cankers       6  408.6    68.1   0.736  0.674
+# Site:Storage:Scion:Cankers  6  325.0    54.2   0.586  0.741
+# Residuals                   2  184.9    92.5               
 # 2 observations deleted due to missingness
 # 
 # $PC10
-#                                Df Sum Sq Mean Sq F value Pr(>F)
-# Site                            2   11.8     5.9   0.015  0.985
-# Storage                         1   23.9    23.9   0.061  0.828
-# Scion                           6  309.2    51.5   0.131  0.978
-# Cankers_avg                     1   11.8    11.8   0.030  0.879
-# Site:Storage                    2  120.8    60.4   0.153  0.867
-# Site:Scion                     12  478.8    39.9   0.101  0.997
-# Storage:Scion                   6  117.7    19.6   0.050  0.998
-# Site:Cankers_avg                2   35.2    17.6   0.045  0.957
-# Storage:Cankers_avg             1    0.7     0.7   0.002  0.971
-# Scion:Cankers_avg               6  522.4    87.1   0.221  0.937
-# Site:Storage:Scion             12  587.5    49.0   0.124  0.994
-# Site:Storage:Cankers_avg        2   99.8    49.9   0.127  0.888
-# Site:Scion:Cankers_avg         11  827.4    75.2   0.191  0.975
-# Storage:Scion:Cankers_avg       6  597.7    99.6   0.253  0.920
-# Site:Storage:Scion:Cankers_avg  6  221.7    37.0   0.094  0.989
-# Residuals                       2  787.6   393.8               
+#                            Df Sum Sq Mean Sq F value Pr(>F)
+# Site                        2   11.8     5.9   0.015  0.985
+# Storage                     1   23.9    23.9   0.061  0.828
+# Scion                       6  309.2    51.5   0.131  0.978
+# Cankers                     1   11.8    11.8   0.030  0.879
+# Site:Storage                2  120.8    60.4   0.153  0.867
+# Site:Scion                 12  478.8    39.9   0.101  0.997
+# Storage:Scion               6  117.7    19.6   0.050  0.998
+# Site:Cankers                2   35.2    17.6   0.045  0.957
+# Storage:Cankers             1    0.7     0.7   0.002  0.971
+# Scion:Cankers               6  522.4    87.1   0.221  0.937
+# Site:Storage:Scion         12  587.5    49.0   0.124  0.994
+# Site:Storage:Cankers        2   99.8    49.9   0.127  0.888
+# Site:Scion:Cankers         11  827.4    75.2   0.191  0.975
+# Storage:Scion:Cankers       6  597.7    99.6   0.253  0.920
+# Site:Storage:Scion:Cankers  6  221.7    37.0   0.094  0.989
+# Residuals                   2  787.6   393.8               
 # 2 observations deleted due to missingness
 ```
 
-```r
+``` r
 # Extract PC scores as a list of dataframes
 pcas <- lapply(pca_summary, function(i) data.frame(unclass(i)))
 
@@ -3525,7 +3518,7 @@ pcs_factors_tidy[
 </tbody>
 </table>
 
-```r
+``` r
 # Table with factors as columns and PCs as rows
 # pcs_factors <- dcast(pcs_factors_tidy, PC ~ Factor, value.var = "variance")
 pcs_factors <- pcs_factors_tidy %>%
@@ -3551,18 +3544,18 @@ pcs_factors %>%
    <th style="text-align:left;"> Site </th>
    <th style="text-align:left;"> Storage </th>
    <th style="text-align:left;"> Scion </th>
-   <th style="text-align:left;"> Cankers_avg </th>
+   <th style="text-align:left;"> Cankers </th>
    <th style="text-align:left;"> Site:Storage </th>
    <th style="text-align:left;"> Site:Scion </th>
    <th style="text-align:left;"> Storage:Scion </th>
-   <th style="text-align:left;"> Site:Cankers_avg </th>
-   <th style="text-align:left;"> Storage:Cankers_avg </th>
-   <th style="text-align:left;"> Scion:Cankers_avg </th>
+   <th style="text-align:left;"> Site:Cankers </th>
+   <th style="text-align:left;"> Storage:Cankers </th>
+   <th style="text-align:left;"> Scion:Cankers </th>
    <th style="text-align:left;"> Site:Storage:Scion </th>
-   <th style="text-align:left;"> Site:Storage:Cankers_avg </th>
-   <th style="text-align:left;"> Site:Scion:Cankers_avg </th>
-   <th style="text-align:left;"> Storage:Scion:Cankers_avg </th>
-   <th style="text-align:left;"> Site:Storage:Scion:Cankers_avg </th>
+   <th style="text-align:left;"> Site:Storage:Cankers </th>
+   <th style="text-align:left;"> Site:Scion:Cankers </th>
+   <th style="text-align:left;"> Storage:Scion:Cankers </th>
+   <th style="text-align:left;"> Site:Storage:Scion:Cankers </th>
    <th style="text-align:left;"> Residuals </th>
   </tr>
  </thead>
@@ -3773,7 +3766,7 @@ pcs_factors %>%
 ### ADONIS
 
 
-```r
+``` r
 # Calculate Bray-Curtis distance matrix
 vg <- vegdist(t(counts(dds, normalize = T)), method = "bray")
 
@@ -3786,19 +3779,26 @@ result
 
 ```
 # Permutation test for adonis under reduced model
+# Terms added sequentially (first to last)
 # Permutation: free
 # Number of permutations: 1000
 # 
 # adonis2(formula = formula, data = colData(dds), permutations = 1000)
-#          Df SumOfSqs     R2      F   Pr(>F)    
-# Model    41  13.9181 0.6707 1.9374 0.000999 ***
-# Residual 39   6.8334 0.3293                    
-# Total    80  20.7514 1.0000                    
+#                    Df SumOfSqs      R2       F   Pr(>F)    
+# Site                2   6.5423 0.31527 18.6694 0.000999 ***
+# Storage             1   0.4053 0.01953  2.3133 0.014985 *  
+# Scion               6   0.9096 0.04383  0.8652 0.769231    
+# Site:Storage        2   0.7206 0.03472  2.0562 0.005994 ** 
+# Site:Scion         12   2.1487 0.10354  1.0219 0.424575    
+# Storage:Scion       6   1.1647 0.05613  1.1079 0.278721    
+# Site:Storage:Scion 12   2.0269 0.09768  0.9640 0.580420    
+# Residual           39   6.8334 0.32930                     
+# Total              80  20.7514 1.00000                     
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-```r
+``` r
 df <- result %>% data.frame()
 df$Perc.Var <- df$SumOfSqs / df["Total", "SumOfSqs"] * 100
 df %>%
@@ -3820,31 +3820,85 @@ df %>%
  </thead>
 <tbody>
   <tr>
-   <td style="text-align:left;"> Model </td>
-   <td style="text-align:right;"> 41 </td>
-   <td style="text-align:right;"> 13.918056 </td>
-   <td style="text-align:right;"> 0.6707038 </td>
-   <td style="text-align:right;"> 1.937424 </td>
-   <td style="text-align:right;"> 0.000999 </td>
-   <td style="text-align:right;"> 67.07038 </td>
+   <td style="text-align:left;"> Site </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 6.5423049 </td>
+   <td style="text-align:right;"> 0.3152702 </td>
+   <td style="text-align:right;"> 18.6694186 </td>
+   <td style="text-align:right;"> 0.0009990 </td>
+   <td style="text-align:right;"> 31.527021 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Storage </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 0.4053241 </td>
+   <td style="text-align:right;"> 0.0195324 </td>
+   <td style="text-align:right;"> 2.3133026 </td>
+   <td style="text-align:right;"> 0.0149850 </td>
+   <td style="text-align:right;"> 1.953235 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Scion </td>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 0.9095936 </td>
+   <td style="text-align:right;"> 0.0438328 </td>
+   <td style="text-align:right;"> 0.8652192 </td>
+   <td style="text-align:right;"> 0.7692308 </td>
+   <td style="text-align:right;"> 4.383283 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Site:Storage </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 0.7205681 </td>
+   <td style="text-align:right;"> 0.0347238 </td>
+   <td style="text-align:right;"> 2.0562460 </td>
+   <td style="text-align:right;"> 0.0059940 </td>
+   <td style="text-align:right;"> 3.472380 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Site:Scion </td>
+   <td style="text-align:right;"> 12 </td>
+   <td style="text-align:right;"> 2.1486813 </td>
+   <td style="text-align:right;"> 0.1035438 </td>
+   <td style="text-align:right;"> 1.0219291 </td>
+   <td style="text-align:right;"> 0.4245754 </td>
+   <td style="text-align:right;"> 10.354382 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Storage:Scion </td>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 1.1646804 </td>
+   <td style="text-align:right;"> 0.0561253 </td>
+   <td style="text-align:right;"> 1.1078616 </td>
+   <td style="text-align:right;"> 0.2787213 </td>
+   <td style="text-align:right;"> 5.612533 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Site:Storage:Scion </td>
+   <td style="text-align:right;"> 12 </td>
+   <td style="text-align:right;"> 2.0269039 </td>
+   <td style="text-align:right;"> 0.0976754 </td>
+   <td style="text-align:right;"> 0.9640108 </td>
+   <td style="text-align:right;"> 0.5804196 </td>
+   <td style="text-align:right;"> 9.767543 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Residual </td>
    <td style="text-align:right;"> 39 </td>
-   <td style="text-align:right;"> 6.833365 </td>
+   <td style="text-align:right;"> 6.8333647 </td>
    <td style="text-align:right;"> 0.3292962 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> 32.92962 </td>
+   <td style="text-align:right;"> 32.929623 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Total </td>
    <td style="text-align:right;"> 80 </td>
-   <td style="text-align:right;"> 20.751421 </td>
+   <td style="text-align:right;"> 20.7514210 </td>
    <td style="text-align:right;"> 1.0000000 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> 100.00000 </td>
+   <td style="text-align:right;"> 100.000000 </td>
   </tr>
 </tbody>
 </table>
@@ -3852,14 +3906,14 @@ df %>%
 #### Bray-Curtis canker correlation
 
 
-```r
+``` r
 # Convert Bray-Curtis distance matrix to table
 bc <- as.matrix(vg)
 bc[lower.tri(bc, diag = TRUE)] <- NA
 bc <- melt(bc, value.name = "BC", na.rm = TRUE)
 
 # Calculate canker count difference matrix
-cankers <- colData$Cankers_avg
+cankers <- colData$Cankers
 cankers_diff <- abs(outer(cankers, cankers, "-"))
 rownames(cankers_diff) <- rownames(colData)
 colnames(cankers_diff) <- rownames(colData)
@@ -3885,7 +3939,7 @@ cor.test(bc_cankers$BC, bc_cankers$Cankers, method = "spearman")
 # 0.08969468
 ```
 
-```r
+``` r
 # Plot correlation between Bray-Curtis and canker count difference
 ggscatter(bc_cankers, x = "BC", y = "Cankers", add = "reg.line", conf.int = TRUE)
 ```
@@ -3895,7 +3949,7 @@ ggscatter(bc_cankers, x = "BC", y = "Cankers", add = "reg.line", conf.int = TRUE
 ### NMDS ordination
 
 
-```r
+``` r
 set.seed(sum(utf8ToInt("Hamish McLean")))
 ord <- metaMDS(vg, trace=0) 
 #sratmax=20000,maxit=20000,try = 177, trymax = 177
@@ -3919,11 +3973,11 @@ fun_nmds_plot
 #### NMDS with canker counts
 
 
-```r
-# Rownames for which Cankers_avg is NA
-missing <- rownames(colData[is.na(colData$Cankers_avg), ])
+``` r
+# Rownames for which Cankers is NA
+missing <- rownames(colData[is.na(colData$Cankers), ])
 
-colData$log_cankers <- log10(colData$Cankers_avg + 1)
+colData$log_cankers <- log10(colData$Cankers + 1)
 
 fun_nmds_canker_plot <- plotOrd(
   fun_nmds, colData, 
@@ -3946,7 +4000,7 @@ fun_nmds_canker_plot
 ### Explore distribution of ASV read counts
 
 
-```r
+``` r
 # Extract normalised counts from DESeq object
 asv_counts <- counts(dds, normalize = T) %>% as.data.frame()
 
@@ -3975,7 +4029,7 @@ fun_cum_asv
 
 ![](root_endophytes_files/figure-html/FUN top ASVs-1.png)<!-- -->
 
-```r
+``` r
 # Find the number of ASVs that account for 50%, 80%, and 99% of total reads
 cat(
   "Number of ASVs that account for 50%, 80%, 90%, and 99% of total reads", "\n\n",
@@ -3995,7 +4049,7 @@ cat(
 #  99%: 741
 ```
 
-```r
+``` r
 # Find the cumulative percentage accounted for by top x ASVs
 cat(
   "Percentage of total reads accounted for by the top 100, 200,and 500 ASVs:", "\n\n",
@@ -4013,7 +4067,7 @@ cat(
 #  500: 98.1
 ```
 
-```r
+``` r
 # Average ASV counts in order
 mean_asv_counts <- rowMeans(asv_counts)
 mean_asv_counts <- mean_asv_counts[order(mean_asv_counts, decreasing = T)]
@@ -4030,7 +4084,7 @@ fun_asv_counts
 
 ![](root_endophytes_files/figure-html/FUN top ASVs-2.png)<!-- -->
 
-```r
+``` r
 # Number of ASVs with mean read count > 100, 200, and 500
 cat(
   "Number of ASVs with mean read count > 100, 200, and 500", "\n\n",
@@ -4051,7 +4105,7 @@ cat(
 ### Filter top ASVs with 100 % of reads
 
 
-```r
+``` r
 # Filter the top x abundant ASVs by the sum of their normalised counts
 # top_asvs <- asv_counts[order(rowSums(asv_counts), decreasing = T)[1:DIFFOTU], ]
 
@@ -4072,7 +4126,7 @@ identical(names(top_asvs), rownames(colData))
 # [1] TRUE
 ```
 
-```r
+``` r
 # Extract taxonomic data for top ASVs
 top_taxa <- taxData[rownames(top_asvs), ]
 
@@ -4090,7 +4144,7 @@ identical(rownames(top_asv_data), rownames(colData))
 # [1] TRUE
 ```
 
-```r
+``` r
 # Add sample metadata to top ASV data
 top_asv_data <- merge(top_asv_data, colData, by = 0) %>% column_to_rownames("Row.names")
 ```
@@ -4100,7 +4154,7 @@ top_asv_data <- merge(top_asv_data, colData, by = 0) %>% column_to_rownames("Row
 Effect of Site, Scion, and Storage on abundance of top ASVs
 
 
-```r
+``` r
 # ANOVA of top ASVs
 asv_lm_anova <- function(asv, formula, data) {
   f = update(formula, paste0("log(", asv, " + 1) ~ ."))
@@ -4130,13 +4184,13 @@ extend_asv_anova <- function(anova_result, asv) {
     Abundance = round(mean(top_asv_data[[asv]]), 3),
     Factor = gsub(" ", "", rownames(anova_result)),
     var = Sum.Sq / sum(anova_result$Sum.Sq) * 100,
-    # sig = case_when(
-    #   is.na(Pr..F.) ~ "",
-    #   Pr..F. < 0.001 ~ "***",
-    #   Pr..F. < 0.01 ~ "**",
-    #   Pr..F. < 0.05 ~ "*",
-    #   TRUE ~ ""
-    # ),
+    sig = case_when(
+      is.na(Pr..F.) ~ "",
+      Pr..F. < 0.001 ~ "***",
+      Pr..F. < 0.01 ~ "**",
+      Pr..F. < 0.05 ~ "*",
+      TRUE ~ ""
+    )#,
     # Variance = ifelse(
     #   perc_var < 0.01, paste0("<0.01", sig),
     #   paste0(round(perc_var, 2), sig)
@@ -4189,7 +4243,23 @@ cat(
   "Site:Storage:Scion:", nrow(top_asvs_anova_results[Factor == "Site:Storage:Scion" & p.adj < 0.05, ]), "\n\n",
   "Total ASVs:", length(unique(top_asvs_anova_results$ASV)), "\n\n"
 )
+```
 
+```
+# Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values 
+# 
+#  Site: 698 
+#  Storage: 14 
+#  Scion: 1 
+#  Site:Storage: 122 
+#  Site:Scion: 2 
+#  Storage:Scion: 2 
+#  Site:Storage:Scion: 11 
+# 
+#  Total ASVs: 995
+```
+
+``` r
 # Filter by significant effect of scion and its interactions
 scion_asvs <- top_asvs_anova_results[grepl("Scion", Factor) & p.adj < 0.05, ]
 
@@ -4198,10 +4268,16 @@ scion_asvs <- top_asvs_anova_results[grepl("Scion", Factor) & p.adj < 0.05, ]
 #   kable_styling("striped", full_width = F)
 
 cat(
-  length(scion_asvs$ASV), 
+  length(unique(scion_asvs$ASV)), 
   "ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Scion and its interactions.", "\n\n"
 )
+```
 
+```
+# 11 ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Scion and its interactions.
+```
+
+``` r
 # Summary of ASVs with significant Scion effect
 fun_significant_scion <- top_asvs_anova_summary[ASV %in% scion_asvs$ASV, ] %>%
   arrange(desc(Abundance))
@@ -4221,7 +4297,7 @@ top_asvs_anova_summary %>%
 ```
 
 
-```r
+``` r
 # Export significant ASVs as fasta
 
 # Read FUN ASVs
@@ -4237,6 +4313,97 @@ write.fasta(
 )
 ```
 
+### Effect of design factors and canker counts on abundance of top ASVs
+
+
+``` r
+formula <- design_with_canker
+
+# Perform ANOVA on list of top ASVs
+asv_canker_anova_results <- lapply(
+  top_asv_ids, 
+  function(asv) {
+    asv_lm_anova(asv, formula, top_asv_data) %>%
+    extend_asv_anova(asv)
+  }
+) %>% bind_rows() %>% data.table()
+
+# Group by factor and adjust p-values
+asv_canker_anova_results <- asv_canker_anova_results %>% 
+  group_by(Factor) %>% 
+  mutate(p.adj = p.adjust(`Pr..F.`, method = "BH")) %>% 
+  data.table()
+
+# Order factors by original order
+asv_canker_anova_results$Factor <- factor(asv_canker_anova_results$Factor, levels = unique(asv_canker_anova_results$Factor))
+
+# Summary of top ASV ANOVA results
+asv_canker_anova_summary <- asv_canker_anova_results %>% 
+  select(ASV, Taxonomy, Abundance, Factor, var, p.adj) %>% 
+  pivot_wider(names_from = Factor, values_from = c(var, p.adj), names_glue = "{Factor}_{.value}") %>%
+  select(
+    ASV, Taxonomy, Abundance, Cankers_var, Cankers_p.adj
+    # Site_var, Site_p.adj, Storage_var, Storage_p.adj, 
+    # Scion_var, Scion_p.adj, "Site:Storage_var", "Site:Storage_p.adj", "Site:Scion_var", 
+    # "Site:Scion_p.adj", "Storage:Scion_var", "Storage:Scion_p.adj", "Site:Storage:Scion_var", 
+    # "Site:Storage:Scion_p.adj", 
+  ) %>%
+  data.table()
+
+cat(
+  "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
+  "Cankers:", nrow(asv_canker_anova_results[Factor == "Cankers" & p.adj < 0.05, ]), "\n",
+  # "Storage:", nrow(top_asvs_anova_results[Factor == "Storage" & p.adj < 0.05, ]), "\n",
+  # "Scion:", nrow(top_asvs_anova_results[Factor == "Scion" & p.adj < 0.05, ]), "\n",
+  # "Site:Storage:", nrow(top_asvs_anova_results[Factor == "Site:Storage" & p.adj < 0.05, ]), "\n",
+  # "Site:Scion:", nrow(top_asvs_anova_results[Factor == "Site:Scion" & p.adj < 0.05, ]), "\n",
+  # "Storage:Scion:", nrow(top_asvs_anova_results[Factor == "Storage:Scion" & p.adj < 0.05, ]), "\n",
+  # "Site:Storage:Scion:", nrow(top_asvs_anova_results[Factor == "Site:Storage:Scion" & p.adj < 0.05, ]), "\n\n",
+  "Total ASVs:", length(unique(asv_canker_anova_results$ASV)), "\n\n"
+)
+```
+
+```
+# Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values 
+# 
+#  Cankers: 272 
+#  Total ASVs: 995
+```
+
+``` r
+# Filter by significant effect of scion and its interactions
+canker_asvs <- asv_canker_anova_results[grepl("Cankers", Factor) & p.adj < 0.05, ]
+
+# canker_asvs %>%
+#   kbl() %>%
+#   kable_styling("striped", full_width = F)
+
+cat(
+  length(unique(canker_asvs$ASV)), 
+  "ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Cankers and its interactions.", "\n\n"
+)
+```
+
+```
+# 274 ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Cankers and its interactions.
+```
+
+``` r
+# Summary of ASVs with significant Scion effect
+fun_significant_canker <- asv_canker_anova_summary[ASV %in% canker_asvs$ASV, ] %>%
+  arrange(desc(Abundance))
+
+kbl(fun_significant_canker) %>%
+  kable_styling("striped") %>%
+  save_kable("tables/FUN_asvs_design_canker.html")
+
+asv_canker_anova_summary %>%
+  arrange(desc(Abundance)) %>%
+  kbl() %>%
+  kable_styling("striped") %>%
+  save_kable("tables/FUN_asvs_design_canker_all.html")
+```
+
 ## Canker counts
 
 Testing the effects of of total abundance, ASV abundance, α-diversity, and β-diversity on canker counts.
@@ -4246,7 +4413,7 @@ This uses a nested negative binomial regression model.
 The base model for canker counts uses the formula: Cankers ~ Site * Storage * Scion.
 
 
-```r
+``` r
 # Filter out samples with missing canker count
 canker_abundance_data <- colData[complete.cases(colData$Cankers), ]
 
@@ -4280,9 +4447,9 @@ anova(base_model, abundance_model) %>%
 <tbody>
   <tr>
    <td style="text-align:left;"> Site * Storage * Scion </td>
-   <td style="text-align:right;"> 2.828262 </td>
-   <td style="text-align:right;"> 32 </td>
-   <td style="text-align:right;"> -546.8670 </td>
+   <td style="text-align:right;"> 2.820284 </td>
+   <td style="text-align:right;"> 37 </td>
+   <td style="text-align:right;"> -486.0298 </td>
    <td style="text-align:left;">  </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
@@ -4290,13 +4457,13 @@ anova(base_model, abundance_model) %>%
   </tr>
   <tr>
    <td style="text-align:left;"> Site * Storage * Scion + log(copy_number) </td>
-   <td style="text-align:right;"> 2.831854 </td>
-   <td style="text-align:right;"> 31 </td>
-   <td style="text-align:right;"> -546.8376 </td>
+   <td style="text-align:right;"> 2.840237 </td>
+   <td style="text-align:right;"> 36 </td>
+   <td style="text-align:right;"> -484.5982 </td>
    <td style="text-align:left;"> 1 vs 2 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 0.0293702 </td>
-   <td style="text-align:right;"> 0.863927 </td>
+   <td style="text-align:right;"> 1.431569 </td>
+   <td style="text-align:right;"> 0.2315085 </td>
   </tr>
 </tbody>
 </table>
@@ -4304,7 +4471,7 @@ anova(base_model, abundance_model) %>%
 ### Effect of ASV abundance on canker count
 
 
-```r
+``` r
 # Filter out samples with missing canker count
 canker_top_asv_data <- top_asv_data[complete.cases(top_asv_data$Cankers), ]
 # all.equal(top_asv_data[c("Site", "Storage", "Scion", "Cankers")],cankers)
@@ -4390,7 +4557,13 @@ cat(
   nrow(asv_canker_results[p_adjusted < 0.05, ]), "of", nrow(asv_canker_results),
   "ASVs have statistically significant (*P* < 0.05) adjusted p-values\n\n"
 )
+```
 
+```
+# 0 of 995 ASVs have statistically significant (*P* < 0.05) adjusted p-values
+```
+
+``` r
 fun_sig_canker_asvs <- asv_canker_results[p_adjusted < 0.05, ] %>%
   arrange(desc(Abundance))
 
@@ -4412,13 +4585,25 @@ cat(
 )
 ```
 
+```
+# 
+# Significant canker bacterial ASVs
+#  
+# Total ASVs:  995 
+# Warnings:  995 
+# Total ASVs without warnings:  0 
+# Total significant ASVs:  0 
+# ASVs with negative effect:  0 
+# ASVs with positive effect:  0
+```
+
 #### Effect of ASV abundance on canker count per site
 
 Filter top ASVs with 100 % of reads per site
 and test the effect of ASV abundance on canker count per site.
 
 
-```r
+``` r
 # For each site, select top ASVs with 90% of reads
 top_asvs_per_site <- lapply(
   unique(colData$Site),
@@ -4446,7 +4631,52 @@ data.table(
   "ASV%" = round(topASVs / totalASVs * 100),
   "Read%" = round(topreads / totalreads * 100)
 ) %>% kbl() %>% kable_styling("striped")  
+```
 
+<table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+ <thead>
+  <tr>
+   <th style="text-align:right;"> Site </th>
+   <th style="text-align:right;"> topASVs </th>
+   <th style="text-align:right;"> totalASVs </th>
+   <th style="text-align:right;"> topreads </th>
+   <th style="text-align:right;"> totalreads </th>
+   <th style="text-align:right;"> ASV% </th>
+   <th style="text-align:right;"> Read% </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 831 </td>
+   <td style="text-align:right;"> 831 </td>
+   <td style="text-align:right;"> 2905486 </td>
+   <td style="text-align:right;"> 2905486 </td>
+   <td style="text-align:right;"> 100 </td>
+   <td style="text-align:right;"> 100 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 915 </td>
+   <td style="text-align:right;"> 915 </td>
+   <td style="text-align:right;"> 6175938 </td>
+   <td style="text-align:right;"> 6175938 </td>
+   <td style="text-align:right;"> 100 </td>
+   <td style="text-align:right;"> 100 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 3 </td>
+   <td style="text-align:right;"> 931 </td>
+   <td style="text-align:right;"> 920 </td>
+   <td style="text-align:right;"> 3224018 </td>
+   <td style="text-align:right;"> 3224018 </td>
+   <td style="text-align:right;"> 101 </td>
+   <td style="text-align:right;"> 100 </td>
+  </tr>
+</tbody>
+</table>
+
+``` r
 canker_site_design <- "Cankers ~ Storage * Scion"
 
 # ANOVA of ASV abundance with canker count per ASV
@@ -4502,8 +4732,38 @@ for(site in 1:3){
 }
 ```
 
+```
+# 
+# Significant canker fungal ASVs for site  1 
+#  
+# Total ASVs:  831 
+# Warnings:  831 
+# Total ASVs without warnings:  0 
+# Total significant ASVs:  0 
+# ASVs with negative effect:  0 
+# ASVs with positive effect:  0 
+# 
+# Significant canker fungal ASVs for site  2 
+#  
+# Total ASVs:  915 
+# Warnings:  915 
+# Total ASVs without warnings:  0 
+# Total significant ASVs:  0 
+# ASVs with negative effect:  0 
+# ASVs with positive effect:  0 
+# 
+# Significant canker fungal ASVs for site  3 
+#  
+# Total ASVs:  931 
+# Warnings:  931 
+# Total ASVs without warnings:  0 
+# Total significant ASVs:  0 
+# ASVs with negative effect:  0 
+# ASVs with positive effect:  0
+```
 
-```r
+
+``` r
 # Export significant ASVs as FASTA
 write.fasta(
   sequences = FUN_asvs[as.character(significant_asvs$ASV)],
@@ -4512,14 +4772,10 @@ write.fasta(
 )
 ```
 
-```
-# Error in eval(expr, envir, enclos): object 'FUN_asvs' not found
-```
-
 ##### Plot of ASV abundance against canker count
 
 
-```r
+``` r
 # List of significant ASVs
 significant_asv_list <- significant_asvs$ASV %>% unlist()
 
@@ -4553,141 +4809,10 @@ ggsave(
 fun_asv_canker_plot
 ```
 
-#### Effect of aggregated genera on canker counts
-
-
-```r
-# Add genus from taxData to countData
-fun_genus_data <- counts(dds, normalize = T) %>% as.data.frame() %>% mutate(
-  genus = taxData[rownames(countData), "genus"]
-)
-
-# Group by genus
-fun_genus_data <- fun_genus_data %>% group_by(genus) %>% summarise_all(sum) %>% as.data.frame()
-
-# Set rownames as genus
-rownames(fun_genus_data) <- fun_genus_data$genus
-fun_genus_data <- dplyr::select(fun_genus_data, -genus)
-
-# Filter genera with mean abundance < 100
-fun_genus_data <- fun_genus_data[rowMeans(fun_genus_data) > 10, ]
-
-# Rank not genus
-not_genus <- rownames(fun_genus_data)[grep("\\([a-z]\\)", rownames(fun_genus_data))]
-# Remove rows with genus in not_genus
-fun_genus_data <- fun_genus_data[!rownames(fun_genus_data) %in% not_genus, ]
-cat(
-  length(not_genus), "non-genus ranks removed:\n\n",
-  not_genus, "\n"
-)
-
-# Final genus list
-fun_genera <- rownames(fun_genus_data)
-
-# Transpose and add metadata from colData
-fun_genus_data <- t(fun_genus_data) %>% as.data.frame() %>% mutate(
-  Site = colData[rownames(.), "Site"],
-  Storage = colData[rownames(.), "Storage"],
-  Scion = colData[rownames(.), "Scion"],
-  Cankers = colData[rownames(.), "Cankers"]
-)
-
-# Filter out samples with missing canker count
-fun_genus_data <- fun_genus_data[complete.cases(fun_genus_data$Cankers), ]
-```
-
-
-```r
-# Base model design
-canker_design = "Cankers ~ Site * Storage * Scion"
-
-# Base model with genus abundance data
-base_model <- glm.nb(canker_design, data = fun_genus_data)
-
-# ANOVA of genus abundance with canker count
-genus_canker_anova <- function(genus, design, base_model, data) {
-  log_genus = paste0("log(", genus, " + 1)")
-  f = paste(design, "+", log_genus)#, "+", log_genus, ":Site")
-  m = glm.nb(f, data = data)
-  a = anova(base_model, m) %>% data.frame()
-  b = suppressWarnings(anova(m)) %>% data.frame()
-  total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
-  d = data.table(
-    Genus = genus,
-    Abundance = mean(data[[genus]]),
-    coef = m$coefficients[log_genus],
-    var = b[log_genus, 'Deviance'] / total_deviance * 100,
-    p = a[2, 'Pr.Chi.']
-  )
-  return(d)
-}
-
-# genus_canker_anova(fun_genera[1], canker_design, base_model, fun_genus_data)
-
-# Effect of genera abundance on canker counts
-genus_canker_results <- lapply(
-  fun_genera, 
-  function(x) genus_canker_anova(x, canker_design, base_model, fun_genus_data)
-) %>% bind_rows() %>% data.table()
-
-# Adjust p-values for multiple testing
-genus_canker_results$p_adjusted <- p.adjust(genus_canker_results$p, method = "BH")
-
-# Summary of genera with statistically significant (*P* < 0.05) adjusted p-values
-cat(
-  nrow(genus_canker_results[p_adjusted < 0.05, ]), "of", nrow(genus_canker_results),
-  "genera have statistically significant (*P* < 0.05) adjusted p-values\n\n"
-)
-if(nrow(genus_canker_results[p_adjusted < 0.05, ]) > 0) {
-  genus_canker_results[p_adjusted < 0.05, ] %>%
-    arrange(desc(Abundance)) %>%
-    kbl() %>%
-    kable_styling("striped")
-}
-
-# for (genus in sig_genus) {
-#   log_genus = paste0("log(", genus, " + 1)")
-#   f = paste(canker_design, "+", log_genus)
-#   m = glm.nb(f, data = fun_genus_data)
-#   print(anova(base_model, m))
-# }
-```
-
-##### Plot of genus abundance against canker count
-
-
-```r
-significant_genera <- genus_canker_results[p_adjusted < 0.05]$Genus %>% unlist()
-
-significant_genera_data <- fun_genus_data[, c(significant_genera, FACTORS, "Cankers")]
-
-# Melt data for ggplot
-significant_genera_data <- significant_genera_data %>% reshape2::melt(
-  id.vars = c(FACTORS, "Cankers"), variable.name = "Genus", value.name = "Abundance"
-)
-
-# Log transform abundance
-significant_genera_data$log10_abundance <- log(significant_genera_data$Abundance + 1)
-# significant_genera_data$log10_cankers <- log(significant_genera_data$Cankers + 1)
-
-# Plot of genus abundance against canker count
-fun_genus_canker_plot <- ggscatter(
-  data = significant_genera_data, x = "log10_abundance", y = "Cankers", 
-  color = "Site", shape = "Storage",
-  xlab = "Genus abundance (log10)", ylab = "Canker count",
-  free_x = T, free_y = T, palette = cbPalette
-) + facet_wrap(~ Genus, scales = "free")
-
-ggsave(
-  filename = "fun_genus_canker_plot.png", plot = fun_genus_canker_plot, path = "figures/",
-  height = 10, width = 20, units = "cm"
-)
-```
-
 ### Effect of α-diversity on canker count
 
 
-```r
+``` r
 # ANOVA of α-diversity with canker count
 
 # Base model with α-diversity data
@@ -4738,31 +4863,31 @@ alpha_canker_results %>%
   <tr>
    <td style="text-align:left;"> S.chao1 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 0.0033377 </td>
-   <td style="text-align:right;"> 2.9113117 </td>
-   <td style="text-align:right;"> 0.0879603 </td>
-   <td style="text-align:right;"> 0.0384239 </td>
+   <td style="text-align:right;"> 0.0042126 </td>
+   <td style="text-align:right;"> 4.321673 </td>
+   <td style="text-align:right;"> 0.0376299 </td>
+   <td style="text-align:right;"> 0.0028913 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> shannon </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> -0.0830027 </td>
-   <td style="text-align:right;"> 0.0720829 </td>
-   <td style="text-align:right;"> 0.7883279 </td>
-   <td style="text-align:right;"> 0.2109241 </td>
+   <td style="text-align:right;"> -0.1114461 </td>
+   <td style="text-align:right;"> 0.130929 </td>
+   <td style="text-align:right;"> 0.7174707 </td>
+   <td style="text-align:right;"> 0.3131261 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> simpson </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> -4.0314477 </td>
-   <td style="text-align:right;"> 4.1404456 </td>
-   <td style="text-align:right;"> 0.0418701 </td>
-   <td style="text-align:right;"> 1.8197613 </td>
+   <td style="text-align:right;"> -4.5739258 </td>
+   <td style="text-align:right;"> 5.069055 </td>
+   <td style="text-align:right;"> 0.0243567 </td>
+   <td style="text-align:right;"> 2.4078013 </td>
   </tr>
 </tbody>
 </table>
 
-```r
+``` r
 # ANOVA results
 for (measure in measures) {
   f = paste(canker_design, "+", measure)
@@ -4776,35 +4901,35 @@ for (measure in measures) {
 # 
 # Response: Cankers
 #                              Model    theta Resid. df    2 x log-lik.   Test
-# 1           Site * Storage * Scion 2.828262        32       -546.8670       
-# 2 Site * Storage * Scion + S.chao1 2.934597        31       -543.9557 1 vs 2
+# 1           Site * Storage * Scion 2.820284        37       -486.0298       
+# 2 Site * Storage * Scion + S.chao1 2.930574        36       -481.7081 1 vs 2
 #      df LR stat.    Pr(Chi)
 # 1                          
-# 2     1 2.911312 0.08796031
+# 2     1 4.321673 0.03762992
 # Likelihood ratio tests of Negative Binomial Models
 # 
 # Response: Cankers
 #                              Model    theta Resid. df    2 x log-lik.   Test
-# 1           Site * Storage * Scion 2.828262        32       -546.8670       
-# 2 Site * Storage * Scion + shannon 2.836456        31       -546.7949 1 vs 2
-#      df   LR stat.   Pr(Chi)
-# 1                           
-# 2     1 0.07208289 0.7883279
+# 1           Site * Storage * Scion 2.820284        37       -486.0298       
+# 2 Site * Storage * Scion + shannon 2.839250        36       -485.8988 1 vs 2
+#      df LR stat.   Pr(Chi)
+# 1                         
+# 2     1 0.130929 0.7174707
 # Likelihood ratio tests of Negative Binomial Models
 # 
 # Response: Cankers
 #                              Model    theta Resid. df    2 x log-lik.   Test
-# 1           Site * Storage * Scion 2.828262        32       -546.8670       
-# 2 Site * Storage * Scion + simpson 3.056752        31       -542.7265 1 vs 2
+# 1           Site * Storage * Scion 2.820284        37       -486.0298       
+# 2 Site * Storage * Scion + simpson 3.121922        36       -480.9607 1 vs 2
 #      df LR stat.    Pr(Chi)
 # 1                          
-# 2     1 4.140446 0.04187015
+# 2     1 5.069055 0.02435666
 ```
 
 ### Effect of β-diversity on canker count
 
 
-```r
+``` r
 no_pcs <- 10
 
 # Merge PC scores with canker data
@@ -4857,88 +4982,88 @@ beta_canker_results %>%
   <tr>
    <td style="text-align:left;"> PC1 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 0.0128138 </td>
-   <td style="text-align:right;"> 0.9851543 </td>
-   <td style="text-align:right;"> 0.3209296 </td>
-   <td style="text-align:right;"> 4.6547052 </td>
+   <td style="text-align:right;"> 0.0005571 </td>
+   <td style="text-align:right;"> 0.0018609 </td>
+   <td style="text-align:right;"> 0.9655913 </td>
+   <td style="text-align:right;"> 4.2216573 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC2 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> -0.0025164 </td>
-   <td style="text-align:right;"> 0.1365507 </td>
-   <td style="text-align:right;"> 0.7117345 </td>
-   <td style="text-align:right;"> 0.0513068 </td>
+   <td style="text-align:right;"> -0.0012888 </td>
+   <td style="text-align:right;"> 0.0367203 </td>
+   <td style="text-align:right;"> 0.8480357 </td>
+   <td style="text-align:right;"> 0.0723001 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC3 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 0.0119703 </td>
-   <td style="text-align:right;"> 2.5742584 </td>
-   <td style="text-align:right;"> 0.1086150 </td>
-   <td style="text-align:right;"> 0.1146305 </td>
+   <td style="text-align:right;"> 0.0088323 </td>
+   <td style="text-align:right;"> 1.3862781 </td>
+   <td style="text-align:right;"> 0.2390346 </td>
+   <td style="text-align:right;"> 0.0490851 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC4 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 0.0263314 </td>
-   <td style="text-align:right;"> 3.3395217 </td>
-   <td style="text-align:right;"> 0.0676343 </td>
-   <td style="text-align:right;"> 1.1475272 </td>
+   <td style="text-align:right;"> 0.0284739 </td>
+   <td style="text-align:right;"> 5.7994229 </td>
+   <td style="text-align:right;"> 0.0160314 </td>
+   <td style="text-align:right;"> 0.9700279 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC5 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> -0.0047435 </td>
-   <td style="text-align:right;"> 0.0719010 </td>
-   <td style="text-align:right;"> 0.7885887 </td>
-   <td style="text-align:right;"> 0.5930129 </td>
+   <td style="text-align:right;"> -0.0307083 </td>
+   <td style="text-align:right;"> 6.5355019 </td>
+   <td style="text-align:right;"> 0.0105742 </td>
+   <td style="text-align:right;"> 5.5289199 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC6 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> -0.0264086 </td>
-   <td style="text-align:right;"> 4.3863504 </td>
-   <td style="text-align:right;"> 0.0362278 </td>
-   <td style="text-align:right;"> 1.4714388 </td>
+   <td style="text-align:right;"> -0.0171344 </td>
+   <td style="text-align:right;"> 1.6416302 </td>
+   <td style="text-align:right;"> 0.2001019 </td>
+   <td style="text-align:right;"> 0.5428300 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC7 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> -0.0058366 </td>
-   <td style="text-align:right;"> 0.1431624 </td>
-   <td style="text-align:right;"> 0.7051572 </td>
-   <td style="text-align:right;"> 0.0274986 </td>
+   <td style="text-align:right;"> -0.0086052 </td>
+   <td style="text-align:right;"> 0.2868965 </td>
+   <td style="text-align:right;"> 0.5922162 </td>
+   <td style="text-align:right;"> 0.1423567 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC8 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> -0.0093899 </td>
-   <td style="text-align:right;"> 0.3581093 </td>
-   <td style="text-align:right;"> 0.5495581 </td>
-   <td style="text-align:right;"> 0.8596759 </td>
+   <td style="text-align:right;"> -0.0041993 </td>
+   <td style="text-align:right;"> 0.0680437 </td>
+   <td style="text-align:right;"> 0.7942067 </td>
+   <td style="text-align:right;"> 1.5720246 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC9 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> -0.0185098 </td>
-   <td style="text-align:right;"> 1.0450939 </td>
-   <td style="text-align:right;"> 0.3066397 </td>
-   <td style="text-align:right;"> 0.1436870 </td>
+   <td style="text-align:right;"> -0.0039860 </td>
+   <td style="text-align:right;"> 0.0445902 </td>
+   <td style="text-align:right;"> 0.8327593 </td>
+   <td style="text-align:right;"> 0.0029149 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC10 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> -0.0065698 </td>
-   <td style="text-align:right;"> 0.1379981 </td>
-   <td style="text-align:right;"> 0.7102794 </td>
-   <td style="text-align:right;"> 0.7028716 </td>
+   <td style="text-align:right;"> 0.0042037 </td>
+   <td style="text-align:right;"> 0.0601626 </td>
+   <td style="text-align:right;"> 0.8062392 </td>
+   <td style="text-align:right;"> 0.4584069 </td>
   </tr>
 </tbody>
 </table>
 
 
-```r
+``` r
 # Save environment
 save.image("FUN.RData")
 ```
@@ -4948,7 +5073,7 @@ save.image("FUN.RData")
 <!-- #=============================================================================== -->
 
 
-```r
+``` r
 # Unpack bacteria data
 invisible(mapply(assign, names(ubiome_BAC), ubiome_BAC, MoreArgs = list(envir = globalenv())))
 ```
@@ -4958,7 +5083,7 @@ invisible(mapply(assign, names(ubiome_BAC), ubiome_BAC, MoreArgs = list(envir = 
 ### Read and sample summary
 
 
-```r
+``` r
 cat(
   "Raw reads", "\n\n",
   "Total raw reads:\t\t", sum(countData), "\n",
@@ -4979,7 +5104,7 @@ cat(
 #  Min raw reads per sample:	 15049
 ```
 
-```r
+``` r
 #colSums(countData)
 
 nct <- counts(dds, normalize = T)
@@ -5002,14 +5127,14 @@ cat("Normalised reads", "\n\n",
 #  Max normalised reads per sample:	 139399.1
 ```
 
-```r
+``` r
 #round(colSums(counts(dds,normalize = T)),0)
 ```
 
 ### ASV summary 
 
 
-```r
+``` r
 cat(
   "Total ASVs:\t\t", nrow(taxData),"\n\n",
   "Raw reads per ASV summary", "\n\n",
@@ -5031,7 +5156,7 @@ cat(
 #  ASV raw Max reads:		 106398
 ```
 
-```r
+``` r
 cat(
   "Normalised reads per ASV summary","\n\n",
   "Mean normalised reads per ASV:\t\t", mean(rowSums(nct)),"\n",
@@ -5050,7 +5175,7 @@ cat(
 #  ASV normalised Max reads:		 139400.3
 ```
 
-```r
+``` r
 y <- rowSums(nct)
 y <- y[order(y, decreasing = T)]
 # proportion
@@ -5063,7 +5188,7 @@ cat("Top ", TOPOTU, "ASVs:\n")
 # Top  10 ASVs:
 ```
 
-```r
+``` r
 data.frame(
   counts = y[1:TOPOTU], 
   proportion = xy[1:TOPOTU], 
@@ -5153,7 +5278,7 @@ data.frame(
 Proportion of ASVs which can be assigned (with the given confidence) at each taxonomic rank
 
 
-```r
+``` r
 # Proportion of ASVs which can be assigned (with the given confidence) at each taxonomic rank
 
 tx <- copy(taxData)
@@ -5230,7 +5355,7 @@ data.table(
 % of reads which can be assigned to each taxonomic ranks
 
 
-```r
+``` r
 tx <-taxData[rownames(dds),]
 nc <- counts(dds, normalize = T)
 ac <- sum(nc)
@@ -5305,7 +5430,7 @@ data.table(
 Plots of proportion of normalised reads assigned to members of phylum and class.
 
 
-```r
+``` r
 dat <- list(as.data.frame(counts(dds, normalize = T)), taxData, as.data.frame(colData(dds)))
 
 design <- c("Site", "Storage")
@@ -5330,7 +5455,7 @@ bac_phylum_plot
 
 ![](root_endophytes_files/figure-html/BAC taxonomy plots-1.png)<!-- -->
 
-```r
+``` r
 md2 <- getSummedTaxa(dat, conf = TAXCONF, design = design, taxon = "class", cutoff = 0.1, topn = 9)
 
 md2[, Site := factor(Site, levels = c(1, 2, 3))]
@@ -5353,7 +5478,7 @@ bac_class_plot
 ## Community size
 
 
-```r
+``` r
 abundance_plot <- ggplot(
   data = as.data.frame(colData(dds)), 
   aes(x = Site, y = log_copy_number, colour = Scion, shape = Storage)
@@ -5376,7 +5501,7 @@ abundance_plot
 
 ![](root_endophytes_files/figure-html/BAC size-1.png)<!-- -->
 
-```r
+``` r
 # Formula for ANOVA
 formula <- update(FULL_DESIGN, log_copy_number ~ .)
 
@@ -5389,7 +5514,7 @@ plot(abundance_anova)
 
 ![](root_endophytes_files/figure-html/BAC size-2.png)<!-- -->
 
-```r
+``` r
 png("figures/bac_abundance_norm.png", width = 800, height = 600)
 par(mfrow = c(2, 2))
 plot(abundance_anova)
@@ -5401,7 +5526,7 @@ dev.off()
 #   2
 ```
 
-```r
+``` r
 # Results
 summary(abundance_anova)
 ```
@@ -5420,7 +5545,7 @@ summary(abundance_anova)
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-```r
+``` r
 abundance_results <- abundance_anova %>% summary() %>% unclass() %>% data.frame()
 total_variance <- sum(abundance_results$Sum.Sq)
 abundance_results$Perc.Var <- abundance_results$Sum.Sq / total_variance * 100
@@ -5521,43 +5646,43 @@ abundance_results %>%
 ### Communtiy size with canker count
 
 
-```r
+``` r
 cat("Model formula: ", deparse(update(design_with_canker, log_copy_number ~ .)), "\n")
 ```
 
 ```
-# Model formula:  log_copy_number ~ Site + Storage + Scion + Cankers_avg + Site:Storage +      Site:Scion + Storage:Scion + Site:Cankers_avg + Storage:Cankers_avg +      Scion:Cankers_avg + Site:Storage:Scion + Site:Storage:Cankers_avg +      Site:Scion:Cankers_avg + Storage:Scion:Cankers_avg + Site:Storage:Scion:Cankers_avg
+# Model formula:  log_copy_number ~ Site + Storage + Scion + Cankers + Site:Storage +      Site:Scion + Storage:Scion + Site:Cankers + Storage:Cankers +      Scion:Cankers + Site:Storage:Scion + Site:Storage:Cankers +      Site:Scion:Cankers + Storage:Scion:Cankers + Site:Storage:Scion:Cankers
 ```
 
-```r
+``` r
 abundance_canker_anova <- aov(update(design_with_canker, log_copy_number ~ .), data = as.data.frame(colData(dds)))
 summary(abundance_canker_anova)
 ```
 
 ```
-#                                Df Sum Sq Mean Sq F value Pr(>F)  
-# Site                            2 1.8693  0.9347  17.002 0.0555 .
-# Storage                         1 0.0599  0.0599   1.089 0.4062  
-# Scion                           6 0.5203  0.0867   1.577 0.4374  
-# Cankers_avg                     1 0.0003  0.0003   0.005 0.9501  
-# Site:Storage                    2 0.0831  0.0415   0.756 0.5696  
-# Site:Scion                     12 0.2190  0.0183   0.332 0.9129  
-# Storage:Scion                   6 0.1798  0.0300   0.545 0.7611  
-# Site:Cankers_avg                2 0.0573  0.0287   0.521 0.6573  
-# Storage:Cankers_avg             1 0.0446  0.0446   0.812 0.4626  
-# Scion:Cankers_avg               6 0.1690  0.0282   0.512 0.7776  
-# Site:Storage:Scion             12 0.2608  0.0217   0.395 0.8789  
-# Site:Storage:Cankers_avg        2 0.1150  0.0575   1.046 0.4888  
-# Site:Scion:Cankers_avg         11 0.4932  0.0448   0.816 0.6694  
-# Storage:Scion:Cankers_avg       6 0.2830  0.0472   0.858 0.6265  
-# Site:Storage:Scion:Cankers_avg  7 0.1763  0.0252   0.458 0.8167  
-# Residuals                       2 0.1099  0.0550                 
+#                            Df Sum Sq Mean Sq F value Pr(>F)  
+# Site                        2 1.8693  0.9347  17.002 0.0555 .
+# Storage                     1 0.0599  0.0599   1.089 0.4062  
+# Scion                       6 0.5203  0.0867   1.577 0.4374  
+# Cankers                     1 0.0003  0.0003   0.005 0.9501  
+# Site:Storage                2 0.0831  0.0415   0.756 0.5696  
+# Site:Scion                 12 0.2190  0.0183   0.332 0.9129  
+# Storage:Scion               6 0.1798  0.0300   0.545 0.7611  
+# Site:Cankers                2 0.0573  0.0287   0.521 0.6573  
+# Storage:Cankers             1 0.0446  0.0446   0.812 0.4626  
+# Scion:Cankers               6 0.1690  0.0282   0.512 0.7776  
+# Site:Storage:Scion         12 0.2608  0.0217   0.395 0.8789  
+# Site:Storage:Cankers        2 0.1150  0.0575   1.046 0.4888  
+# Site:Scion:Cankers         11 0.4932  0.0448   0.816 0.6694  
+# Storage:Scion:Cankers       6 0.2830  0.0472   0.858 0.6265  
+# Site:Storage:Scion:Cankers  7 0.1763  0.0252   0.458 0.8167  
+# Residuals                   2 0.1099  0.0550                 
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 ```
 
-```r
+``` r
 abundance_canker_results <- abundance_canker_anova %>% summary() %>% unclass() %>% data.frame()
 total_variance <- sum(abundance_canker_results$Sum.Sq)
 abundance_canker_results$Perc.Var <- abundance_canker_results$Sum.Sq / total_variance * 100
@@ -5607,7 +5732,7 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 11.2114621 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Cankers_avg </td>
+   <td style="text-align:left;"> Cankers </td>
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 0.0002739 </td>
    <td style="text-align:right;"> 0.0002739 </td>
@@ -5643,7 +5768,7 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 3.8737659 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Cankers </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 0.0573207 </td>
    <td style="text-align:right;"> 0.0286604 </td>
@@ -5652,7 +5777,7 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 1.2351602 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Storage:Cankers_avg </td>
+   <td style="text-align:left;"> Storage:Cankers </td>
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 0.0446437 </td>
    <td style="text-align:right;"> 0.0446437 </td>
@@ -5661,7 +5786,7 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 0.9619924 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 0.1689993 </td>
    <td style="text-align:right;"> 0.0281666 </td>
@@ -5679,7 +5804,7 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 5.6191846 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Storage:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Storage:Cankers </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 0.1149808 </td>
    <td style="text-align:right;"> 0.0574904 </td>
@@ -5688,7 +5813,7 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 2.4776343 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Scion:Cankers </td>
    <td style="text-align:right;"> 11 </td>
    <td style="text-align:right;"> 0.4932251 </td>
    <td style="text-align:right;"> 0.0448386 </td>
@@ -5697,7 +5822,7 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 10.6281316 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Storage:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Storage:Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 0.2829503 </td>
    <td style="text-align:right;"> 0.0471584 </td>
@@ -5706,7 +5831,7 @@ abundance_canker_results %>%
    <td style="text-align:right;"> 6.0970797 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Storage:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Storage:Scion:Cankers </td>
    <td style="text-align:right;"> 7 </td>
    <td style="text-align:right;"> 0.1762539 </td>
    <td style="text-align:right;"> 0.0251791 </td>
@@ -5731,7 +5856,7 @@ abundance_canker_results %>%
 ### Alpha diversity plot
 
 
-```r
+``` r
 # plot alpha diversity - plot_alpha will convert normalised abundances to integer values
 
 bac_alpha_plot <- plot_alpha(
@@ -5763,7 +5888,7 @@ bac_alpha_plot
 ### Permutation based anova on α-diversity index ranks
 
 
-```r
+``` r
 # get the diversity index data
 all_alpha_ord <- plot_alpha(
   counts(dds, normalize = F), colData(dds), design = "Site", returnData = T
@@ -5789,7 +5914,7 @@ result <- aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T)
 # [1] "Settings:  sequential SS "
 ```
 
-```r
+``` r
 summary(result)
 ```
 
@@ -5808,7 +5933,7 @@ summary(result)
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-```r
+``` r
 df <- result %>% summary() %>% unclass() %>% data.frame()
 total_variance <- sum(df$R.Sum.Sq)
 df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
@@ -5905,7 +6030,7 @@ df %>%
 </tbody>
 </table>
 
-```r
+``` r
 # Shannon
 
 setkey(all_alpha_ord, shannon)
@@ -5917,7 +6042,7 @@ result <- aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T)
 # [1] "Settings:  sequential SS "
 ```
 
-```r
+``` r
 summary(result)
 ```
 
@@ -5936,7 +6061,7 @@ summary(result)
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-```r
+``` r
 df <- result %>% summary() %>% unclass() %>% data.frame()
 total_variance <- sum(df$R.Sum.Sq)
 df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
@@ -6033,7 +6158,7 @@ df %>%
 </tbody>
 </table>
 
-```r
+``` r
 # Simpson
 
 setkey(all_alpha_ord, simpson)
@@ -6045,7 +6170,7 @@ result <- aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T)
 # [1] "Settings:  sequential SS "
 ```
 
-```r
+``` r
 summary(result)
 ```
 
@@ -6064,7 +6189,7 @@ summary(result)
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-```r
+``` r
 df <- result %>% summary() %>% unclass() %>% data.frame()
 total_variance <- sum(df$R.Sum.Sq)
 df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
@@ -6164,15 +6289,15 @@ df %>%
 #### Permutation based anova on α-diversity index ranks with canker lesion counts
 
 
-```r
+``` r
 cat("Model formula: ", deparse(design_with_canker), "\n")
 ```
 
 ```
-# Model formula:  y ~ Site * Storage * Scion * Cankers_avg
+# Model formula:  y ~ Site * Storage * Scion * Cankers
 ```
 
-```r
+``` r
 # Chao1
 
 setkey(all_alpha_ord, S.chao1)
@@ -6184,34 +6309,34 @@ result <- aovp(update(design_with_canker, measure ~ .), all_alpha_ord, seqs = T)
 # [1] "Settings:  sequential SS : numeric variables centered"
 ```
 
-```r
+``` r
 summary(result)
 ```
 
 ```
 # Component 1 :
-#                                Df R Sum Sq R Mean Sq Iter Pr(Prob)    
-# Site                            2  19947.7    9973.9 5000  0.00060 ***
-# Storage                         1     58.2      58.2  309  0.24595    
-# Site:Storage                    2   3190.2    1595.1 5000  0.02440 *  
-# Scion                           6   1339.7     223.3 1960  0.09082 .  
-# Site:Scion                     12   5577.6     464.8 5000  0.07140 .  
-# Storage:Scion                   6    912.5     152.1 2898  0.17667    
-# Site:Storage:Scion             12   2111.6     176.0 2206  0.11469    
-# Cankers_avg                     1     52.3      52.3  168  0.37500    
-# Site:Cankers_avg                2   1303.3     651.6 4781  0.04288 *  
-# Storage:Cankers_avg             1    318.6     318.6 1450  0.06483 .  
-# Site:Storage:Cankers_avg        2    106.3      53.1 1047  0.14422    
-# Scion:Cankers_avg               6   2622.0     437.0 5000  0.05620 .  
-# Site:Scion:Cankers_avg         11   3464.0     314.9 5000  0.09120 .  
-# Storage:Scion:Cankers_avg       6    663.3     110.5 2126  0.17592    
-# Site:Storage:Scion:Cankers_avg  7   2844.2     406.3 2374  0.08256 .  
-# Residuals                       2     36.5      18.2                  
+#                            Df R Sum Sq R Mean Sq Iter Pr(Prob)    
+# Site                        2  19947.7    9973.9 5000  0.00060 ***
+# Storage                     1     58.2      58.2  309  0.24595    
+# Site:Storage                2   3190.2    1595.1 5000  0.02440 *  
+# Scion                       6   1339.7     223.3 1960  0.09082 .  
+# Site:Scion                 12   5577.6     464.8 5000  0.07140 .  
+# Storage:Scion               6    912.5     152.1 2898  0.17667    
+# Site:Storage:Scion         12   2111.6     176.0 2206  0.11469    
+# Cankers                     1     52.3      52.3  168  0.37500    
+# Site:Cankers                2   1303.3     651.6 4781  0.04288 *  
+# Storage:Cankers             1    318.6     318.6 1450  0.06483 .  
+# Site:Storage:Cankers        2    106.3      53.1 1047  0.14422    
+# Scion:Cankers               6   2622.0     437.0 5000  0.05620 .  
+# Site:Scion:Cankers         11   3464.0     314.9 5000  0.09120 .  
+# Storage:Scion:Cankers       6    663.3     110.5 2126  0.17592    
+# Site:Storage:Scion:Cankers  7   2844.2     406.3 2374  0.08256 .  
+# Residuals                   2     36.5      18.2                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-```r
+``` r
 df <- result %>% summary() %>% unclass() %>% data.frame()
 total_variance <- sum(df$R.Sum.Sq)
 df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
@@ -6297,7 +6422,7 @@ df %>%
    <td style="text-align:right;"> 4.7399525 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Cankers_avg </td>
+   <td style="text-align:left;"> Cankers </td>
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 52.27463 </td>
    <td style="text-align:right;"> 52.27463 </td>
@@ -6306,7 +6431,7 @@ df %>%
    <td style="text-align:right;"> 0.1173445 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Cankers </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 1303.26970 </td>
    <td style="text-align:right;"> 651.63485 </td>
@@ -6315,7 +6440,7 @@ df %>%
    <td style="text-align:right;"> 2.9255411 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Storage:Cankers_avg </td>
+   <td style="text-align:left;"> Storage:Cankers </td>
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 318.60477 </td>
    <td style="text-align:right;"> 318.60477 </td>
@@ -6324,7 +6449,7 @@ df %>%
    <td style="text-align:right;"> 0.7151945 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Storage:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Storage:Cankers </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 106.29388 </td>
    <td style="text-align:right;"> 53.14694 </td>
@@ -6333,7 +6458,7 @@ df %>%
    <td style="text-align:right;"> 0.2386054 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2622.03763 </td>
    <td style="text-align:right;"> 437.00627 </td>
@@ -6342,7 +6467,7 @@ df %>%
    <td style="text-align:right;"> 5.8858722 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Scion:Cankers </td>
    <td style="text-align:right;"> 11 </td>
    <td style="text-align:right;"> 3463.99944 </td>
    <td style="text-align:right;"> 314.90904 </td>
@@ -6351,7 +6476,7 @@ df %>%
    <td style="text-align:right;"> 7.7758831 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Storage:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Storage:Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 663.27595 </td>
    <td style="text-align:right;"> 110.54599 </td>
@@ -6360,7 +6485,7 @@ df %>%
    <td style="text-align:right;"> 1.4889022 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Storage:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Storage:Scion:Cankers </td>
    <td style="text-align:right;"> 7 </td>
    <td style="text-align:right;"> 2844.24400 </td>
    <td style="text-align:right;"> 406.32057 </td>
@@ -6380,7 +6505,7 @@ df %>%
 </tbody>
 </table>
 
-```r
+``` r
 # Shannon
 
 setkey(all_alpha_ord, shannon)
@@ -6392,34 +6517,34 @@ result <- aovp(update(design_with_canker, measure ~ .), all_alpha_ord, seqs = T)
 # [1] "Settings:  sequential SS : numeric variables centered"
 ```
 
-```r
+``` r
 summary(result)
 ```
 
 ```
 # Component 1 :
-#                                Df R Sum Sq R Mean Sq Iter Pr(Prob)   
-# Site                            2  23123.2   11561.6 5000  0.00440 **
-# Storage                         1    107.5     107.5  474  0.17511   
-# Site:Storage                    2    850.7     425.4 1186  0.12395   
-# Scion                           6   1025.4     170.9  681  0.20852   
-# Site:Scion                     12   3930.7     327.6 4590  0.19216   
-# Storage:Scion                   6    725.7     120.9  825  0.34061   
-# Site:Storage:Scion             12   2203.7     183.6 2229  0.30911   
-# Cankers_avg                     1    117.1     117.1  600  0.14333   
-# Site:Cankers_avg                2   2889.8    1444.9 4577  0.04086 * 
-# Storage:Cankers_avg             1    615.7     615.7  769  0.11573   
-# Site:Storage:Cankers_avg        2   1165.0     582.5 2979  0.10104   
-# Scion:Cankers_avg               6   1736.4     289.4 1298  0.17103   
-# Site:Scion:Cankers_avg         11   4398.8     399.9 3733  0.16100   
-# Storage:Scion:Cankers_avg       6   1949.9     325.0  845  0.23550   
-# Site:Storage:Scion:Cankers_avg  7    405.4      57.9  543  0.44751   
-# Residuals                       2    153.0      76.5                 
+#                            Df R Sum Sq R Mean Sq Iter Pr(Prob)   
+# Site                        2  23123.2   11561.6 5000  0.00440 **
+# Storage                     1    107.5     107.5  474  0.17511   
+# Site:Storage                2    850.7     425.4 1186  0.12395   
+# Scion                       6   1025.4     170.9  681  0.20852   
+# Site:Scion                 12   3930.7     327.6 4590  0.19216   
+# Storage:Scion               6    725.7     120.9  825  0.34061   
+# Site:Storage:Scion         12   2203.7     183.6 2229  0.30911   
+# Cankers                     1    117.1     117.1  600  0.14333   
+# Site:Cankers                2   2889.8    1444.9 4577  0.04086 * 
+# Storage:Cankers             1    615.7     615.7  769  0.11573   
+# Site:Storage:Cankers        2   1165.0     582.5 2979  0.10104   
+# Scion:Cankers               6   1736.4     289.4 1298  0.17103   
+# Site:Scion:Cankers         11   4398.8     399.9 3733  0.16100   
+# Storage:Scion:Cankers       6   1949.9     325.0  845  0.23550   
+# Site:Storage:Scion:Cankers  7    405.4      57.9  543  0.44751   
+# Residuals                   2    153.0      76.5                 
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-```r
+``` r
 df <- result %>% summary() %>% unclass() %>% data.frame()
 total_variance <- sum(df$R.Sum.Sq)
 df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
@@ -6505,7 +6630,7 @@ df %>%
    <td style="text-align:right;"> 4.8542322 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Cankers_avg </td>
+   <td style="text-align:left;"> Cankers </td>
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 117.1164 </td>
    <td style="text-align:right;"> 117.11638 </td>
@@ -6514,7 +6639,7 @@ df %>%
    <td style="text-align:right;"> 0.2579770 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Cankers </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 2889.7503 </td>
    <td style="text-align:right;"> 1444.87514 </td>
@@ -6523,7 +6648,7 @@ df %>%
    <td style="text-align:right;"> 6.3653709 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Storage:Cankers_avg </td>
+   <td style="text-align:left;"> Storage:Cankers </td>
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 615.6584 </td>
    <td style="text-align:right;"> 615.65837 </td>
@@ -6532,7 +6657,7 @@ df %>%
    <td style="text-align:right;"> 1.3561358 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Storage:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Storage:Cankers </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 1165.0054 </td>
    <td style="text-align:right;"> 582.50269 </td>
@@ -6541,7 +6666,7 @@ df %>%
    <td style="text-align:right;"> 2.5662049 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 1736.4016 </td>
    <td style="text-align:right;"> 289.40027 </td>
@@ -6550,7 +6675,7 @@ df %>%
    <td style="text-align:right;"> 3.8248427 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Scion:Cankers </td>
    <td style="text-align:right;"> 11 </td>
    <td style="text-align:right;"> 4398.7758 </td>
    <td style="text-align:right;"> 399.88871 </td>
@@ -6559,7 +6684,7 @@ df %>%
    <td style="text-align:right;"> 9.6893631 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Storage:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Storage:Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 1949.9155 </td>
    <td style="text-align:right;"> 324.98591 </td>
@@ -6568,7 +6693,7 @@ df %>%
    <td style="text-align:right;"> 4.2951584 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Storage:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Storage:Scion:Cankers </td>
    <td style="text-align:right;"> 7 </td>
    <td style="text-align:right;"> 405.3766 </td>
    <td style="text-align:right;"> 57.91095 </td>
@@ -6588,7 +6713,7 @@ df %>%
 </tbody>
 </table>
 
-```r
+``` r
 # Simpson
 
 setkey(all_alpha_ord, simpson)
@@ -6600,34 +6725,34 @@ result <- aovp(update(design_with_canker, measure ~ .), all_alpha_ord, seqs = T)
 # [1] "Settings:  sequential SS : numeric variables centered"
 ```
 
-```r
+``` r
 summary(result)
 ```
 
 ```
 # Component 1 :
-#                                Df R Sum Sq R Mean Sq Iter Pr(Prob)   
-# Site                            2  21042.0   10521.0 5000  0.00220 **
-# Storage                         1     11.7      11.7   51  0.82353   
-# Site:Storage                    2   1383.1     691.5 3882  0.05229 . 
-# Scion                           6   2047.5     341.2 2327  0.12248   
-# Site:Scion                     12   3877.8     323.1 1146  0.19983   
-# Storage:Scion                   6   1014.4     169.1  851  0.29847   
-# Site:Storage:Scion             12   3377.6     281.5 4059  0.14856   
-# Cankers_avg                     1     82.8      82.8  107  0.48598   
-# Site:Cankers_avg                2   3038.6    1519.3 3945  0.04106 * 
-# Storage:Cankers_avg             1    441.8     441.8  474  0.17511   
-# Site:Storage:Cankers_avg        2   1417.4     708.7 3596  0.05145 . 
-# Scion:Cankers_avg               6   1860.3     310.1 3345  0.10224   
-# Site:Scion:Cankers_avg         11   4409.0     400.8 3440  0.08081 . 
-# Storage:Scion:Cankers_avg       6   1334.2     222.4 2690  0.16580   
-# Site:Storage:Scion:Cankers_avg  7    463.4      66.2  425  0.40000   
-# Residuals                       2    116.5      58.2                 
+#                            Df R Sum Sq R Mean Sq Iter Pr(Prob)   
+# Site                        2  21042.0   10521.0 5000  0.00220 **
+# Storage                     1     11.7      11.7   51  0.82353   
+# Site:Storage                2   1383.1     691.5 3882  0.05229 . 
+# Scion                       6   2047.5     341.2 2327  0.12248   
+# Site:Scion                 12   3877.8     323.1 1146  0.19983   
+# Storage:Scion               6   1014.4     169.1  851  0.29847   
+# Site:Storage:Scion         12   3377.6     281.5 4059  0.14856   
+# Cankers                     1     82.8      82.8  107  0.48598   
+# Site:Cankers                2   3038.6    1519.3 3945  0.04106 * 
+# Storage:Cankers             1    441.8     441.8  474  0.17511   
+# Site:Storage:Cankers        2   1417.4     708.7 3596  0.05145 . 
+# Scion:Cankers               6   1860.3     310.1 3345  0.10224   
+# Site:Scion:Cankers         11   4409.0     400.8 3440  0.08081 . 
+# Storage:Scion:Cankers       6   1334.2     222.4 2690  0.16580   
+# Site:Storage:Scion:Cankers  7    463.4      66.2  425  0.40000   
+# Residuals                   2    116.5      58.2                 
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-```r
+``` r
 df <- result %>% summary() %>% unclass() %>% data.frame()
 total_variance <- sum(df$R.Sum.Sq)
 df$Perc.Var <- df$R.Sum.Sq / total_variance * 100
@@ -6713,7 +6838,7 @@ df %>%
    <td style="text-align:right;"> 7.3556377 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Cankers_avg </td>
+   <td style="text-align:left;"> Cankers </td>
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 82.82755 </td>
    <td style="text-align:right;"> 82.82755 </td>
@@ -6722,7 +6847,7 @@ df %>%
    <td style="text-align:right;"> 0.1803819 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Cankers </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 3038.64251 </td>
    <td style="text-align:right;"> 1519.32125 </td>
@@ -6731,7 +6856,7 @@ df %>%
    <td style="text-align:right;"> 6.6175573 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Storage:Cankers_avg </td>
+   <td style="text-align:left;"> Storage:Cankers </td>
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 441.82086 </td>
    <td style="text-align:right;"> 441.82086 </td>
@@ -6740,7 +6865,7 @@ df %>%
    <td style="text-align:right;"> 0.9621977 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Storage:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Storage:Cankers </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 1417.36515 </td>
    <td style="text-align:right;"> 708.68258 </td>
@@ -6749,7 +6874,7 @@ df %>%
    <td style="text-align:right;"> 3.0867386 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 1860.30778 </td>
    <td style="text-align:right;"> 310.05130 </td>
@@ -6758,7 +6883,7 @@ df %>%
    <td style="text-align:right;"> 4.0513793 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Scion:Cankers </td>
    <td style="text-align:right;"> 11 </td>
    <td style="text-align:right;"> 4408.95332 </td>
    <td style="text-align:right;"> 400.81394 </td>
@@ -6767,7 +6892,7 @@ df %>%
    <td style="text-align:right;"> 9.6018209 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Storage:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Storage:Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 1334.20545 </td>
    <td style="text-align:right;"> 222.36757 </td>
@@ -6776,7 +6901,7 @@ df %>%
    <td style="text-align:right;"> 2.9056333 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Site:Storage:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Storage:Scion:Cankers </td>
    <td style="text-align:right;"> 7 </td>
    <td style="text-align:right;"> 463.37738 </td>
    <td style="text-align:right;"> 66.19677 </td>
@@ -6800,7 +6925,7 @@ df %>%
 
 ### PCA 
 
-```r
+``` r
 # Number of PCs to include
 n_pcs <- 10
 
@@ -6815,7 +6940,7 @@ formula = FULL_DESIGN
 
 #### Percent variation in first 10 PCs 
 
-```r
+``` r
 # Cumulative percentage of variance explained
 pca_cum_var <- data.frame(
   cumulative = cumsum(mypca$percentVar * 100),
@@ -6834,7 +6959,7 @@ bac_cum_pca
 
 ![](root_endophytes_files/figure-html/BAC PCA var-1.png)<!-- -->
 
-```r
+``` r
 pca_var <- data.frame(
   PC = paste0("PC", 1:n_pcs),
   perc_var = round(mypca$percentVar[1:n_pcs] * 100, 1)
@@ -6898,7 +7023,7 @@ pca_var %>%
 
 #### ANOVA of first 10 PCs
 
-```r
+``` r
 pca_summary <- apply(
   mypca$x[, 1:n_pcs], 2, 
   function(x){
@@ -7042,7 +7167,7 @@ pca_summary
 #### Percent variation in first 10 PCs for each factor
 
 
-```r
+``` r
 # Extract PC scores as a list of dataframes
 pcas <- lapply(pca_summary, function(i) data.frame(unclass(i)))
 
@@ -7232,7 +7357,7 @@ pcs_factors_tidy[
 </tbody>
 </table>
 
-```r
+``` r
 # Table with factors as columns and PCs as rows
 # pcs_factors <- dcast(pcs_factors_tidy, PC ~ Factor, value.var = "variance")
 pcs_factors <- pcs_factors_tidy %>%
@@ -7385,7 +7510,7 @@ pcs_factors %>%
 
 #### PCA plot
 
-```r
+``` r
 bac_pca_plot <- plotOrd(
   bac_pca,
   colData(dds),
@@ -7404,7 +7529,7 @@ bac_pca_plot
 
 ![](root_endophytes_files/figure-html/BAC PCA plot-1.png)<!-- -->
 
-```r
+``` r
 bac_pca_3_6_plot <- plotOrd(
   bac_pca,
   colData(dds),
@@ -7425,7 +7550,7 @@ bac_pca_3_6_plot
 #### PCA sum of squares (% var)
 
 
-```r
+``` r
 sum_squares <- apply(mypca$x, 2 ,function(x) 
   summary(aov(update(formula, x ~ .), data = cbind(x, colData(dds))))[[1]][2]
 )
@@ -7446,7 +7571,7 @@ round(colSums(perVar) / sum(colSums(perVar)) * 100, 3)
 ### PCA with canker lesion counts
 
 
-```r
+``` r
 pca_summary <- apply(
   mypca$x[, 1:n_pcs], 2, 
   function(x){
@@ -7459,213 +7584,213 @@ pca_summary
 
 ```
 # $PC1
-#                                Df Sum Sq Mean Sq F value  Pr(>F)   
-# Site                            2 186046   93023 151.832 0.00654 **
-# Storage                         1      2       2   0.003 0.96464   
-# Scion                           6   3688     615   1.003 0.57711   
-# Cankers_avg                     1     56      56   0.091 0.79173   
-# Site:Storage                    2   3007    1504   2.454 0.28949   
-# Site:Scion                     12   8024     669   1.091 0.57375   
-# Storage:Scion                   6   1603     267   0.436 0.81799   
-# Site:Cankers_avg                2    567     283   0.462 0.68381   
-# Storage:Cankers_avg             1    161     161   0.263 0.65888   
-# Scion:Cankers_avg               6   2200     367   0.598 0.73508   
-# Site:Storage:Scion             12   6574     548   0.894 0.64136   
-# Site:Storage:Cankers_avg        2    188      94   0.154 0.86685   
-# Site:Scion:Cankers_avg         11   4919     447   0.730 0.70574   
-# Storage:Scion:Cankers_avg       6   2206     368   0.600 0.73428   
-# Site:Storage:Scion:Cankers_avg  7   3358     480   0.783 0.66342   
-# Residuals                       2   1225     613                   
+#                            Df Sum Sq Mean Sq F value  Pr(>F)   
+# Site                        2 186046   93023 151.832 0.00654 **
+# Storage                     1      2       2   0.003 0.96464   
+# Scion                       6   3688     615   1.003 0.57711   
+# Cankers                     1     56      56   0.091 0.79173   
+# Site:Storage                2   3007    1504   2.454 0.28949   
+# Site:Scion                 12   8024     669   1.091 0.57375   
+# Storage:Scion               6   1603     267   0.436 0.81799   
+# Site:Cankers                2    567     283   0.462 0.68381   
+# Storage:Cankers             1    161     161   0.263 0.65888   
+# Scion:Cankers               6   2200     367   0.598 0.73508   
+# Site:Storage:Scion         12   6574     548   0.894 0.64136   
+# Site:Storage:Cankers        2    188      94   0.154 0.86685   
+# Site:Scion:Cankers         11   4919     447   0.730 0.70574   
+# Storage:Scion:Cankers       6   2206     368   0.600 0.73428   
+# Site:Storage:Scion:Cankers  7   3358     480   0.783 0.66342   
+# Residuals                   2   1225     613                   
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC2
-#                                Df Sum Sq Mean Sq  F value   Pr(>F)    
-# Site                            2 130756   65378 2554.091 0.000391 ***
-# Storage                         1    184     184    7.176 0.115672    
-# Scion                           6   1286     214    8.375 0.110496    
-# Cankers_avg                     1     23      23    0.914 0.439966    
-# Site:Storage                    2    623     312   12.170 0.075930 .  
-# Site:Scion                     12   4417     368   14.379 0.066808 .  
-# Storage:Scion                   6    797     133    5.192 0.170278    
-# Site:Cankers_avg                2    394     197    7.688 0.115103    
-# Storage:Cankers_avg             1      1       1    0.022 0.895089    
-# Scion:Cankers_avg               6   1852     309   12.061 0.078533 .  
-# Site:Storage:Scion             12   2823     235    9.190 0.102230    
-# Site:Storage:Cankers_avg        2    300     150    5.865 0.145656    
-# Site:Scion:Cankers_avg         11   3195     290   11.346 0.083726 .  
-# Storage:Scion:Cankers_avg       6   2078     346   13.533 0.070397 .  
-# Site:Storage:Scion:Cankers_avg  7   1034     148    5.768 0.155671    
-# Residuals                       2     51      26                      
+#                            Df Sum Sq Mean Sq  F value   Pr(>F)    
+# Site                        2 130756   65378 2554.091 0.000391 ***
+# Storage                     1    184     184    7.176 0.115672    
+# Scion                       6   1286     214    8.375 0.110496    
+# Cankers                     1     23      23    0.914 0.439966    
+# Site:Storage                2    623     312   12.170 0.075930 .  
+# Site:Scion                 12   4417     368   14.379 0.066808 .  
+# Storage:Scion               6    797     133    5.192 0.170278    
+# Site:Cankers                2    394     197    7.688 0.115103    
+# Storage:Cankers             1      1       1    0.022 0.895089    
+# Scion:Cankers               6   1852     309   12.061 0.078533 .  
+# Site:Storage:Scion         12   2823     235    9.190 0.102230    
+# Site:Storage:Cankers        2    300     150    5.865 0.145656    
+# Site:Scion:Cankers         11   3195     290   11.346 0.083726 .  
+# Storage:Scion:Cankers       6   2078     346   13.533 0.070397 .  
+# Site:Storage:Scion:Cankers  7   1034     148    5.768 0.155671    
+# Residuals                   2     51      26                      
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC3
-#                                Df Sum Sq Mean Sq F value Pr(>F)
-# Site                            2   2270    1135   1.225  0.449
-# Storage                         1     62      62   0.067  0.820
-# Scion                           6  14682    2447   2.641  0.300
-# Cankers_avg                     1    260     260   0.281  0.649
-# Site:Storage                    2  14484    7242   7.817  0.113
-# Site:Scion                     12  11146     929   1.003  0.603
-# Storage:Scion                   6   8840    1473   1.590  0.435
-# Site:Cankers_avg                2    779     390   0.421  0.704
-# Storage:Cankers_avg             1     83      83   0.090  0.793
-# Scion:Cankers_avg               6   1812     302   0.326  0.879
-# Site:Storage:Scion             12   4261     355   0.383  0.885
-# Site:Storage:Cankers_avg        2   5138    2569   2.773  0.265
-# Site:Scion:Cankers_avg         11  10341     940   1.015  0.596
-# Storage:Scion:Cankers_avg       6   4249     708   0.764  0.662
-# Site:Storage:Scion:Cankers_avg  7   5992     856   0.924  0.611
-# Residuals                       2   1853     926               
+#                            Df Sum Sq Mean Sq F value Pr(>F)
+# Site                        2   2270    1135   1.225  0.449
+# Storage                     1     62      62   0.067  0.820
+# Scion                       6  14682    2447   2.641  0.300
+# Cankers                     1    260     260   0.281  0.649
+# Site:Storage                2  14484    7242   7.817  0.113
+# Site:Scion                 12  11146     929   1.003  0.603
+# Storage:Scion               6   8840    1473   1.590  0.435
+# Site:Cankers                2    779     390   0.421  0.704
+# Storage:Cankers             1     83      83   0.090  0.793
+# Scion:Cankers               6   1812     302   0.326  0.879
+# Site:Storage:Scion         12   4261     355   0.383  0.885
+# Site:Storage:Cankers        2   5138    2569   2.773  0.265
+# Site:Scion:Cankers         11  10341     940   1.015  0.596
+# Storage:Scion:Cankers       6   4249     708   0.764  0.662
+# Site:Storage:Scion:Cankers  7   5992     856   0.924  0.611
+# Residuals                   2   1853     926               
 # 2 observations deleted due to missingness
 # 
 # $PC4
-#                                Df Sum Sq Mean Sq F value Pr(>F)
-# Site                            2   5865  2932.6   4.613  0.178
-# Storage                         1    448   448.0   0.705  0.490
-# Scion                           6   2902   483.6   0.761  0.664
-# Cankers_avg                     1    241   240.6   0.378  0.601
-# Site:Storage                    2    467   233.7   0.368  0.731
-# Site:Scion                     12  13981  1165.1   1.833  0.407
-# Storage:Scion                   6   2031   338.5   0.532  0.767
-# Site:Cankers_avg                2   2306  1153.0   1.813  0.355
-# Storage:Cankers_avg             1     61    61.0   0.096  0.786
-# Scion:Cankers_avg               6   2069   344.8   0.542  0.762
-# Site:Storage:Scion             12   8226   685.5   1.078  0.578
-# Site:Storage:Cankers_avg        2    280   139.8   0.220  0.820
-# Site:Scion:Cankers_avg         11   2853   259.3   0.408  0.868
-# Storage:Scion:Cankers_avg       6   1836   306.0   0.481  0.794
-# Site:Storage:Scion:Cankers_avg  7   4384   626.3   0.985  0.590
-# Residuals                       2   1272   635.8               
+#                            Df Sum Sq Mean Sq F value Pr(>F)
+# Site                        2   5865  2932.6   4.613  0.178
+# Storage                     1    448   448.0   0.705  0.490
+# Scion                       6   2902   483.6   0.761  0.664
+# Cankers                     1    241   240.6   0.378  0.601
+# Site:Storage                2    467   233.7   0.368  0.731
+# Site:Scion                 12  13981  1165.1   1.833  0.407
+# Storage:Scion               6   2031   338.5   0.532  0.767
+# Site:Cankers                2   2306  1153.0   1.813  0.355
+# Storage:Cankers             1     61    61.0   0.096  0.786
+# Scion:Cankers               6   2069   344.8   0.542  0.762
+# Site:Storage:Scion         12   8226   685.5   1.078  0.578
+# Site:Storage:Cankers        2    280   139.8   0.220  0.820
+# Site:Scion:Cankers         11   2853   259.3   0.408  0.868
+# Storage:Scion:Cankers       6   1836   306.0   0.481  0.794
+# Site:Storage:Scion:Cankers  7   4384   626.3   0.985  0.590
+# Residuals                   2   1272   635.8               
 # 2 observations deleted due to missingness
 # 
 # $PC5
-#                                Df Sum Sq Mean Sq F value  Pr(>F)   
-# Site                            2     41      21   4.581 0.17916   
-# Storage                         1   4073    4073 904.252 0.00110 **
-# Scion                           6   1313     219  48.588 0.02030 * 
-# Cankers_avg                     1    908     908 201.532 0.00493 **
-# Site:Storage                    2   4714    2357 523.277 0.00191 **
-# Site:Scion                     12   2369     197  43.827 0.02252 * 
-# Storage:Scion                   6   1976     329  73.135 0.01355 * 
-# Site:Cankers_avg                2   2032    1016 225.525 0.00441 **
-# Storage:Cankers_avg             1    455     455 100.930 0.00976 **
-# Scion:Cankers_avg               6   1219     203  45.094 0.02185 * 
-# Site:Storage:Scion             12   5506     459 101.876 0.00976 **
-# Site:Storage:Cankers_avg        2    286     143  31.776 0.03051 * 
-# Site:Scion:Cankers_avg         11   4110     374  82.960 0.01197 * 
-# Storage:Scion:Cankers_avg       6   2561     427  94.769 0.01048 * 
-# Site:Storage:Scion:Cankers_avg  7   3884     555 123.207 0.00807 **
-# Residuals                       2      9       5                   
+#                            Df Sum Sq Mean Sq F value  Pr(>F)   
+# Site                        2     41      21   4.581 0.17916   
+# Storage                     1   4073    4073 904.252 0.00110 **
+# Scion                       6   1313     219  48.588 0.02030 * 
+# Cankers                     1    908     908 201.532 0.00493 **
+# Site:Storage                2   4714    2357 523.277 0.00191 **
+# Site:Scion                 12   2369     197  43.827 0.02252 * 
+# Storage:Scion               6   1976     329  73.135 0.01355 * 
+# Site:Cankers                2   2032    1016 225.525 0.00441 **
+# Storage:Cankers             1    455     455 100.930 0.00976 **
+# Scion:Cankers               6   1219     203  45.094 0.02185 * 
+# Site:Storage:Scion         12   5506     459 101.876 0.00976 **
+# Site:Storage:Cankers        2    286     143  31.776 0.03051 * 
+# Site:Scion:Cankers         11   4110     374  82.960 0.01197 * 
+# Storage:Scion:Cankers       6   2561     427  94.769 0.01048 * 
+# Site:Storage:Scion:Cankers  7   3884     555 123.207 0.00807 **
+# Residuals                   2      9       5                   
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 # 2 observations deleted due to missingness
 # 
 # $PC6
-#                                Df Sum Sq Mean Sq F value Pr(>F)
-# Site                            2     11     5.7   0.019  0.981
-# Storage                         1   1229  1228.9   4.135  0.179
-# Scion                           6   4637   772.9   2.601  0.304
-# Cankers_avg                     1      3     2.9   0.010  0.931
-# Site:Storage                    2   1200   600.0   2.019  0.331
-# Site:Scion                     12   2264   188.7   0.635  0.753
-# Storage:Scion                   6   2799   466.4   1.569  0.439
-# Site:Cankers_avg                2     14     6.8   0.023  0.978
-# Storage:Cankers_avg             1     45    44.8   0.151  0.735
-# Scion:Cankers_avg               6   1705   284.1   0.956  0.592
-# Site:Storage:Scion             12   2048   170.6   0.574  0.783
-# Site:Storage:Cankers_avg        2    944   471.8   1.587  0.386
-# Site:Scion:Cankers_avg         11   3543   322.1   1.084  0.574
-# Storage:Scion:Cankers_avg       6    982   163.7   0.551  0.758
-# Site:Storage:Scion:Cankers_avg  7   2104   300.6   1.012  0.581
-# Residuals                       2    594   297.2               
+#                            Df Sum Sq Mean Sq F value Pr(>F)
+# Site                        2     11     5.7   0.019  0.981
+# Storage                     1   1229  1228.9   4.135  0.179
+# Scion                       6   4637   772.9   2.601  0.304
+# Cankers                     1      3     2.9   0.010  0.931
+# Site:Storage                2   1200   600.0   2.019  0.331
+# Site:Scion                 12   2264   188.7   0.635  0.753
+# Storage:Scion               6   2799   466.4   1.569  0.439
+# Site:Cankers                2     14     6.8   0.023  0.978
+# Storage:Cankers             1     45    44.8   0.151  0.735
+# Scion:Cankers               6   1705   284.1   0.956  0.592
+# Site:Storage:Scion         12   2048   170.6   0.574  0.783
+# Site:Storage:Cankers        2    944   471.8   1.587  0.386
+# Site:Scion:Cankers         11   3543   322.1   1.084  0.574
+# Storage:Scion:Cankers       6    982   163.7   0.551  0.758
+# Site:Storage:Scion:Cankers  7   2104   300.6   1.012  0.581
+# Residuals                   2    594   297.2               
 # 2 observations deleted due to missingness
 # 
 # $PC7
-#                                Df Sum Sq Mean Sq F value Pr(>F)
-# Site                            2    223   111.3   0.308  0.765
-# Storage                         1    212   211.5   0.585  0.524
-# Scion                           6   2014   335.6   0.928  0.602
-# Cankers_avg                     1      1     0.6   0.002  0.971
-# Site:Storage                    2   1413   706.7   1.953  0.339
-# Site:Scion                     12   1909   159.1   0.440  0.855
-# Storage:Scion                   6    927   154.5   0.427  0.823
-# Site:Cankers_avg                2    242   121.0   0.334  0.749
-# Storage:Cankers_avg             1    258   257.6   0.712  0.488
-# Scion:Cankers_avg               6   1751   291.9   0.807  0.646
-# Site:Storage:Scion             12   1670   139.2   0.385  0.885
-# Site:Storage:Cankers_avg        2    944   472.2   1.305  0.434
-# Site:Scion:Cankers_avg         11   4374   397.6   1.099  0.569
-# Storage:Scion:Cankers_avg       6    829   138.1   0.382  0.848
-# Site:Storage:Scion:Cankers_avg  7   1414   202.1   0.559  0.764
-# Residuals                       2    724   361.8               
+#                            Df Sum Sq Mean Sq F value Pr(>F)
+# Site                        2    223   111.3   0.308  0.765
+# Storage                     1    212   211.5   0.585  0.524
+# Scion                       6   2014   335.6   0.928  0.602
+# Cankers                     1      1     0.6   0.002  0.971
+# Site:Storage                2   1413   706.7   1.953  0.339
+# Site:Scion                 12   1909   159.1   0.440  0.855
+# Storage:Scion               6    927   154.5   0.427  0.823
+# Site:Cankers                2    242   121.0   0.334  0.749
+# Storage:Cankers             1    258   257.6   0.712  0.488
+# Scion:Cankers               6   1751   291.9   0.807  0.646
+# Site:Storage:Scion         12   1670   139.2   0.385  0.885
+# Site:Storage:Cankers        2    944   472.2   1.305  0.434
+# Site:Scion:Cankers         11   4374   397.6   1.099  0.569
+# Storage:Scion:Cankers       6    829   138.1   0.382  0.848
+# Site:Storage:Scion:Cankers  7   1414   202.1   0.559  0.764
+# Residuals                   2    724   361.8               
 # 2 observations deleted due to missingness
 # 
 # $PC8
-#                                Df Sum Sq Mean Sq F value Pr(>F)
-# Site                            2  148.0    74.0   0.330  0.752
-# Storage                         1  501.2   501.2   2.232  0.274
-# Scion                           6  722.1   120.3   0.536  0.766
-# Cankers_avg                     1   19.4    19.4   0.087  0.796
-# Site:Storage                    2  247.9   124.0   0.552  0.644
-# Site:Scion                     12 1394.0   116.2   0.517  0.813
-# Storage:Scion                   6 1720.1   286.7   1.277  0.501
-# Site:Cankers_avg                2 2393.3  1196.7   5.329  0.158
-# Storage:Cankers_avg             1  103.0   103.0   0.459  0.568
-# Scion:Cankers_avg               6 1255.4   209.2   0.932  0.600
-# Site:Storage:Scion             12 3113.4   259.4   1.155  0.554
-# Site:Storage:Cankers_avg        2  742.3   371.2   1.653  0.377
-# Site:Scion:Cankers_avg         11 3030.9   275.5   1.227  0.532
-# Storage:Scion:Cankers_avg       6 1259.0   209.8   0.934  0.600
-# Site:Storage:Scion:Cankers_avg  7 1883.9   269.1   1.198  0.527
-# Residuals                       2  449.1   224.6               
+#                            Df Sum Sq Mean Sq F value Pr(>F)
+# Site                        2  148.0    74.0   0.330  0.752
+# Storage                     1  501.2   501.2   2.232  0.274
+# Scion                       6  722.1   120.3   0.536  0.766
+# Cankers                     1   19.4    19.4   0.087  0.796
+# Site:Storage                2  247.9   124.0   0.552  0.644
+# Site:Scion                 12 1394.0   116.2   0.517  0.813
+# Storage:Scion               6 1720.1   286.7   1.277  0.501
+# Site:Cankers                2 2393.3  1196.7   5.329  0.158
+# Storage:Cankers             1  103.0   103.0   0.459  0.568
+# Scion:Cankers               6 1255.4   209.2   0.932  0.600
+# Site:Storage:Scion         12 3113.4   259.4   1.155  0.554
+# Site:Storage:Cankers        2  742.3   371.2   1.653  0.377
+# Site:Scion:Cankers         11 3030.9   275.5   1.227  0.532
+# Storage:Scion:Cankers       6 1259.0   209.8   0.934  0.600
+# Site:Storage:Scion:Cankers  7 1883.9   269.1   1.198  0.527
+# Residuals                   2  449.1   224.6               
 # 2 observations deleted due to missingness
 # 
 # $PC9
-#                                Df Sum Sq Mean Sq F value Pr(>F)
-# Site                            2    320   160.2   0.421  0.704
-# Storage                         1    160   159.6   0.419  0.584
-# Scion                           6    777   129.5   0.341  0.871
-# Cankers_avg                     1     69    69.1   0.182  0.711
-# Site:Storage                    2   3729  1864.6   4.902  0.169
-# Site:Scion                     12   2018   168.2   0.442  0.853
-# Storage:Scion                   6    887   147.9   0.389  0.844
-# Site:Cankers_avg                2     85    42.5   0.112  0.899
-# Storage:Cankers_avg             1    155   155.4   0.408  0.588
-# Scion:Cankers_avg               6    302    50.4   0.132  0.977
-# Site:Storage:Scion             12   1385   115.4   0.303  0.928
-# Site:Storage:Cankers_avg        2   1423   711.4   1.870  0.348
-# Site:Scion:Cankers_avg         11   3304   300.4   0.790  0.680
-# Storage:Scion:Cankers_avg       6    384    64.0   0.168  0.962
-# Site:Storage:Scion:Cankers_avg  7    823   117.6   0.309  0.899
-# Residuals                       2    761   380.4               
+#                            Df Sum Sq Mean Sq F value Pr(>F)
+# Site                        2    320   160.2   0.421  0.704
+# Storage                     1    160   159.6   0.419  0.584
+# Scion                       6    777   129.5   0.341  0.871
+# Cankers                     1     69    69.1   0.182  0.711
+# Site:Storage                2   3729  1864.6   4.902  0.169
+# Site:Scion                 12   2018   168.2   0.442  0.853
+# Storage:Scion               6    887   147.9   0.389  0.844
+# Site:Cankers                2     85    42.5   0.112  0.899
+# Storage:Cankers             1    155   155.4   0.408  0.588
+# Scion:Cankers               6    302    50.4   0.132  0.977
+# Site:Storage:Scion         12   1385   115.4   0.303  0.928
+# Site:Storage:Cankers        2   1423   711.4   1.870  0.348
+# Site:Scion:Cankers         11   3304   300.4   0.790  0.680
+# Storage:Scion:Cankers       6    384    64.0   0.168  0.962
+# Site:Storage:Scion:Cankers  7    823   117.6   0.309  0.899
+# Residuals                   2    761   380.4               
 # 2 observations deleted due to missingness
 # 
 # $PC10
-#                                Df Sum Sq Mean Sq F value Pr(>F)
-# Site                            2  110.9    55.5   0.417  0.706
-# Storage                         1  256.1   256.1   1.927  0.300
-# Scion                           6  914.6   152.4   1.147  0.535
-# Cankers_avg                     1  278.8   278.8   2.097  0.285
-# Site:Storage                    2 2166.8  1083.4   8.149  0.109
-# Site:Scion                     12 2324.9   193.7   1.457  0.478
-# Storage:Scion                   6 1869.1   311.5   2.343  0.329
-# Site:Cankers_avg                2   86.6    43.3   0.326  0.754
-# Storage:Cankers_avg             1   31.3    31.3   0.235  0.676
-# Scion:Cankers_avg               6 1117.0   186.2   1.400  0.473
-# Site:Storage:Scion             12 2566.3   213.9   1.609  0.447
-# Site:Storage:Cankers_avg        2  652.8   326.4   2.455  0.289
-# Site:Scion:Cankers_avg         11 1427.7   129.8   0.976  0.609
-# Storage:Scion:Cankers_avg       6  599.6    99.9   0.752  0.667
-# Site:Storage:Scion:Cankers_avg  7 1099.9   157.1   1.182  0.531
-# Residuals                       2  265.9   132.9               
+#                            Df Sum Sq Mean Sq F value Pr(>F)
+# Site                        2  110.9    55.5   0.417  0.706
+# Storage                     1  256.1   256.1   1.927  0.300
+# Scion                       6  914.6   152.4   1.147  0.535
+# Cankers                     1  278.8   278.8   2.097  0.285
+# Site:Storage                2 2166.8  1083.4   8.149  0.109
+# Site:Scion                 12 2324.9   193.7   1.457  0.478
+# Storage:Scion               6 1869.1   311.5   2.343  0.329
+# Site:Cankers                2   86.6    43.3   0.326  0.754
+# Storage:Cankers             1   31.3    31.3   0.235  0.676
+# Scion:Cankers               6 1117.0   186.2   1.400  0.473
+# Site:Storage:Scion         12 2566.3   213.9   1.609  0.447
+# Site:Storage:Cankers        2  652.8   326.4   2.455  0.289
+# Site:Scion:Cankers         11 1427.7   129.8   0.976  0.609
+# Storage:Scion:Cankers       6  599.6    99.9   0.752  0.667
+# Site:Storage:Scion:Cankers  7 1099.9   157.1   1.182  0.531
+# Residuals                   2  265.9   132.9               
 # 2 observations deleted due to missingness
 ```
 
-```r
+``` r
 # Extract PC scores as a list of dataframes
 pcas <- lapply(pca_summary, function(i) data.frame(unclass(i)))
 
@@ -7764,7 +7889,7 @@ pcs_factors_tidy[
   </tr>
   <tr>
    <td style="text-align:left;"> PC5 </td>
-   <td style="text-align:left;"> Cankers_avg </td>
+   <td style="text-align:left;"> Cankers </td>
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 201.53154 </td>
    <td style="text-align:right;"> 0.0049254 </td>
@@ -7804,7 +7929,7 @@ pcs_factors_tidy[
   </tr>
   <tr>
    <td style="text-align:left;"> PC5 </td>
-   <td style="text-align:left;"> Site:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Cankers </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 225.52497 </td>
    <td style="text-align:right;"> 0.0044145 </td>
@@ -7814,7 +7939,7 @@ pcs_factors_tidy[
   </tr>
   <tr>
    <td style="text-align:left;"> PC5 </td>
-   <td style="text-align:left;"> Storage:Cankers_avg </td>
+   <td style="text-align:left;"> Storage:Cankers </td>
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 100.93024 </td>
    <td style="text-align:right;"> 0.0097630 </td>
@@ -7824,7 +7949,7 @@ pcs_factors_tidy[
   </tr>
   <tr>
    <td style="text-align:left;"> PC5 </td>
-   <td style="text-align:left;"> Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 45.09403 </td>
    <td style="text-align:right;"> 0.0218520 </td>
@@ -7844,7 +7969,7 @@ pcs_factors_tidy[
   </tr>
   <tr>
    <td style="text-align:left;"> PC5 </td>
-   <td style="text-align:left;"> Site:Storage:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Storage:Cankers </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 31.77564 </td>
    <td style="text-align:right;"> 0.0305105 </td>
@@ -7854,7 +7979,7 @@ pcs_factors_tidy[
   </tr>
   <tr>
    <td style="text-align:left;"> PC5 </td>
-   <td style="text-align:left;"> Site:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Scion:Cankers </td>
    <td style="text-align:right;"> 11 </td>
    <td style="text-align:right;"> 82.95971 </td>
    <td style="text-align:right;"> 0.0119687 </td>
@@ -7864,7 +7989,7 @@ pcs_factors_tidy[
   </tr>
   <tr>
    <td style="text-align:left;"> PC5 </td>
-   <td style="text-align:left;"> Storage:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Storage:Scion:Cankers </td>
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 94.76855 </td>
    <td style="text-align:right;"> 0.0104782 </td>
@@ -7874,7 +7999,7 @@ pcs_factors_tidy[
   </tr>
   <tr>
    <td style="text-align:left;"> PC5 </td>
-   <td style="text-align:left;"> Site:Storage:Scion:Cankers_avg </td>
+   <td style="text-align:left;"> Site:Storage:Scion:Cankers </td>
    <td style="text-align:right;"> 7 </td>
    <td style="text-align:right;"> 123.20714 </td>
    <td style="text-align:right;"> 0.0080742 </td>
@@ -7885,7 +8010,7 @@ pcs_factors_tidy[
 </tbody>
 </table>
 
-```r
+``` r
 # Table with factors as columns and PCs as rows
 # pcs_factors <- dcast(pcs_factors_tidy, PC ~ Factor, value.var = "variance")
 pcs_factors <- pcs_factors_tidy %>%
@@ -7911,18 +8036,18 @@ pcs_factors %>%
    <th style="text-align:left;"> Site </th>
    <th style="text-align:left;"> Storage </th>
    <th style="text-align:left;"> Scion </th>
-   <th style="text-align:left;"> Cankers_avg </th>
+   <th style="text-align:left;"> Cankers </th>
    <th style="text-align:left;"> Site:Storage </th>
    <th style="text-align:left;"> Site:Scion </th>
    <th style="text-align:left;"> Storage:Scion </th>
-   <th style="text-align:left;"> Site:Cankers_avg </th>
-   <th style="text-align:left;"> Storage:Cankers_avg </th>
-   <th style="text-align:left;"> Scion:Cankers_avg </th>
+   <th style="text-align:left;"> Site:Cankers </th>
+   <th style="text-align:left;"> Storage:Cankers </th>
+   <th style="text-align:left;"> Scion:Cankers </th>
    <th style="text-align:left;"> Site:Storage:Scion </th>
-   <th style="text-align:left;"> Site:Storage:Cankers_avg </th>
-   <th style="text-align:left;"> Site:Scion:Cankers_avg </th>
-   <th style="text-align:left;"> Storage:Scion:Cankers_avg </th>
-   <th style="text-align:left;"> Site:Storage:Scion:Cankers_avg </th>
+   <th style="text-align:left;"> Site:Storage:Cankers </th>
+   <th style="text-align:left;"> Site:Scion:Cankers </th>
+   <th style="text-align:left;"> Storage:Scion:Cankers </th>
+   <th style="text-align:left;"> Site:Storage:Scion:Cankers </th>
    <th style="text-align:left;"> Residuals </th>
   </tr>
  </thead>
@@ -8133,7 +8258,7 @@ pcs_factors %>%
 ### ADONIS
 
 
-```r
+``` r
 # Calculate Bray-Curtis distance matrix
 vg <- vegdist(t(counts(dds, normalize = T)), method = "bray")
 
@@ -8146,19 +8271,26 @@ result
 
 ```
 # Permutation test for adonis under reduced model
+# Terms added sequentially (first to last)
 # Permutation: free
 # Number of permutations: 1000
 # 
 # adonis2(formula = formula, data = colData(dds), permutations = 1000)
-#          Df SumOfSqs      R2      F   Pr(>F)    
-# Model    41   9.9754 0.67431 2.0199 0.000999 ***
-# Residual 40   4.8180 0.32569                    
-# Total    81  14.7934 1.00000                    
+#                    Df SumOfSqs      R2       F   Pr(>F)    
+# Site                2   4.6757 0.31606 19.4091 0.000999 ***
+# Storage             1   0.2240 0.01514  1.8596 0.056943 .  
+# Scion               6   0.9812 0.06633  1.3577 0.062937 .  
+# Site:Storage        2   0.7189 0.04859  2.9841 0.002997 ** 
+# Site:Scion         12   1.4891 0.10066  1.0302 0.406593    
+# Storage:Scion       6   0.6866 0.04641  0.9500 0.556444    
+# Site:Storage:Scion 12   1.2000 0.08112  0.8302 0.891109    
+# Residual           40   4.8180 0.32569                     
+# Total              81  14.7934 1.00000                     
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-```r
+``` r
 df <- result %>% data.frame()
 df$Perc.Var <- df$SumOfSqs / df["Total", "SumOfSqs"] * 100
 df %>%
@@ -8180,31 +8312,85 @@ df %>%
  </thead>
 <tbody>
   <tr>
-   <td style="text-align:left;"> Model </td>
-   <td style="text-align:right;"> 41 </td>
-   <td style="text-align:right;"> 9.975362 </td>
-   <td style="text-align:right;"> 0.6743129 </td>
-   <td style="text-align:right;"> 2.019934 </td>
-   <td style="text-align:right;"> 0.000999 </td>
-   <td style="text-align:right;"> 67.43129 </td>
+   <td style="text-align:left;"> Site </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 4.6756525 </td>
+   <td style="text-align:right;"> 0.3160640 </td>
+   <td style="text-align:right;"> 19.4090620 </td>
+   <td style="text-align:right;"> 0.0009990 </td>
+   <td style="text-align:right;"> 31.606401 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Storage </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 0.2239849 </td>
+   <td style="text-align:right;"> 0.0151409 </td>
+   <td style="text-align:right;"> 1.8595639 </td>
+   <td style="text-align:right;"> 0.0569431 </td>
+   <td style="text-align:right;"> 1.514090 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Scion </td>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 0.9812079 </td>
+   <td style="text-align:right;"> 0.0663275 </td>
+   <td style="text-align:right;"> 1.3576946 </td>
+   <td style="text-align:right;"> 0.0629371 </td>
+   <td style="text-align:right;"> 6.632753 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Site:Storage </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 0.7188806 </td>
+   <td style="text-align:right;"> 0.0485948 </td>
+   <td style="text-align:right;"> 2.9841392 </td>
+   <td style="text-align:right;"> 0.0029970 </td>
+   <td style="text-align:right;"> 4.859477 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Site:Scion </td>
+   <td style="text-align:right;"> 12 </td>
+   <td style="text-align:right;"> 1.4890925 </td>
+   <td style="text-align:right;"> 0.1006594 </td>
+   <td style="text-align:right;"> 1.0302266 </td>
+   <td style="text-align:right;"> 0.4065934 </td>
+   <td style="text-align:right;"> 10.065944 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Storage:Scion </td>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 0.6865717 </td>
+   <td style="text-align:right;"> 0.0464108 </td>
+   <td style="text-align:right;"> 0.9500073 </td>
+   <td style="text-align:right;"> 0.5564436 </td>
+   <td style="text-align:right;"> 4.641076 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Site:Storage:Scion </td>
+   <td style="text-align:right;"> 12 </td>
+   <td style="text-align:right;"> 1.1999721 </td>
+   <td style="text-align:right;"> 0.0811155 </td>
+   <td style="text-align:right;"> 0.8301990 </td>
+   <td style="text-align:right;"> 0.8911089 </td>
+   <td style="text-align:right;"> 8.111553 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Residual </td>
    <td style="text-align:right;"> 40 </td>
-   <td style="text-align:right;"> 4.818010 </td>
+   <td style="text-align:right;"> 4.8180097 </td>
    <td style="text-align:right;"> 0.3256871 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> 32.56871 </td>
+   <td style="text-align:right;"> 32.568705 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Total </td>
    <td style="text-align:right;"> 81 </td>
-   <td style="text-align:right;"> 14.793372 </td>
+   <td style="text-align:right;"> 14.7933719 </td>
    <td style="text-align:right;"> 1.0000000 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> 100.00000 </td>
+   <td style="text-align:right;"> 100.000000 </td>
   </tr>
 </tbody>
 </table>
@@ -8212,7 +8398,7 @@ df %>%
 #### Bray-Curtis canker correlation
 
 
-```r
+``` r
 # Convert Bray-Curtis distance matrix to table
 bc <- as.matrix(vg)
 bc[lower.tri(bc, diag = TRUE)] <- NA
@@ -8220,7 +8406,7 @@ bc <- melt(bc, value.name = "BC", na.rm = TRUE)
 
 
 # Calculate canker count difference matrix
-cankers <- colData$Cankers_avg
+cankers <- colData$Cankers
 cankers_diff <- abs(outer(cankers, cankers, "-"))
 rownames(cankers_diff) <- rownames(colData)
 colnames(cankers_diff) <- rownames(colData)
@@ -8246,7 +8432,7 @@ cor.test(bc_cankers$BC, bc_cankers$Cankers, method = "spearman")
 # 0.1362243
 ```
 
-```r
+``` r
 # Plot correlation between Bray-Curtis and canker count difference
 ggscatter(bc_cankers, x = "BC", y = "Cankers", add = "reg.line", conf.int = TRUE)
 ```
@@ -8256,7 +8442,7 @@ ggscatter(bc_cankers, x = "BC", y = "Cankers", add = "reg.line", conf.int = TRUE
 ### NMDS ordination
 
 
-```r
+``` r
 set.seed(sum(utf8ToInt("Hamish McLean")))
 ord <- metaMDS(vg,trace=0) 
 #sratmax=20000,maxit=20000,try = 177, trymax = 177
@@ -8280,11 +8466,11 @@ bac_nmds_plot
 #### NMDS with canker counts
 
 
-```r
-# Rownames for which Cankers_avg is NA
-missing <- rownames(colData[is.na(colData$Cankers_avg), ])
+``` r
+# Rownames for which Cankers is NA
+missing <- rownames(colData[is.na(colData$Cankers), ])
 
-colData$log_cankers <- log10(colData$Cankers_avg + 1)
+colData$log_cankers <- log10(colData$Cankers + 1)
 
 bac_nmds_canker_plot <- plotOrd(
   fun_nmds, colData, 
@@ -8302,7 +8488,7 @@ bac_nmds_canker_plot <- plotOrd(
 # Error in data.frame(..., check.names = FALSE): arguments imply differing number of rows: 79, 80
 ```
 
-```r
+``` r
 bac_nmds_canker_plot
 ```
 
@@ -8315,7 +8501,7 @@ bac_nmds_canker_plot
 ### Explore distribution of ASV counts
 
 
-```r
+``` r
 # Extract normalised counts from DESeq object
 asv_counts <- counts(dds, normalize = T) %>% as.data.frame()
 
@@ -8344,7 +8530,7 @@ bac_cum_asv
 
 ![](root_endophytes_files/figure-html/BAC top ASVs-1.png)<!-- -->
 
-```r
+``` r
 # Find the number of ASVs that account for 50%, 80%, and 99% of total reads
 cat(
   "Number of ASVs that account for 50%, 80%, 90%, and 99% of total reads", "\n\n",
@@ -8364,7 +8550,7 @@ cat(
 #  99%: 5037
 ```
 
-```r
+``` r
 # Find the cumulative percentage accounted for by top x ASVs
 cat(
   "Percentage of total reads accounted for by the top 100, 200,and 500 ASVs:", "\n\n",
@@ -8382,7 +8568,7 @@ cat(
 #  500: 69.1
 ```
 
-```r
+``` r
 # Average ASV counts in order
 mean_asv_counts <- rowMeans(asv_counts)
 mean_asv_counts <- mean_asv_counts[order(mean_asv_counts, decreasing = T)]
@@ -8399,7 +8585,7 @@ bac_asv_counts
 
 ![](root_endophytes_files/figure-html/BAC top ASVs-2.png)<!-- -->
 
-```r
+``` r
 # Number of ASVs with mean read count > 100, 200, and 500
 cat(
   "Number of ASVs with mean read count > 100, 200, and 500", "\n\n",
@@ -8420,7 +8606,7 @@ cat(
 ### Filter top ASVs with 100 % of reads
 
 
-```r
+``` r
 # Filter the top x abundant ASVs by the sum of their normalised counts
 # top_asvs <- asv_counts[order(rowSums(asv_counts), decreasing = T)[1:DIFFOTU], ]
 
@@ -8441,7 +8627,7 @@ identical(names(top_asvs), rownames(colData))
 # [1] TRUE
 ```
 
-```r
+``` r
 # Extract taxonomic data for top ASVs
 top_taxa <- taxData[rownames(top_asvs), ]
 
@@ -8457,7 +8643,7 @@ identical(rownames(top_asv_data), rownames(colData))
 # [1] TRUE
 ```
 
-```r
+``` r
 top_asv_data <- merge(top_asv_data, colData, by = 0) %>% column_to_rownames("Row.names")
 ```
 
@@ -8466,7 +8652,7 @@ top_asv_data <- merge(top_asv_data, colData, by = 0) %>% column_to_rownames("Row
 Effect of Site, Scion, and Storage on abundance of top 200 ASVs
 
 
-```r
+``` r
 # Perform ANOVA on list of top ASVs
 top_asvs_anova_results <- lapply(
   top_asv_ids, 
@@ -8512,7 +8698,23 @@ cat(
   "Site:Storage:Scion:", nrow(top_asvs_anova_results[Factor == "Site:Storage:Scion" & p.adj < 0.05, ]), "\n\n",
   "Total ASVs:", length(unique(top_asvs_anova_results$ASV)), "\n\n"
 )
+```
 
+```
+# Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values 
+# 
+#  Site: 3897 
+#  Storage: 84 
+#  Scion: 134 
+#  Site:Storage: 480 
+#  Site:Scion: 92 
+#  Storage:Scion: 46 
+#  Site:Storage:Scion: 68 
+# 
+#  Total ASVs: 5883
+```
+
+``` r
 # Filter by significant effect of scion and its interactions
 scion_asvs <- top_asvs_anova_results[grepl("Scion", Factor) & p.adj < 0.05, ]
 
@@ -8521,10 +8723,16 @@ scion_asvs <- top_asvs_anova_results[grepl("Scion", Factor) & p.adj < 0.05, ]
 #   kable_styling("striped", full_width = F)
 
 cat(
-  length(scion_asvs$ASV), 
+  length(unique(scion_asvs$ASV)), 
   "ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Scion and its interactions.", "\n\n"
 )
+```
 
+```
+# 283 ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Scion and its interactions.
+```
+
+``` r
 # Summary of ASVs with significant Scion effect
 # bac_significant_scion <- top_asvs_anova_summary[ASV %in% scion_asvs$ASV, ] %>%
 #   arrange(desc(Abundance))
@@ -8544,7 +8752,7 @@ top_asvs_anova_summary %>%
 ```
 
 
-```r
+``` r
 # Export significant ASVs as fasta
 
 # Read BAC ASVs
@@ -8560,6 +8768,97 @@ write.fasta(
 )
 ```
 
+### Effect of design factors and canker counts on abundance of top ASVs
+
+
+``` r
+formula <- design_with_canker
+
+# Perform ANOVA on list of top ASVs
+asv_canker_anova_results <- lapply(
+  top_asv_ids, 
+  function(asv) {
+    asv_lm_anova(asv, formula, top_asv_data) %>%
+    extend_asv_anova(asv)
+  }
+) %>% bind_rows() %>% data.table()
+
+# Group by factor and adjust p-values
+asv_canker_anova_results <- asv_canker_anova_results %>% 
+  group_by(Factor) %>% 
+  mutate(p.adj = p.adjust(`Pr..F.`, method = "BH")) %>% 
+  data.table()
+
+# Order factors by original order
+asv_canker_anova_results$Factor <- factor(asv_canker_anova_results$Factor, levels = unique(asv_canker_anova_results$Factor))
+
+# Summary of top ASV ANOVA results
+asv_canker_anova_summary <- asv_canker_anova_results %>% 
+  select(ASV, Taxonomy, Abundance, Factor, var, p.adj) %>% 
+  pivot_wider(names_from = Factor, values_from = c(var, p.adj), names_glue = "{Factor}_{.value}") %>%
+  select(
+    ASV, Taxonomy, Abundance, Cankers_var, Cankers_p.adj
+    # Site_var, Site_p.adj, Storage_var, Storage_p.adj, 
+    # Scion_var, Scion_p.adj, "Site:Storage_var", "Site:Storage_p.adj", "Site:Scion_var", 
+    # "Site:Scion_p.adj", "Storage:Scion_var", "Storage:Scion_p.adj", "Site:Storage:Scion_var", 
+    # "Site:Storage:Scion_p.adj", 
+  ) %>%
+  data.table()
+
+cat(
+  "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
+  "Cankers:", nrow(asv_canker_anova_results[Factor == "Cankers" & p.adj < 0.05, ]), "\n",
+  # "Storage:", nrow(top_asvs_anova_results[Factor == "Storage" & p.adj < 0.05, ]), "\n",
+  # "Scion:", nrow(top_asvs_anova_results[Factor == "Scion" & p.adj < 0.05, ]), "\n",
+  # "Site:Storage:", nrow(top_asvs_anova_results[Factor == "Site:Storage" & p.adj < 0.05, ]), "\n",
+  # "Site:Scion:", nrow(top_asvs_anova_results[Factor == "Site:Scion" & p.adj < 0.05, ]), "\n",
+  # "Storage:Scion:", nrow(top_asvs_anova_results[Factor == "Storage:Scion" & p.adj < 0.05, ]), "\n",
+  # "Site:Storage:Scion:", nrow(top_asvs_anova_results[Factor == "Site:Storage:Scion" & p.adj < 0.05, ]), "\n\n",
+  "Total ASVs:", length(unique(asv_canker_anova_results$ASV)), "\n\n"
+)
+```
+
+```
+# Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values 
+# 
+#  Cankers: 1157 
+#  Total ASVs: 5883
+```
+
+``` r
+# Filter by significant effect of scion and its interactions
+canker_asvs <- asv_canker_anova_results[grepl("Cankers", Factor) & p.adj < 0.05, ]
+
+# canker_asvs %>%
+#   kbl() %>%
+#   kable_styling("striped", full_width = F)
+
+cat(
+  length(unique(canker_asvs$ASV)), 
+  "ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Cankers and its interactions.", "\n\n"
+)
+```
+
+```
+# 1201 ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Cankers and its interactions.
+```
+
+``` r
+# Summary of ASVs with significant Scion effect
+bac_significant_canker <- asv_canker_anova_summary[ASV %in% canker_asvs$ASV, ] %>%
+  arrange(desc(Abundance))
+
+kbl(bac_significant_canker) %>%
+  kable_styling("striped") %>%
+  save_kable("tables/BAC_asvs_design_canker.html")
+
+asv_canker_anova_summary %>%
+  arrange(desc(Abundance)) %>%
+  kbl() %>%
+  kable_styling("striped") %>%
+  save_kable("tables/BAC_asvs_design_canker_all.html")
+```
+
 ## Canker counts
 
 Testing the effects of of ASV abundance, α-diversity, and β-diversity on canker counts.
@@ -8569,7 +8868,7 @@ This uses a nested negative binomial regression model.
 The base model for canker counts uses the formula: Cankers ~ Site * Storage * Scion.
 
 
-```r
+``` r
 # Filter out samples with missing canker count
 canker_abundance_data <- colData[complete.cases(colData$Cankers), ]
 
@@ -8603,9 +8902,9 @@ anova(base_model, abundance_model) %>%
 <tbody>
   <tr>
    <td style="text-align:left;"> Site * Storage * Scion </td>
-   <td style="text-align:right;"> 2.882191 </td>
-   <td style="text-align:right;"> 33 </td>
-   <td style="text-align:right;"> -554.6118 </td>
+   <td style="text-align:right;"> 2.879833 </td>
+   <td style="text-align:right;"> 38 </td>
+   <td style="text-align:right;"> -492.4708 </td>
    <td style="text-align:left;">  </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
@@ -8613,13 +8912,13 @@ anova(base_model, abundance_model) %>%
   </tr>
   <tr>
    <td style="text-align:left;"> Site * Storage * Scion + log(copy_number) </td>
-   <td style="text-align:right;"> 2.980708 </td>
-   <td style="text-align:right;"> 32 </td>
-   <td style="text-align:right;"> -551.9342 </td>
+   <td style="text-align:right;"> 2.913115 </td>
+   <td style="text-align:right;"> 37 </td>
+   <td style="text-align:right;"> -491.5619 </td>
    <td style="text-align:left;"> 1 vs 2 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 2.677645 </td>
-   <td style="text-align:right;"> 0.1017661 </td>
+   <td style="text-align:right;"> 0.9089456 </td>
+   <td style="text-align:right;"> 0.3403943 </td>
   </tr>
 </tbody>
 </table>
@@ -8627,7 +8926,7 @@ anova(base_model, abundance_model) %>%
 ### Effect of ASV abundance on canker count
 
 
-```r
+``` r
 # Filter out samples with missing canker count
 top_asv_data <- top_asv_data[complete.cases(top_asv_data$Cankers), ]
 
@@ -8651,7 +8950,13 @@ cat(
   nrow(asv_canker_results[p_adjusted < 0.05, ]), 
   "ASVs have statistically significant (*P* < 0.05) adjusted p-values"
 )
+```
 
+```
+# 0 ASVs have statistically significant (*P* < 0.05) adjusted p-values
+```
+
+``` r
 bac_sig_canker_asvs <- asv_canker_results[p_adjusted < 0.05, ] %>%
   arrange(desc(Abundance))
 
@@ -8673,13 +8978,25 @@ cat(
 )
 ```
 
+```
+# 
+# Significant canker bacterial ASVs
+#  
+# Total ASVs:  5883 
+# Warnings:  5883 
+# Total ASVs without warnings:  0 
+# Total significant ASVs:  0 
+# ASVs with negative effect:  0 
+# ASVs with positive effect:  0
+```
+
 #### Effect of ASV abundance on canker count per site
 
 Filter top ASVs with 100 % of reads per site
 and test the effect of ASV abundance on canker count per site.
 
 
-```r
+``` r
 # For each site, select top ASVs with 50% of reads
 top_asvs_per_site <- lapply(
   unique(colData$Site),
@@ -8708,7 +9025,52 @@ data.table(
   "ASV%" = round(topASVs / totalASVs * 100),
   "Read%" = round(topreads / totalreads * 100)
 ) %>% kbl() %>% kable_styling("striped")
+```
 
+<table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+ <thead>
+  <tr>
+   <th style="text-align:right;"> Site </th>
+   <th style="text-align:right;"> topASVs </th>
+   <th style="text-align:right;"> totalASVs </th>
+   <th style="text-align:right;"> topreads </th>
+   <th style="text-align:right;"> totalreads </th>
+   <th style="text-align:right;"> ASV% </th>
+   <th style="text-align:right;"> Read% </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 5772 </td>
+   <td style="text-align:right;"> 5770 </td>
+   <td style="text-align:right;"> 2042152.9 </td>
+   <td style="text-align:right;"> 2042152.9 </td>
+   <td style="text-align:right;"> 100 </td>
+   <td style="text-align:right;"> 100 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 5759 </td>
+   <td style="text-align:right;"> 5759 </td>
+   <td style="text-align:right;"> 867347.7 </td>
+   <td style="text-align:right;"> 867347.7 </td>
+   <td style="text-align:right;"> 100 </td>
+   <td style="text-align:right;"> 100 </td>
+  </tr>
+  <tr>
+   <td style="text-align:right;"> 3 </td>
+   <td style="text-align:right;"> 5599 </td>
+   <td style="text-align:right;"> 5592 </td>
+   <td style="text-align:right;"> 1515519.1 </td>
+   <td style="text-align:right;"> 1515519.1 </td>
+   <td style="text-align:right;"> 100 </td>
+   <td style="text-align:right;"> 100 </td>
+  </tr>
+</tbody>
+</table>
+
+``` r
 canker_site_design <- "Cankers ~ Storage * Scion"
 
 # ANOVA of ASV abundance with canker count per ASV
@@ -8764,8 +9126,38 @@ for(site in 1:3){
 }
 ```
 
+```
+# 
+# Significant canker fungal ASVs for site  1 
+#  
+# Total ASVs:  5772 
+# Warnings:  5772 
+# Total ASVs without warnings:  0 
+# Total significant ASVs:  0 
+# ASVs with negative effect:  0 
+# ASVs with positive effect:  0 
+# 
+# Significant canker fungal ASVs for site  2 
+#  
+# Total ASVs:  5759 
+# Warnings:  5759 
+# Total ASVs without warnings:  0 
+# Total significant ASVs:  0 
+# ASVs with negative effect:  0 
+# ASVs with positive effect:  0 
+# 
+# Significant canker fungal ASVs for site  3 
+#  
+# Total ASVs:  5599 
+# Warnings:  5599 
+# Total ASVs without warnings:  0 
+# Total significant ASVs:  0 
+# ASVs with negative effect:  0 
+# ASVs with positive effect:  0
+```
 
-```r
+
+``` r
 # Export significant ASVs as FASTA
 write.fasta(
   sequences = BAC_asvs[as.character(significant_asvs$ASV)],
@@ -8777,7 +9169,7 @@ write.fasta(
 ##### Plot of ASV abundance against canker count
 
 
-```r
+``` r
 # List of significant ASVs
 significant_asv_list <- significant_asvs$ASV %>% unlist()
 
@@ -8811,151 +9203,10 @@ ggsave(
 bac_asv_canker_plot
 ```
 
-#### Effect of aggregated genera on canker counts
-
-
-```r
-# Add genus from taxData to countData
-bac_genus_data <- counts(dds, normalize = T) %>% as.data.frame() %>% mutate(
-  genus = taxData[rownames(countData), "genus"]
-)
-
-# Group by genus and set genus to rownames
-bac_genus_data <- bac_genus_data %>% group_by(genus) %>% summarise_all(sum) %>% as.data.frame()
-
-# Set rownames as genus
-rownames(bac_genus_data) <- bac_genus_data$genus
-bac_genus_data <- dplyr::select(bac_genus_data, -genus)
-
-# Filter genera with mean abundance < 100
-bac_genus_data <- bac_genus_data[rowMeans(bac_genus_data) > 10, ]
-
-# Rank not genus
-not_genus <- rownames(bac_genus_data)[grep("\\([a-z]\\)", rownames(bac_genus_data))]
-# Remove rows with genus in not_genus
-bac_genus_data <- bac_genus_data[!rownames(bac_genus_data) %in% not_genus, ]
-cat(
-  length(not_genus), "non-genus ranks removed:\n\n",
-  not_genus, "\n"
-)
-
-# Remove any with slashes or underscores
-removals <- rownames(bac_genus_data)[grep("[/_]", rownames(bac_genus_data))]
-# Remove rows with symbols in the name
-bac_genus_data <- bac_genus_data[!rownames(bac_genus_data) %in% removals, ]
-cat(
-  length(removals), "ranks with slashes or underscores removed:\n\n",
-  removals, "\n"
-)
-
-# Set rownames as genus
-bac_genera <- rownames(bac_genus_data)
-
-# Transpose and add metadata from colData
-bac_genus_data <- t(bac_genus_data) %>% as.data.frame() %>% mutate(
-  Site = colData[rownames(.), "Site"],
-  Storage = colData[rownames(.), "Storage"],
-  Scion = colData[rownames(.), "Scion"],
-  Cankers = colData[rownames(.), "Cankers"]
-)
-
-# Filter out samples with missing canker count
-bac_genus_data <- bac_genus_data[complete.cases(bac_genus_data$Cankers), ]
-```
-
-
-```r
-# Base model design
-canker_design = "Cankers ~ Site * Storage * Scion"
-
-# Base model with genus abundance data
-base_model <- glm.nb(canker_design, data = bac_genus_data)
-
-# ANOVA of genus abundance with canker count
-genus_canker_anova <- function(genus, design, base_model, data) {
-  log_genus = paste0("log(", genus, " + 1)")
-  f = paste(design, "+", log_genus)#, "+", log_genus, ":Site")
-  m = glm.nb(f, data = data)
-  a = anova(base_model, m) %>% data.frame()
-  b = suppressWarnings(anova(m)) %>% data.frame()
-  total_deviance = sum(b$Deviance, na.rm = T) + tail(b$Resid..Dev, 1)
-  d = data.table(
-    Genus = genus,
-    Abundance = mean(data[[genus]]),
-    coef = m$coefficients[log_genus],
-    var = b[log_genus, 'Deviance'] / total_deviance * 100,
-    p = a[2, 'Pr.Chi.']
-  )
-  return(d)
-}
-
-# genus_canker_anova(bac_genera[1], canker_design, base_model, bac_genus_data)
-
-# Effect of genera abundance on canker counts
-genus_canker_results <- lapply(
-  bac_genera, 
-  function(x) genus_canker_anova(x, canker_design, base_model, bac_genus_data)
-) %>% bind_rows() %>% data.table()
-
-# Adjust p-values for multiple testing
-genus_canker_results$p_adjusted <- p.adjust(genus_canker_results$p, method = "BH")
-
-# Summary of ASVs with statistically significant (*P* < 0.05) adjusted p-values
-cat(
-  nrow(genus_canker_results[p_adjusted < 0.05, ]), "of", nrow(genus_canker_results),
-  "genera have statistically significant (*P* < 0.05) adjusted p-values\n\n"
-)
-if(nrow(genus_canker_results[p_adjusted < 0.05, ]) > 0) {
-  genus_canker_results[p_adjusted < 0.05, ] %>%
-    arrange(desc(Abundance)) %>%
-    kbl() %>%
-    kable_styling("striped")
-}
-
-sig_genus <- genus_canker_results[p_adjusted < 0.05]$Genus %>% unlist()
-
-for (genus in sig_genus) {
-  log_genus = paste0("log(", genus, " + 1)")
-  f = paste(canker_design, "+", log_genus)
-  m = glm.nb(f, data = bac_genus_data)
-  print(anova(base_model, m))
-}
-```
-
-##### Plot of genus abundance against canker count
-
-
-```r
-significant_genera <- genus_canker_results[p_adjusted < 0.05]$Genus %>% unlist()
-
-significant_genera_data <- bac_genus_data[, c(significant_genera, FACTORS, "Cankers")]
-
-# Melt data for ggplot
-significant_genera_data <- significant_genera_data %>% reshape2::melt(
-  id.vars = c(FACTORS, "Cankers"), variable.name = "Genus", value.name = "Abundance"
-)
-
-# Log transform abundance
-significant_genera_data$log10_abundance <- log10(significant_genera_data$Abundance + 1)
-
-# Plot of genus abundance against canker count
-bac_genus_canker_plot <- ggscatter(
-  data = significant_genera_data, x = "log10_abundance", y = "Cankers", 
-  color = "Site", shape = "Storage",
-  xlab = "Genus abundance (log10)", ylab = "Canker count",
-  free_x = T, free_y = T, palette = cbPalette
-) + facet_wrap(~ Genus, scales = "free")
-
-ggsave(
-  filename = "bac_genus_canker_plot.png", plot = bac_genus_canker_plot, path = "figures/",
-  height = 10, width = 20, units = "cm"
-)
-```
-
 ### Effect of α-diversity on canker count
 
 
-```r
+``` r
 # ANOVA of α-diversity with canker count
 
 # Base model with α-diversity data
@@ -9004,31 +9255,31 @@ alpha_canker_results %>%
   <tr>
    <td style="text-align:left;"> S.chao1 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 0.000326 </td>
-   <td style="text-align:right;"> 0.8269849 </td>
-   <td style="text-align:right;"> 0.3631458 </td>
-   <td style="text-align:right;"> 0.1949192 </td>
+   <td style="text-align:right;"> 0.0000499 </td>
+   <td style="text-align:right;"> 0.0190558 </td>
+   <td style="text-align:right;"> 0.8902066 </td>
+   <td style="text-align:right;"> 0.4416744 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> shannon </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 1.047427 </td>
-   <td style="text-align:right;"> 4.4866793 </td>
-   <td style="text-align:right;"> 0.0341600 </td>
-   <td style="text-align:right;"> 3.0434692 </td>
+   <td style="text-align:right;"> 0.0623983 </td>
+   <td style="text-align:right;"> 0.0178346 </td>
+   <td style="text-align:right;"> 0.8937614 </td>
+   <td style="text-align:right;"> 3.0766861 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> simpson </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 74.201152 </td>
-   <td style="text-align:right;"> 6.3333138 </td>
-   <td style="text-align:right;"> 0.0118491 </td>
-   <td style="text-align:right;"> 2.5540565 </td>
+   <td style="text-align:right;"> 5.8557097 </td>
+   <td style="text-align:right;"> 0.0579833 </td>
+   <td style="text-align:right;"> 0.8097123 </td>
+   <td style="text-align:right;"> 2.3170646 </td>
   </tr>
 </tbody>
 </table>
 
-```r
+``` r
 # ANOVA results
 for (measure in measures) {
   f = paste(canker_design, "+", measure)
@@ -9042,41 +9293,41 @@ for (measure in measures) {
 # 
 # Response: Cankers
 #                              Model    theta Resid. df    2 x log-lik.   Test
-# 1           Site * Storage * Scion 2.882191        33       -554.6118       
-# 2 Site * Storage * Scion + S.chao1 2.904996        32       -553.7848 1 vs 2
-#      df  LR stat.   Pr(Chi)
-# 1                          
-# 2     1 0.8269849 0.3631458
+# 1           Site * Storage * Scion 2.879833        38       -492.4708       
+# 2 Site * Storage * Scion + S.chao1 2.880251        37       -492.4518 1 vs 2
+#      df   LR stat.   Pr(Chi)
+# 1                           
+# 2     1 0.01905582 0.8902066
 # Likelihood ratio tests of Negative Binomial Models
 # 
 # Response: Cankers
 #                              Model    theta Resid. df    2 x log-lik.   Test
-# 1           Site * Storage * Scion 2.882191        33       -554.6118       
-# 2 Site * Storage * Scion + shannon 3.049289        32       -550.1251 1 vs 2
-#      df LR stat.    Pr(Chi)
-# 1                          
-# 2     1 4.486679 0.03415997
+# 1           Site * Storage * Scion 2.879833        38       -492.4708       
+# 2 Site * Storage * Scion + shannon 2.875798        37       -492.4530 1 vs 2
+#      df   LR stat.   Pr(Chi)
+# 1                           
+# 2     1 0.01783459 0.8937614
 # Likelihood ratio tests of Negative Binomial Models
 # 
 # Response: Cankers
 #                              Model    theta Resid. df    2 x log-lik.   Test
-# 1           Site * Storage * Scion 2.882191        33       -554.6118       
-# 2 Site * Storage * Scion + simpson 3.136392        32       -548.2785 1 vs 2
-#      df LR stat.    Pr(Chi)
-# 1                          
-# 2     1 6.333314 0.01184907
+# 1           Site * Storage * Scion 2.879833        38       -492.4708       
+# 2 Site * Storage * Scion + simpson 2.867183        37       -492.4128 1 vs 2
+#      df   LR stat.   Pr(Chi)
+# 1                           
+# 2     1 0.05798327 0.8097123
 ```
 
 Plot of Simpson against canker counts
 
 
-```r
+``` r
 ggscatter(all_alpha_ord, y = "Cankers", x = "simpson", add = "reg.line", conf.int = T, cor.coef = T)
 ```
 
 ![](root_endophytes_files/figure-html/unnamed-chunk-1-1.png)<!-- -->
 
-```r
+``` r
 ggsave("figures/bac_alpha_test.png")
 
 m <- glm.nb("Cankers ~ Site * Storage * Scion + simpson", data = all_alpha_ord)
@@ -9086,7 +9337,7 @@ Spearman correlation of α-diversity indices with canker lesion
 
 
 
-```r
+``` r
 cor.test(all_alpha_ord$S.chao1, all_alpha_ord$Cankers, method = "spearman", use = "complete.obs")
 ```
 
@@ -9095,14 +9346,14 @@ cor.test(all_alpha_ord$S.chao1, all_alpha_ord$Cankers, method = "spearman", use 
 # 	Spearman's rank correlation rho
 # 
 # data:  all_alpha_ord$S.chao1 and all_alpha_ord$Cankers
-# S = 45495, p-value = 0.004557
+# S = 59944, p-value = 0.007377
 # alternative hypothesis: true rho is not equal to 0
 # sample estimates:
 #       rho 
-# 0.3262464
+# 0.2974264
 ```
 
-```r
+``` r
 cor.test(all_alpha_ord$shannon, all_alpha_ord$Cankers, method = "spearman", use = "complete.obs")
 ```
 
@@ -9111,14 +9362,14 @@ cor.test(all_alpha_ord$shannon, all_alpha_ord$Cankers, method = "spearman", use 
 # 	Spearman's rank correlation rho
 # 
 # data:  all_alpha_ord$shannon and all_alpha_ord$Cankers
-# S = 33051, p-value = 3.366e-06
+# S = 41926, p-value = 1.459e-06
 # alternative hypothesis: true rho is not equal to 0
 # sample estimates:
 #       rho 
-# 0.5105344
+# 0.5085986
 ```
 
-```r
+``` r
 cor.test(all_alpha_ord$simpson, all_alpha_ord$Cankers, method = "spearman", use = "complete.obs")
 ```
 
@@ -9127,17 +9378,17 @@ cor.test(all_alpha_ord$simpson, all_alpha_ord$Cankers, method = "spearman", use 
 # 	Spearman's rank correlation rho
 # 
 # data:  all_alpha_ord$simpson and all_alpha_ord$Cankers
-# S = 32444, p-value = 2.104e-06
+# S = 40866, p-value = 7.24e-07
 # alternative hypothesis: true rho is not equal to 0
 # sample estimates:
 #       rho 
-# 0.5195309
+# 0.5210212
 ```
 
 ### Effect of β-diversity on canker count
 
 
-```r
+``` r
 no_pcs <- 10
 
 # Merge PC scores with canker data
@@ -9190,82 +9441,82 @@ beta_canker_results %>%
   <tr>
    <td style="text-align:left;"> PC1 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> -0.0247556 </td>
-   <td style="text-align:right;"> 14.5763203 </td>
-   <td style="text-align:right;"> 0.0001346 </td>
-   <td style="text-align:right;"> 0.2245606 </td>
+   <td style="text-align:right;"> -0.0202112 </td>
+   <td style="text-align:right;"> 10.3236543 </td>
+   <td style="text-align:right;"> 0.0013134 </td>
+   <td style="text-align:right;"> 0.0432082 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC2 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> -0.0071783 </td>
-   <td style="text-align:right;"> 0.9833974 </td>
-   <td style="text-align:right;"> 0.3213615 </td>
-   <td style="text-align:right;"> 0.0276326 </td>
+   <td style="text-align:right;"> -0.0074100 </td>
+   <td style="text-align:right;"> 1.0296866 </td>
+   <td style="text-align:right;"> 0.3102323 </td>
+   <td style="text-align:right;"> 0.0008131 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC3 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> -0.0036667 </td>
-   <td style="text-align:right;"> 0.4855541 </td>
-   <td style="text-align:right;"> 0.4859172 </td>
-   <td style="text-align:right;"> 0.3145477 </td>
+   <td style="text-align:right;"> 0.0040745 </td>
+   <td style="text-align:right;"> 0.7026033 </td>
+   <td style="text-align:right;"> 0.4019103 </td>
+   <td style="text-align:right;"> 0.6717022 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC4 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 0.0157086 </td>
-   <td style="text-align:right;"> 6.8155264 </td>
-   <td style="text-align:right;"> 0.0090369 </td>
-   <td style="text-align:right;"> 0.2983212 </td>
+   <td style="text-align:right;"> 0.0095434 </td>
+   <td style="text-align:right;"> 2.5670906 </td>
+   <td style="text-align:right;"> 0.1091082 </td>
+   <td style="text-align:right;"> 0.2014323 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC5 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 0.0040380 </td>
-   <td style="text-align:right;"> 0.4772993 </td>
-   <td style="text-align:right;"> 0.4896482 </td>
-   <td style="text-align:right;"> 3.4298480 </td>
+   <td style="text-align:right;"> 0.0095633 </td>
+   <td style="text-align:right;"> 2.8699571 </td>
+   <td style="text-align:right;"> 0.0902473 </td>
+   <td style="text-align:right;"> 4.5864933 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC6 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> -0.0092406 </td>
-   <td style="text-align:right;"> 1.0251900 </td>
-   <td style="text-align:right;"> 0.3112911 </td>
-   <td style="text-align:right;"> 0.9320288 </td>
+   <td style="text-align:right;"> -0.0071452 </td>
+   <td style="text-align:right;"> 0.5890798 </td>
+   <td style="text-align:right;"> 0.4427752 </td>
+   <td style="text-align:right;"> 0.4372487 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC7 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> -0.0017239 </td>
-   <td style="text-align:right;"> 0.0318831 </td>
-   <td style="text-align:right;"> 0.8582844 </td>
-   <td style="text-align:right;"> 0.0292505 </td>
+   <td style="text-align:right;"> 0.0020400 </td>
+   <td style="text-align:right;"> 0.0508273 </td>
+   <td style="text-align:right;"> 0.8216300 </td>
+   <td style="text-align:right;"> 0.0379060 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC8 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 0.0127517 </td>
-   <td style="text-align:right;"> 2.2531119 </td>
-   <td style="text-align:right;"> 0.1333460 </td>
-   <td style="text-align:right;"> 0.4595563 </td>
+   <td style="text-align:right;"> 0.0062619 </td>
+   <td style="text-align:right;"> 0.6141555 </td>
+   <td style="text-align:right;"> 0.4332275 </td>
+   <td style="text-align:right;"> 0.7283617 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC9 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 0.0061285 </td>
-   <td style="text-align:right;"> 0.3383622 </td>
-   <td style="text-align:right;"> 0.5607761 </td>
-   <td style="text-align:right;"> 0.0412642 </td>
+   <td style="text-align:right;"> -0.0088269 </td>
+   <td style="text-align:right;"> 0.7265850 </td>
+   <td style="text-align:right;"> 0.3939924 </td>
+   <td style="text-align:right;"> 0.4185271 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> PC10 </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 0.0012980 </td>
-   <td style="text-align:right;"> 0.0097534 </td>
-   <td style="text-align:right;"> 0.9213293 </td>
-   <td style="text-align:right;"> 3.5283651 </td>
+   <td style="text-align:right;"> -0.0116633 </td>
+   <td style="text-align:right;"> 0.8613142 </td>
+   <td style="text-align:right;"> 0.3533712 </td>
+   <td style="text-align:right;"> 2.9219511 </td>
   </tr>
 </tbody>
 </table>
@@ -9275,7 +9526,7 @@ beta_canker_results %>%
 ## Abundance
 
 
-```r
+``` r
 abundance_combined <- rbind(
   as.data.frame(colData(ubiome_FUN$dds)), as.data.frame(colData(ubiome_BAC$dds))
 ) %>% mutate(kingdom = ifelse(Target == "ITS", "Fungi", "Bacteria")) %>%
@@ -9316,7 +9567,7 @@ abundance_box
 ## Alpha diversity
 
 
-```r
+``` r
 alpha_combined <- rbind(fun_alpha, bac_alpha) %>% 
   subset(select = c("Site", "Storage", "Scion", "Target", "S.chao1", "shannon", "simpson")) %>%
   mutate(kingdom = ifelse(Target == "ITS", "Fungi", "Bacteria")) %>%
@@ -9332,7 +9583,7 @@ alpha_combined <- rbind(fun_alpha, bac_alpha) %>%
 # Error in rename(., Chao1 = S.chao1, Shannon = shannon, Simpson = simpson): unused arguments (Chao1 = S.chao1, Shannon = shannon, Simpson = simpson)
 ```
 
-```r
+``` r
 # alpha_bar <- ggbarplot(
 #   data = alpha_combined, x = "Storage", y = "value", 
 #   fill = "Site", add = "mean_se", facet.by = c("measure", "kingdom"), 
@@ -9359,7 +9610,7 @@ alpha_box <- ggboxplot(
 # Error in eval(expr, envir, enclos): object 'alpha_combined' not found
 ```
 
-```r
+``` r
 ggsave(
   filename = "alpha_box.png", plot = alpha_box, path = "figures/", 
   height = 24, width = 24, units = "cm"
@@ -9370,7 +9621,7 @@ ggsave(
 # Error in eval(expr, envir, enclos): object 'alpha_box' not found
 ```
 
-```r
+``` r
 alpha_box
 ```
 
@@ -9378,7 +9629,7 @@ alpha_box
 # Error in eval(expr, envir, enclos): object 'alpha_box' not found
 ```
 
-```r
+``` r
 alpha_box_fungi <- ggboxplot(
   data = alpha_combined[alpha_combined$kingdom == "Fungi", ], x = "Site", y = "value", 
   color = "Storage", add = "jitter", facet.by = "measure",
@@ -9391,7 +9642,7 @@ alpha_box_fungi <- ggboxplot(
 # Error in eval(expr, envir, enclos): object 'alpha_combined' not found
 ```
 
-```r
+``` r
 ggsave(
   filename = "alpha_box_fungi.png", plot = alpha_box_fungi, path = "figures/", 
   height = 12, width = 24, units = "cm"
@@ -9402,7 +9653,7 @@ ggsave(
 # Error in eval(expr, envir, enclos): object 'alpha_box_fungi' not found
 ```
 
-```r
+``` r
 alpha_box_bacteria <- ggboxplot(
   data = alpha_combined[alpha_combined$kingdom == "Bacteria", ], x = "Site", y = "value", 
   color = "Storage", add = "jitter", facet.by = "measure",
@@ -9415,7 +9666,7 @@ alpha_box_bacteria <- ggboxplot(
 # Error in eval(expr, envir, enclos): object 'alpha_combined' not found
 ```
 
-```r
+``` r
 ggsave(
   filename = "alpha_box_bacteria.png", plot = alpha_box_bacteria, path = "figures/", 
   height = 12, width = 24, units = "cm"
@@ -9426,7 +9677,7 @@ ggsave(
 # Error in eval(expr, envir, enclos): object 'alpha_box_bacteria' not found
 ```
 
-```r
+``` r
 alpha_box_combined <- ggarrange(
   alpha_box_fungi, alpha_box_bacteria,
   ncol = 1, nrow = 2, labels = c("A", "B"),
@@ -9438,7 +9689,7 @@ alpha_box_combined <- ggarrange(
 # Error in eval(expr, envir, enclos): object 'alpha_box_fungi' not found
 ```
 
-```r
+``` r
 ggsave(
   filename = "alpha_box_combined.png", plot = alpha_box_combined, path = "figures/", 
   height = 20, width = 24, units = "cm"
@@ -9452,7 +9703,7 @@ ggsave(
 ## PCA
   
 
-```r
+``` r
 pca_combo_plot <- ggarrange(
   fun_pca_plot, bac_pca_plot,
   ncol = 2, nrow = 1, labels = c("A", "B"),
@@ -9469,7 +9720,7 @@ pca_combo_plot
 
 ![](root_endophytes_files/figure-html/PCA figures-1.png)<!-- -->
 
-```r
+``` r
 nmds_combo_plot <- ggarrange(
   fun_nmds_plot, bac_nmds_plot,
   ncol = 2, nrow = 1, widths = c(1.19, 1),
@@ -9486,7 +9737,7 @@ nmds_combo_plot
 
 ![](root_endophytes_files/figure-html/PCA figures-2.png)<!-- -->
 
-```r
+``` r
 mega_combo_plot <- ggarrange(
   fun_pca_plot, bac_pca_plot,
   fun_nmds_plot, bac_nmds_plot,
@@ -9505,7 +9756,7 @@ mega_combo_plot
 ![](root_endophytes_files/figure-html/PCA figures-3.png)<!-- -->
 
 
-```r
+``` r
 # Save environment
 save.image("BAC.RData")
 ```

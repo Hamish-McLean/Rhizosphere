@@ -71,7 +71,7 @@ HEIGHT <- 9
 FACTORS <-            c("Site", "Storage", "Scion")
 DESIGN <-             y ~ Site + Storage + Scion
 FULL_DESIGN <-        y ~ Site * Storage * Scion
-design_with_canker <- y ~ Site * Storage * Scion * Cankers_avg
+design_with_canker <- y ~ Site * Storage * Scion * Cankers
 canker_design <-      "Cankers ~ Site * Storage * Scion"
 
 # Control
@@ -395,22 +395,22 @@ cankers <- canker_data %>%
     Site = first(Site),
     Storage = first(Storage),
     Scion = first(Scion),
-    Cankers = sum(total_cankers),
-    Cankers_avg = mean(total_cankers, na.rm = TRUE)
+    Cankers_sum = sum(total_cankers),
+    Cankers = mean(total_cankers, na.rm = TRUE)
   ) %>% 
   column_to_rownames("code")
 
 # Add total canker count to colData for both FUN and BAC
 ubiome_FUN$colData <- merge(
   ubiome_FUN$colData, 
-  cankers[, c("Cankers", "Cankers_avg")], 
+  cankers[, c("Cankers", "Cankers_sum")],, 
   by = 0,
   all.x = TRUE
 ) %>% column_to_rownames("Row.names")
 
 ubiome_BAC$colData <- merge(
   ubiome_BAC$colData, 
-  cankers[, c("Cankers", "Cankers_avg")], 
+  cankers[, c("Cankers", "Cankers_sum")], 
   by = 0,
   all.x = T
 ) %>% column_to_rownames("Row.names")
@@ -1168,7 +1168,7 @@ bc[lower.tri(bc, diag = TRUE)] <- NA
 bc <- melt(bc, value.name = "BC", na.rm = TRUE)
 
 # Calculate canker count difference matrix
-cankers <- colData$Cankers_avg
+cankers <- colData$Cankers
 cankers_diff <- abs(outer(cankers, cankers, "-"))
 rownames(cankers_diff) <- rownames(colData)
 colnames(cankers_diff) <- rownames(colData)
@@ -1209,10 +1209,10 @@ fun_nmds_plot
 #### NMDS with canker counts
 
 ```{r FUN NMDS with canker}
-# Rownames for which Cankers_avg is NA
-missing <- rownames(colData[is.na(colData$Cankers_avg), ])
+# Rownames for which Cankers is NA
+missing <- rownames(colData[is.na(colData$Cankers), ])
 
-colData$log_cankers <- log10(colData$Cankers_avg + 1)
+colData$log_cankers <- log10(colData$Cankers + 1)
 
 fun_nmds_canker_plot <- plotOrd(
   fun_nmds, colData, 
@@ -1455,7 +1455,7 @@ top_asvs_anova_summary %>%
   save_kable("tables/FUN_all_asvs.html")
 ```
 
-```{r FUN ASV FASTA, eval=ASV_MODELS}
+```{r FUN ASV FASTA, eval = FALSE}
 # Export significant ASVs as fasta
 
 # Read FUN ASVs
@@ -1500,7 +1500,7 @@ asv_canker_anova_summary <- asv_canker_anova_results %>%
   select(ASV, Taxonomy, Abundance, Factor, var, p.adj) %>% 
   pivot_wider(names_from = Factor, values_from = c(var, p.adj), names_glue = "{Factor}_{.value}") %>%
   select(
-    ASV, Taxonomy, Abundance, Cankers_avg_var, Cankers_avg_p.adj
+    ASV, Taxonomy, Abundance, Cankers_var, Cankers_p.adj
     # Site_var, Site_p.adj, Storage_var, Storage_p.adj, 
     # Scion_var, Scion_p.adj, "Site:Storage_var", "Site:Storage_p.adj", "Site:Scion_var", 
     # "Site:Scion_p.adj", "Storage:Scion_var", "Storage:Scion_p.adj", "Site:Storage:Scion_var", 
@@ -1510,7 +1510,7 @@ asv_canker_anova_summary <- asv_canker_anova_results %>%
 
 cat(
   "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
-  "Cankers:", nrow(asv_canker_anova_results[Factor == "Cankers_avg" & p.adj < 0.05, ]), "\n",
+  "Cankers:", nrow(asv_canker_anova_results[Factor == "Cankers" & p.adj < 0.05, ]), "\n",
   # "Storage:", nrow(top_asvs_anova_results[Factor == "Storage" & p.adj < 0.05, ]), "\n",
   # "Scion:", nrow(top_asvs_anova_results[Factor == "Scion" & p.adj < 0.05, ]), "\n",
   # "Site:Storage:", nrow(top_asvs_anova_results[Factor == "Site:Storage" & p.adj < 0.05, ]), "\n",
@@ -1521,16 +1521,30 @@ cat(
 )
 
 # Filter by significant effect of scion and its interactions
-canker_asvs <- asv_canker_anova_results[grepl("Cankers_avg", Factor) & p.adj < 0.05, ]
+canker_asvs <- asv_canker_anova_results[grepl("Cankers", Factor) & p.adj < 0.05, ]
 
-canker_asvs %>%
-  kbl() %>%
-  kable_styling("striped", full_width = F)
+# canker_asvs %>%
+#   kbl() %>%
+#   kable_styling("striped", full_width = F)
 
 cat(
   length(unique(canker_asvs$ASV)), 
   "ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Cankers and its interactions.", "\n\n"
 )
+
+# Summary of ASVs with significant Scion effect
+fun_significant_canker <- asv_canker_anova_summary[ASV %in% canker_asvs$ASV, ] %>%
+  arrange(desc(Abundance))
+
+kbl(fun_significant_canker) %>%
+  kable_styling("striped") %>%
+  save_kable("tables/FUN_asvs_design_canker.html")
+
+asv_canker_anova_summary %>%
+  arrange(desc(Abundance)) %>%
+  kbl() %>%
+  kable_styling("striped") %>%
+  save_kable("tables/FUN_asvs_design_canker_all.html")
 
 ```
 
@@ -1759,7 +1773,7 @@ for(site in 1:3){
 }
 ```
 
-```{r FUN ASV canker FASTA}
+```{r FUN ASV canker FASTA, eval = FALSE}
 # Export significant ASVs as FASTA
 write.fasta(
   sequences = FUN_asvs[as.character(significant_asvs$ASV)],
@@ -2504,7 +2518,7 @@ bc <- melt(bc, value.name = "BC", na.rm = TRUE)
 
 
 # Calculate canker count difference matrix
-cankers <- colData$Cankers_avg
+cankers <- colData$Cankers
 cankers_diff <- abs(outer(cankers, cankers, "-"))
 rownames(cankers_diff) <- rownames(colData)
 colnames(cankers_diff) <- rownames(colData)
@@ -2545,10 +2559,10 @@ bac_nmds_plot
 #### NMDS with canker counts
 
 ```{r BAC NMDS with canker}
-# Rownames for which Cankers_avg is NA
-missing <- rownames(colData[is.na(colData$Cankers_avg), ])
+# Rownames for which Cankers is NA
+missing <- rownames(colData[is.na(colData$Cankers), ])
 
-colData$log_cankers <- log10(colData$Cankers_avg + 1)
+colData$log_cankers <- log10(colData$Cankers + 1)
 
 bac_nmds_canker_plot <- plotOrd(
   fun_nmds, colData, 
@@ -2745,7 +2759,7 @@ top_asvs_anova_summary %>%
   save_kable("tables/BAC_all_asvs.html")
 ```
 
-```{r BAC ASV FASTA, eval=ASV_MODELS}
+```{r BAC ASV FASTA, eval = FALSE}
 # Export significant ASVs as fasta
 
 # Read BAC ASVs
@@ -2790,7 +2804,7 @@ asv_canker_anova_summary <- asv_canker_anova_results %>%
   select(ASV, Taxonomy, Abundance, Factor, var, p.adj) %>% 
   pivot_wider(names_from = Factor, values_from = c(var, p.adj), names_glue = "{Factor}_{.value}") %>%
   select(
-    ASV, Taxonomy, Abundance, Cankers_avg_var, Cankers_avg_p.adj
+    ASV, Taxonomy, Abundance, Cankers_var, Cankers_p.adj
     # Site_var, Site_p.adj, Storage_var, Storage_p.adj, 
     # Scion_var, Scion_p.adj, "Site:Storage_var", "Site:Storage_p.adj", "Site:Scion_var", 
     # "Site:Scion_p.adj", "Storage:Scion_var", "Storage:Scion_p.adj", "Site:Storage:Scion_var", 
@@ -2800,7 +2814,7 @@ asv_canker_anova_summary <- asv_canker_anova_results %>%
 
 cat(
   "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
-  "Cankers:", nrow(asv_canker_anova_results[Factor == "Cankers_avg" & p.adj < 0.05, ]), "\n",
+  "Cankers:", nrow(asv_canker_anova_results[Factor == "Cankers" & p.adj < 0.05, ]), "\n",
   # "Storage:", nrow(top_asvs_anova_results[Factor == "Storage" & p.adj < 0.05, ]), "\n",
   # "Scion:", nrow(top_asvs_anova_results[Factor == "Scion" & p.adj < 0.05, ]), "\n",
   # "Site:Storage:", nrow(top_asvs_anova_results[Factor == "Site:Storage" & p.adj < 0.05, ]), "\n",
@@ -2811,16 +2825,30 @@ cat(
 )
 
 # Filter by significant effect of scion and its interactions
-canker_asvs <- asv_canker_anova_results[grepl("Cankers_avg", Factor) & p.adj < 0.05, ]
+canker_asvs <- asv_canker_anova_results[grepl("Cankers", Factor) & p.adj < 0.05, ]
 
-canker_asvs %>%
-  kbl() %>%
-  kable_styling("striped", full_width = F)
+# canker_asvs %>%
+#   kbl() %>%
+#   kable_styling("striped", full_width = F)
 
 cat(
   length(unique(canker_asvs$ASV)), 
   "ASVs with significant (*P* < 0.05) adjusted p-values for the effect of Cankers and its interactions.", "\n\n"
 )
+
+# Summary of ASVs with significant Scion effect
+bac_significant_canker <- asv_canker_anova_summary[ASV %in% canker_asvs$ASV, ] %>%
+  arrange(desc(Abundance))
+
+kbl(bac_significant_canker) %>%
+  kable_styling("striped") %>%
+  save_kable("tables/BAC_asvs_design_canker.html")
+
+asv_canker_anova_summary %>%
+  arrange(desc(Abundance)) %>%
+  kbl() %>%
+  kable_styling("striped") %>%
+  save_kable("tables/BAC_asvs_design_canker_all.html")
 
 ```
 
@@ -2988,7 +3016,7 @@ for(site in 1:3){
 }
 ```
 
-```{r BAC canker FASTA, eval=ASV_MODELS}
+```{r BAC canker FASTA, eval = FALSE}
 # Export significant ASVs as FASTA
 write.fasta(
   sequences = BAC_asvs[as.character(significant_asvs$ASV)],
