@@ -1536,13 +1536,16 @@ asv_canker_anova_summary <- asv_canker_anova_results %>%
 
 cat(
   "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
+  "Site:", nrow(asv_canker_anova_results[Factor == "Site" & p.adj < 0.05, ]), "\n",
+  "Storage:", nrow(asv_canker_anova_results[Factor == "Storage" & p.adj < 0.05, ]), "\n",
+  "Scion:", nrow(asv_canker_anova_results[Factor == "Scion" & p.adj < 0.05, ]), "\n",
   "Cankers:", nrow(asv_canker_anova_results[Factor == "Cankers" & p.adj < 0.05, ]), "\n",
-  # "Storage:", nrow(top_asvs_anova_results[Factor == "Storage" & p.adj < 0.05, ]), "\n",
-  # "Scion:", nrow(top_asvs_anova_results[Factor == "Scion" & p.adj < 0.05, ]), "\n",
-  # "Site:Storage:", nrow(top_asvs_anova_results[Factor == "Site:Storage" & p.adj < 0.05, ]), "\n",
-  # "Site:Scion:", nrow(top_asvs_anova_results[Factor == "Site:Scion" & p.adj < 0.05, ]), "\n",
-  # "Storage:Scion:", nrow(top_asvs_anova_results[Factor == "Storage:Scion" & p.adj < 0.05, ]), "\n",
-  # "Site:Storage:Scion:", nrow(top_asvs_anova_results[Factor == "Site:Storage:Scion" & p.adj < 0.05, ]), "\n\n",
+  "Site:Storage:", nrow(asv_canker_anova_results[Factor == "Site:Storage" & p.adj < 0.05, ]), "\n",
+  "Site:Scion:", nrow(asv_canker_anova_results[Factor == "Site:Scion" & p.adj < 0.05, ]), "\n",
+  "Storage:Scion:", nrow(asv_canker_anova_results[Factor == "Storage:Scion" & p.adj < 0.05, ]), "\n",
+  "Site:Cankers:", nrow(asv_canker_anova_results[Factor == "Site:Cankers" & p.adj < 0.05, ]), "\n",
+  "Storage:Cankers:", nrow(asv_canker_anova_results[Factor == "Storage:Cankers" & p.adj < 0.05, ]), "\n",
+  "Scion:Cankers:", nrow(asv_canker_anova_results[Factor == "Scion:Cankers" & p.adj < 0.05, ]), "\n",
   "Total ASVs:", length(unique(asv_canker_anova_results$ASV)), "\n\n"
 )
 
@@ -2866,13 +2869,16 @@ asv_canker_anova_summary <- asv_canker_anova_results %>%
 
 cat(
   "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
+  "Site:", nrow(asv_canker_anova_results[Factor == "Site" & p.adj < 0.05, ]), "\n",
+  "Storage:", nrow(asv_canker_anova_results[Factor == "Storage" & p.adj < 0.05, ]), "\n",
+  "Scion:", nrow(asv_canker_anova_results[Factor == "Scion" & p.adj < 0.05, ]), "\n",
   "Cankers:", nrow(asv_canker_anova_results[Factor == "Cankers" & p.adj < 0.05, ]), "\n",
-  # "Storage:", nrow(top_asvs_anova_results[Factor == "Storage" & p.adj < 0.05, ]), "\n",
-  # "Scion:", nrow(top_asvs_anova_results[Factor == "Scion" & p.adj < 0.05, ]), "\n",
-  # "Site:Storage:", nrow(top_asvs_anova_results[Factor == "Site:Storage" & p.adj < 0.05, ]), "\n",
-  # "Site:Scion:", nrow(top_asvs_anova_results[Factor == "Site:Scion" & p.adj < 0.05, ]), "\n",
-  # "Storage:Scion:", nrow(top_asvs_anova_results[Factor == "Storage:Scion" & p.adj < 0.05, ]), "\n",
-  # "Site:Storage:Scion:", nrow(top_asvs_anova_results[Factor == "Site:Storage:Scion" & p.adj < 0.05, ]), "\n\n",
+  "Site:Storage:", nrow(asv_canker_anova_results[Factor == "Site:Storage" & p.adj < 0.05, ]), "\n",
+  "Site:Scion:", nrow(asv_canker_anova_results[Factor == "Site:Scion" & p.adj < 0.05, ]), "\n",
+  "Storage:Scion:", nrow(asv_canker_anova_results[Factor == "Storage:Scion" & p.adj < 0.05, ]), "\n",
+  "Site:Cankers:", nrow(asv_canker_anova_results[Factor == "Site:Cankers" & p.adj < 0.05, ]), "\n",
+  "Storage:Cankers:", nrow(asv_canker_anova_results[Factor == "Storage:Cankers" & p.adj < 0.05, ]), "\n",
+  "Scion:Cankers:", nrow(asv_canker_anova_results[Factor == "Scion:Cankers" & p.adj < 0.05, ]), "\n",
   "Total ASVs:", length(unique(asv_canker_anova_results$ASV)), "\n\n"
 )
 

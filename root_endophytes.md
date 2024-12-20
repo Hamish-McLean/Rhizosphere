@@ -1535,15 +1535,15 @@ summary(result)
 
 ```
 # Component 1 :
-#                    Df R Sum Sq R Mean Sq Iter Pr(Prob)    
-# Site                2  11554.5    5777.2 5000  < 2e-16 ***
-# Storage             1   2056.4    2056.4 2753  0.03523 *  
-# Site:Storage        2    812.4     406.2  321  0.53894    
-# Scion               6    875.7     145.9  346  0.98844    
-# Site:Scion         12   2817.7     234.8  592  0.94426    
-# Storage:Scion       6   2046.5     341.1  374  0.71123    
-# Site:Storage:Scion 12   2735.3     227.9  414  1.00000    
-# Residuals          39  21381.5     548.2                  
+#                    Df R Sum Sq R Mean Sq Iter Pr(Prob)   
+# Site                2  11554.5    5777.2 5000  0.00120 **
+# Storage             1   2056.4    2056.4 2010  0.04776 * 
+# Site:Storage        2    812.4     406.2   80  0.98750   
+# Scion               6    875.7     145.9  179  1.00000   
+# Site:Scion         12   2817.7     234.8  578  0.94637   
+# Storage:Scion       6   2046.5     341.1  784  0.80357   
+# Site:Storage:Scion 12   2735.3     227.9   95  1.00000   
+# Residuals          39  21381.5     548.2                 
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -1576,7 +1576,7 @@ df %>%
    <td style="text-align:right;"> 11554.4684 </td>
    <td style="text-align:right;"> 5777.2342 </td>
    <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0000000 </td>
+   <td style="text-align:right;"> 0.0012000 </td>
    <td style="text-align:right;"> 26.094102 </td>
   </tr>
   <tr>
@@ -1584,8 +1584,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 2056.4245 </td>
    <td style="text-align:right;"> 2056.4245 </td>
-   <td style="text-align:right;"> 2753 </td>
-   <td style="text-align:right;"> 0.0352343 </td>
+   <td style="text-align:right;"> 2010 </td>
+   <td style="text-align:right;"> 0.0477612 </td>
    <td style="text-align:right;"> 4.644139 </td>
   </tr>
   <tr>
@@ -1593,8 +1593,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 812.3544 </td>
    <td style="text-align:right;"> 406.1772 </td>
-   <td style="text-align:right;"> 321 </td>
-   <td style="text-align:right;"> 0.5389408 </td>
+   <td style="text-align:right;"> 80 </td>
+   <td style="text-align:right;"> 0.9875000 </td>
    <td style="text-align:right;"> 1.834585 </td>
   </tr>
   <tr>
@@ -1602,8 +1602,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 875.6763 </td>
    <td style="text-align:right;"> 145.9461 </td>
-   <td style="text-align:right;"> 346 </td>
-   <td style="text-align:right;"> 0.9884393 </td>
+   <td style="text-align:right;"> 179 </td>
+   <td style="text-align:right;"> 1.0000000 </td>
    <td style="text-align:right;"> 1.977589 </td>
   </tr>
   <tr>
@@ -1611,8 +1611,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2817.7201 </td>
    <td style="text-align:right;"> 234.8100 </td>
-   <td style="text-align:right;"> 592 </td>
-   <td style="text-align:right;"> 0.9442568 </td>
+   <td style="text-align:right;"> 578 </td>
+   <td style="text-align:right;"> 0.9463668 </td>
    <td style="text-align:right;"> 6.363415 </td>
   </tr>
   <tr>
@@ -1620,8 +1620,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2046.5389 </td>
    <td style="text-align:right;"> 341.0898 </td>
-   <td style="text-align:right;"> 374 </td>
-   <td style="text-align:right;"> 0.7112299 </td>
+   <td style="text-align:right;"> 784 </td>
+   <td style="text-align:right;"> 0.8035714 </td>
    <td style="text-align:right;"> 4.621813 </td>
   </tr>
   <tr>
@@ -1629,7 +1629,7 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2735.3173 </td>
    <td style="text-align:right;"> 227.9431 </td>
-   <td style="text-align:right;"> 414 </td>
+   <td style="text-align:right;"> 95 </td>
    <td style="text-align:right;"> 1.0000000 </td>
    <td style="text-align:right;"> 6.177320 </td>
   </tr>
@@ -1665,12 +1665,12 @@ summary(result)
 # Component 1 :
 #                    Df R Sum Sq R Mean Sq Iter Pr(Prob)    
 # Site                2  12291.8    6145.9 5000  < 2e-16 ***
-# Storage             1   1077.6    1077.6  704  0.12500    
-# Site:Storage        2   2320.4    1160.2 1180  0.07881 .  
-# Scion               6    570.9      95.1   51  1.00000    
-# Site:Scion         12   3082.1     256.8  580  0.78966    
-# Storage:Scion       6   2730.6     455.1 2250  0.42000    
-# Site:Storage:Scion 12   5311.1     442.6 1447  0.45750    
+# Storage             1   1077.6    1077.6 1830  0.05191 .  
+# Site:Storage        2   2320.4    1160.2  541  0.15712    
+# Scion               6    570.9      95.1  177  0.98870    
+# Site:Scion         12   3082.1     256.8  405  0.84691    
+# Storage:Scion       6   2730.6     455.1 5000  0.35860    
+# Site:Storage:Scion 12   5311.1     442.6 1933  0.40352    
 # Residuals          39  16895.5     433.2                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -1712,8 +1712,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 1077.5749 </td>
    <td style="text-align:right;"> 1077.57489 </td>
-   <td style="text-align:right;"> 704 </td>
-   <td style="text-align:right;"> 0.1250000 </td>
+   <td style="text-align:right;"> 1830 </td>
+   <td style="text-align:right;"> 0.0519126 </td>
    <td style="text-align:right;"> 2.433548 </td>
   </tr>
   <tr>
@@ -1721,8 +1721,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 2320.4220 </td>
    <td style="text-align:right;"> 1160.21098 </td>
-   <td style="text-align:right;"> 1180 </td>
-   <td style="text-align:right;"> 0.0788136 </td>
+   <td style="text-align:right;"> 541 </td>
+   <td style="text-align:right;"> 0.1571165 </td>
    <td style="text-align:right;"> 5.240339 </td>
   </tr>
   <tr>
@@ -1730,8 +1730,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 570.8675 </td>
    <td style="text-align:right;"> 95.14458 </td>
-   <td style="text-align:right;"> 51 </td>
-   <td style="text-align:right;"> 1.0000000 </td>
+   <td style="text-align:right;"> 177 </td>
+   <td style="text-align:right;"> 0.9887006 </td>
    <td style="text-align:right;"> 1.289222 </td>
   </tr>
   <tr>
@@ -1739,8 +1739,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 3082.1462 </td>
    <td style="text-align:right;"> 256.84552 </td>
-   <td style="text-align:right;"> 580 </td>
-   <td style="text-align:right;"> 0.7896552 </td>
+   <td style="text-align:right;"> 405 </td>
+   <td style="text-align:right;"> 0.8469136 </td>
    <td style="text-align:right;"> 6.960583 </td>
   </tr>
   <tr>
@@ -1748,8 +1748,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2730.6068 </td>
    <td style="text-align:right;"> 455.10114 </td>
-   <td style="text-align:right;"> 2250 </td>
-   <td style="text-align:right;"> 0.4200000 </td>
+   <td style="text-align:right;"> 5000 </td>
+   <td style="text-align:right;"> 0.3586000 </td>
    <td style="text-align:right;"> 6.166682 </td>
   </tr>
   <tr>
@@ -1757,8 +1757,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 5311.1323 </td>
    <td style="text-align:right;"> 442.59435 </td>
-   <td style="text-align:right;"> 1447 </td>
-   <td style="text-align:right;"> 0.4574983 </td>
+   <td style="text-align:right;"> 1933 </td>
+   <td style="text-align:right;"> 0.4035178 </td>
    <td style="text-align:right;"> 11.994427 </td>
   </tr>
   <tr>
@@ -1793,12 +1793,12 @@ summary(result)
 # Component 1 :
 #                    Df R Sum Sq R Mean Sq Iter Pr(Prob)    
 # Site                2  12937.5    6468.8 5000  < 2e-16 ***
-# Storage             1    764.2     764.2  711  0.12377    
-# Site:Storage        2   2484.2    1242.1 1793  0.05633 .  
-# Scion               6   1188.1     198.0  176  0.85795    
-# Site:Scion         12   2027.8     169.0  211  1.00000    
-# Storage:Scion       6   2529.6     421.6 1522  0.34166    
-# Site:Storage:Scion 12   5334.6     444.6 1047  0.49093    
+# Storage             1    764.2     764.2  280  0.26429    
+# Site:Storage        2   2484.2    1242.1 1806  0.06866 .  
+# Scion               6   1188.1     198.0  524  0.67557    
+# Site:Scion         12   2027.8     169.0  373  0.93834    
+# Storage:Scion       6   2529.6     421.6 1527  0.57367    
+# Site:Storage:Scion 12   5334.6     444.6 1403  0.47684    
 # Residuals          39  17014.0     436.3                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -1840,8 +1840,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 764.2007 </td>
    <td style="text-align:right;"> 764.2007 </td>
-   <td style="text-align:right;"> 711 </td>
-   <td style="text-align:right;"> 0.1237693 </td>
+   <td style="text-align:right;"> 280 </td>
+   <td style="text-align:right;"> 0.2642857 </td>
    <td style="text-align:right;"> 1.725837 </td>
   </tr>
   <tr>
@@ -1849,8 +1849,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 2484.2454 </td>
    <td style="text-align:right;"> 1242.1227 </td>
-   <td style="text-align:right;"> 1793 </td>
-   <td style="text-align:right;"> 0.0563302 </td>
+   <td style="text-align:right;"> 1806 </td>
+   <td style="text-align:right;"> 0.0686600 </td>
    <td style="text-align:right;"> 5.610310 </td>
   </tr>
   <tr>
@@ -1858,8 +1858,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 1188.0542 </td>
    <td style="text-align:right;"> 198.0090 </td>
-   <td style="text-align:right;"> 176 </td>
-   <td style="text-align:right;"> 0.8579545 </td>
+   <td style="text-align:right;"> 524 </td>
+   <td style="text-align:right;"> 0.6755725 </td>
    <td style="text-align:right;"> 2.683049 </td>
   </tr>
   <tr>
@@ -1867,8 +1867,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2027.7819 </td>
    <td style="text-align:right;"> 168.9818 </td>
-   <td style="text-align:right;"> 211 </td>
-   <td style="text-align:right;"> 1.0000000 </td>
+   <td style="text-align:right;"> 373 </td>
+   <td style="text-align:right;"> 0.9383378 </td>
    <td style="text-align:right;"> 4.579453 </td>
   </tr>
   <tr>
@@ -1876,8 +1876,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2529.5940 </td>
    <td style="text-align:right;"> 421.5990 </td>
-   <td style="text-align:right;"> 1522 </td>
-   <td style="text-align:right;"> 0.3416557 </td>
+   <td style="text-align:right;"> 1527 </td>
+   <td style="text-align:right;"> 0.5736739 </td>
    <td style="text-align:right;"> 5.712724 </td>
   </tr>
   <tr>
@@ -1885,8 +1885,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 5334.6194 </td>
    <td style="text-align:right;"> 444.5516 </td>
-   <td style="text-align:right;"> 1047 </td>
-   <td style="text-align:right;"> 0.4909265 </td>
+   <td style="text-align:right;"> 1403 </td>
+   <td style="text-align:right;"> 0.4768354 </td>
    <td style="text-align:right;"> 12.047469 </td>
   </tr>
   <tr>
@@ -1930,18 +1930,18 @@ summary(result)
 
 ```
 # Component 1 :
-#                 Df R Sum Sq R Mean Sq Iter Pr(Prob)    
-# Site             2  10705.9    5353.0 5000  < 2e-16 ***
-# Storage          1   2000.3    2000.3 1362  0.06902 .  
-# Site:Storage     2   1102.9     551.5  844  0.32583    
-# Scion            6   1343.8     224.0   91  1.00000    
-# Site:Scion      12   2791.5     232.6  457  0.97155    
-# Storage:Scion    6   2435.1     405.9  867  0.43945    
-# Cankers          1      5.4       5.4   51  1.00000    
-# Site:Cankers     2     74.7      37.4   58  1.00000    
-# Storage:Cankers  1   1309.8    1309.8 1025  0.08976 .  
-# Scion:Cankers    6    838.5     139.8  159  0.94340    
-# Residuals       39  20339.1     521.5                  
+#                 Df R Sum Sq R Mean Sq Iter Pr(Prob)   
+# Site             2  10705.9    5353.0 5000  0.00260 **
+# Storage          1   2000.3    2000.3 2278  0.04214 * 
+# Site:Storage     2   1102.9     551.5  743  0.38358   
+# Scion            6   1343.8     224.0  444  0.85360   
+# Site:Scion      12   2791.5     232.6  406  0.97291   
+# Storage:Scion    6   2435.1     405.9 1822  0.66575   
+# Cankers          1      5.4       5.4   51  0.92157   
+# Site:Cankers     2     74.7      37.4   61  0.88525   
+# Storage:Cankers  1   1309.8    1309.8  771  0.11543   
+# Scion:Cankers    6    838.5     139.8  323  0.98142   
+# Residuals       39  20339.1     521.5                 
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -1974,7 +1974,7 @@ df %>%
    <td style="text-align:right;"> 10705.94490 </td>
    <td style="text-align:right;"> 5352.97245 </td>
    <td style="text-align:right;"> 5000 </td>
-   <td style="text-align:right;"> 0.0000000 </td>
+   <td style="text-align:right;"> 0.0026000 </td>
    <td style="text-align:right;"> 24.9282204 </td>
   </tr>
   <tr>
@@ -1982,8 +1982,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 2000.30721 </td>
    <td style="text-align:right;"> 2000.30721 </td>
-   <td style="text-align:right;"> 1362 </td>
-   <td style="text-align:right;"> 0.0690162 </td>
+   <td style="text-align:right;"> 2278 </td>
+   <td style="text-align:right;"> 0.0421422 </td>
    <td style="text-align:right;"> 4.6576084 </td>
   </tr>
   <tr>
@@ -1991,8 +1991,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 1102.90059 </td>
    <td style="text-align:right;"> 551.45030 </td>
-   <td style="text-align:right;"> 844 </td>
-   <td style="text-align:right;"> 0.3258294 </td>
+   <td style="text-align:right;"> 743 </td>
+   <td style="text-align:right;"> 0.3835801 </td>
    <td style="text-align:right;"> 2.5680451 </td>
   </tr>
   <tr>
@@ -2000,8 +2000,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 1343.79825 </td>
    <td style="text-align:right;"> 223.96637 </td>
-   <td style="text-align:right;"> 91 </td>
-   <td style="text-align:right;"> 1.0000000 </td>
+   <td style="text-align:right;"> 444 </td>
+   <td style="text-align:right;"> 0.8536036 </td>
    <td style="text-align:right;"> 3.1289624 </td>
   </tr>
   <tr>
@@ -2009,8 +2009,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2791.47549 </td>
    <td style="text-align:right;"> 232.62296 </td>
-   <td style="text-align:right;"> 457 </td>
-   <td style="text-align:right;"> 0.9715536 </td>
+   <td style="text-align:right;"> 406 </td>
+   <td style="text-align:right;"> 0.9729064 </td>
    <td style="text-align:right;"> 6.4998015 </td>
   </tr>
   <tr>
@@ -2018,8 +2018,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2435.14654 </td>
    <td style="text-align:right;"> 405.85776 </td>
-   <td style="text-align:right;"> 867 </td>
-   <td style="text-align:right;"> 0.4394464 </td>
+   <td style="text-align:right;"> 1822 </td>
+   <td style="text-align:right;"> 0.6657519 </td>
    <td style="text-align:right;"> 5.6701085 </td>
   </tr>
   <tr>
@@ -2028,7 +2028,7 @@ df %>%
    <td style="text-align:right;"> 5.41797 </td>
    <td style="text-align:right;"> 5.41797 </td>
    <td style="text-align:right;"> 51 </td>
-   <td style="text-align:right;"> 1.0000000 </td>
+   <td style="text-align:right;"> 0.9215686 </td>
    <td style="text-align:right;"> 0.0126155 </td>
   </tr>
   <tr>
@@ -2036,8 +2036,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 74.70363 </td>
    <td style="text-align:right;"> 37.35182 </td>
-   <td style="text-align:right;"> 58 </td>
-   <td style="text-align:right;"> 1.0000000 </td>
+   <td style="text-align:right;"> 61 </td>
+   <td style="text-align:right;"> 0.8852459 </td>
    <td style="text-align:right;"> 0.1739434 </td>
   </tr>
   <tr>
@@ -2045,8 +2045,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 1309.75912 </td>
    <td style="text-align:right;"> 1309.75912 </td>
-   <td style="text-align:right;"> 1025 </td>
-   <td style="text-align:right;"> 0.0897561 </td>
+   <td style="text-align:right;"> 771 </td>
+   <td style="text-align:right;"> 0.1154345 </td>
    <td style="text-align:right;"> 3.0497041 </td>
   </tr>
   <tr>
@@ -2054,8 +2054,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 838.54430 </td>
    <td style="text-align:right;"> 139.75738 </td>
-   <td style="text-align:right;"> 159 </td>
-   <td style="text-align:right;"> 0.9433962 </td>
+   <td style="text-align:right;"> 323 </td>
+   <td style="text-align:right;"> 0.9814241 </td>
    <td style="text-align:right;"> 1.9525056 </td>
   </tr>
   <tr>
@@ -2090,15 +2090,15 @@ summary(result)
 # Component 1 :
 #                 Df R Sum Sq R Mean Sq Iter Pr(Prob)    
 # Site             2  13852.6    6926.3 5000   <2e-16 ***
-# Storage          1   1251.7    1251.7  886   0.1016    
-# Site:Storage     2   1768.4     884.2 1287   0.1220    
-# Scion            6    762.0     127.0  284   0.8345    
-# Site:Scion      12   2630.3     219.2  240   0.8583    
-# Storage:Scion    6   2739.4     456.6 1610   0.4149    
-# Cankers          1    185.8     185.8  194   0.3402    
-# Site:Cankers     2    813.1     406.6  517   0.2669    
-# Storage:Cankers  1    548.6     548.6  480   0.1729    
-# Scion:Cankers    6   2265.9     377.7 1233   0.4631    
+# Storage          1   1251.7    1251.7  290   0.2586    
+# Site:Storage     2   1768.4     884.2 1607   0.1413    
+# Scion            6    762.0     127.0   84   1.0000    
+# Site:Scion      12   2630.3     219.2  244   0.7951    
+# Storage:Scion    6   2739.4     456.6 2646   0.3670    
+# Cankers          1    185.8     185.8   51   0.7255    
+# Site:Cankers     2    813.1     406.6  158   0.5190    
+# Storage:Cankers  1    548.6     548.6  910   0.1000 .  
+# Scion:Cankers    6   2265.9     377.7 4822   0.4985    
 # Residuals       39  16718.0     428.7                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -2140,8 +2140,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 1251.7195 </td>
    <td style="text-align:right;"> 1251.7195 </td>
-   <td style="text-align:right;"> 886 </td>
-   <td style="text-align:right;"> 0.1015801 </td>
+   <td style="text-align:right;"> 290 </td>
+   <td style="text-align:right;"> 0.2586207 </td>
    <td style="text-align:right;"> 2.8751434 </td>
   </tr>
   <tr>
@@ -2149,8 +2149,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 1768.4025 </td>
    <td style="text-align:right;"> 884.2012 </td>
-   <td style="text-align:right;"> 1287 </td>
-   <td style="text-align:right;"> 0.1219891 </td>
+   <td style="text-align:right;"> 1607 </td>
+   <td style="text-align:right;"> 0.1412570 </td>
    <td style="text-align:right;"> 4.0619409 </td>
   </tr>
   <tr>
@@ -2158,8 +2158,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 761.9823 </td>
    <td style="text-align:right;"> 126.9970 </td>
-   <td style="text-align:right;"> 284 </td>
-   <td style="text-align:right;"> 0.8345070 </td>
+   <td style="text-align:right;"> 84 </td>
+   <td style="text-align:right;"> 1.0000000 </td>
    <td style="text-align:right;"> 1.7502390 </td>
   </tr>
   <tr>
@@ -2167,8 +2167,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 2630.3353 </td>
    <td style="text-align:right;"> 219.1946 </td>
-   <td style="text-align:right;"> 240 </td>
-   <td style="text-align:right;"> 0.8583333 </td>
+   <td style="text-align:right;"> 244 </td>
+   <td style="text-align:right;"> 0.7950820 </td>
    <td style="text-align:right;"> 6.0417619 </td>
   </tr>
   <tr>
@@ -2176,8 +2176,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2739.3643 </td>
    <td style="text-align:right;"> 456.5607 </td>
-   <td style="text-align:right;"> 1610 </td>
-   <td style="text-align:right;"> 0.4149068 </td>
+   <td style="text-align:right;"> 2646 </td>
+   <td style="text-align:right;"> 0.3669690 </td>
    <td style="text-align:right;"> 6.2921965 </td>
   </tr>
   <tr>
@@ -2185,8 +2185,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 185.7798 </td>
    <td style="text-align:right;"> 185.7798 </td>
-   <td style="text-align:right;"> 194 </td>
-   <td style="text-align:right;"> 0.3402062 </td>
+   <td style="text-align:right;"> 51 </td>
+   <td style="text-align:right;"> 0.7254902 </td>
    <td style="text-align:right;"> 0.4267277 </td>
   </tr>
   <tr>
@@ -2194,8 +2194,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 813.1388 </td>
    <td style="text-align:right;"> 406.5694 </td>
-   <td style="text-align:right;"> 517 </td>
-   <td style="text-align:right;"> 0.2669246 </td>
+   <td style="text-align:right;"> 158 </td>
+   <td style="text-align:right;"> 0.5189873 </td>
    <td style="text-align:right;"> 1.8677433 </td>
   </tr>
   <tr>
@@ -2203,8 +2203,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 548.6167 </td>
    <td style="text-align:right;"> 548.6167 </td>
-   <td style="text-align:right;"> 480 </td>
-   <td style="text-align:right;"> 0.1729167 </td>
+   <td style="text-align:right;"> 910 </td>
+   <td style="text-align:right;"> 0.1000000 </td>
    <td style="text-align:right;"> 1.2601479 </td>
   </tr>
   <tr>
@@ -2212,8 +2212,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2265.9159 </td>
    <td style="text-align:right;"> 377.6527 </td>
-   <td style="text-align:right;"> 1233 </td>
-   <td style="text-align:right;"> 0.4630981 </td>
+   <td style="text-align:right;"> 4822 </td>
+   <td style="text-align:right;"> 0.4985483 </td>
    <td style="text-align:right;"> 5.2047069 </td>
   </tr>
   <tr>
@@ -2248,15 +2248,15 @@ summary(result)
 # Component 1 :
 #                 Df R Sum Sq R Mean Sq Iter Pr(Prob)    
 # Site             2  14033.2    7016.6 5000  < 2e-16 ***
-# Storage          1    717.3     717.3  731  0.12038    
-# Site:Storage     2   2039.3    1019.6 2446  0.08585 .  
-# Scion            6   1448.1     241.3  251  0.87649    
-# Site:Scion      12   1930.5     160.9  490  0.98571    
-# Storage:Scion    6   2599.3     433.2 1721  0.35328    
-# Cankers          1    221.4     221.4  112  0.47321    
-# Site:Cankers     2   1657.7     828.9 1231  0.07555 .  
-# Storage:Cankers  1     12.5      12.5   51  1.00000    
-# Scion:Cankers    6   3837.5     639.6 4636  0.16803    
+# Storage          1    717.3     717.3  582  0.14777    
+# Site:Storage     2   2039.3    1019.6 1256  0.07404 .  
+# Scion            6   1448.1     241.3  175  0.81143    
+# Site:Scion      12   1930.5     160.9  646  0.92879    
+# Storage:Scion    6   2599.3     433.2 2337  0.35601    
+# Cankers          1    221.4     221.4   87  0.54023    
+# Site:Cankers     2   1657.7     828.9  979  0.13994    
+# Storage:Cankers  1     12.5      12.5   53  0.66038    
+# Scion:Cankers    6   3837.5     639.6 5000  0.18300    
 # Residuals       39  15602.8     400.1                  
 # ---
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -2298,8 +2298,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 717.33454 </td>
    <td style="text-align:right;"> 717.33454 </td>
-   <td style="text-align:right;"> 731 </td>
-   <td style="text-align:right;"> 0.1203830 </td>
+   <td style="text-align:right;"> 582 </td>
+   <td style="text-align:right;"> 0.1477663 </td>
    <td style="text-align:right;"> 1.6266257 </td>
   </tr>
   <tr>
@@ -2307,8 +2307,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 2039.26202 </td>
    <td style="text-align:right;"> 1019.63101 </td>
-   <td style="text-align:right;"> 2446 </td>
-   <td style="text-align:right;"> 0.0858545 </td>
+   <td style="text-align:right;"> 1256 </td>
+   <td style="text-align:right;"> 0.0740446 </td>
    <td style="text-align:right;"> 4.6242247 </td>
   </tr>
   <tr>
@@ -2316,8 +2316,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 1448.08338 </td>
    <td style="text-align:right;"> 241.34723 </td>
-   <td style="text-align:right;"> 251 </td>
-   <td style="text-align:right;"> 0.8764940 </td>
+   <td style="text-align:right;"> 175 </td>
+   <td style="text-align:right;"> 0.8114286 </td>
    <td style="text-align:right;"> 3.2836697 </td>
   </tr>
   <tr>
@@ -2325,8 +2325,8 @@ df %>%
    <td style="text-align:right;"> 12 </td>
    <td style="text-align:right;"> 1930.46171 </td>
    <td style="text-align:right;"> 160.87181 </td>
-   <td style="text-align:right;"> 490 </td>
-   <td style="text-align:right;"> 0.9857143 </td>
+   <td style="text-align:right;"> 646 </td>
+   <td style="text-align:right;"> 0.9287926 </td>
    <td style="text-align:right;"> 4.3775094 </td>
   </tr>
   <tr>
@@ -2334,8 +2334,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 2599.34969 </td>
    <td style="text-align:right;"> 433.22495 </td>
-   <td style="text-align:right;"> 1721 </td>
-   <td style="text-align:right;"> 0.3532830 </td>
+   <td style="text-align:right;"> 2337 </td>
+   <td style="text-align:right;"> 0.3560120 </td>
    <td style="text-align:right;"> 5.8942779 </td>
   </tr>
   <tr>
@@ -2343,8 +2343,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 221.37410 </td>
    <td style="text-align:right;"> 221.37410 </td>
-   <td style="text-align:right;"> 112 </td>
-   <td style="text-align:right;"> 0.4732143 </td>
+   <td style="text-align:right;"> 87 </td>
+   <td style="text-align:right;"> 0.5402299 </td>
    <td style="text-align:right;"> 0.5019873 </td>
   </tr>
   <tr>
@@ -2352,8 +2352,8 @@ df %>%
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 1657.73502 </td>
    <td style="text-align:right;"> 828.86751 </td>
-   <td style="text-align:right;"> 1231 </td>
-   <td style="text-align:right;"> 0.0755483 </td>
+   <td style="text-align:right;"> 979 </td>
+   <td style="text-align:right;"> 0.1399387 </td>
    <td style="text-align:right;"> 3.7590752 </td>
   </tr>
   <tr>
@@ -2361,8 +2361,8 @@ df %>%
    <td style="text-align:right;"> 1 </td>
    <td style="text-align:right;"> 12.46303 </td>
    <td style="text-align:right;"> 12.46303 </td>
-   <td style="text-align:right;"> 51 </td>
-   <td style="text-align:right;"> 1.0000000 </td>
+   <td style="text-align:right;"> 53 </td>
+   <td style="text-align:right;"> 0.6603774 </td>
    <td style="text-align:right;"> 0.0282611 </td>
   </tr>
   <tr>
@@ -2370,8 +2370,8 @@ df %>%
    <td style="text-align:right;"> 6 </td>
    <td style="text-align:right;"> 3837.52206 </td>
    <td style="text-align:right;"> 639.58701 </td>
-   <td style="text-align:right;"> 4636 </td>
-   <td style="text-align:right;"> 0.1680328 </td>
+   <td style="text-align:right;"> 5000 </td>
+   <td style="text-align:right;"> 0.1830000 </td>
    <td style="text-align:right;"> 8.7019540 </td>
   </tr>
   <tr>
@@ -4283,13 +4283,16 @@ asv_canker_anova_summary <- asv_canker_anova_results %>%
 
 cat(
   "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
+  "Site:", nrow(asv_canker_anova_results[Factor == "Site" & p.adj < 0.05, ]), "\n",
+  "Storage:", nrow(asv_canker_anova_results[Factor == "Storage" & p.adj < 0.05, ]), "\n",
+  "Scion:", nrow(asv_canker_anova_results[Factor == "Scion" & p.adj < 0.05, ]), "\n",
   "Cankers:", nrow(asv_canker_anova_results[Factor == "Cankers" & p.adj < 0.05, ]), "\n",
-  # "Storage:", nrow(top_asvs_anova_results[Factor == "Storage" & p.adj < 0.05, ]), "\n",
-  # "Scion:", nrow(top_asvs_anova_results[Factor == "Scion" & p.adj < 0.05, ]), "\n",
-  # "Site:Storage:", nrow(top_asvs_anova_results[Factor == "Site:Storage" & p.adj < 0.05, ]), "\n",
-  # "Site:Scion:", nrow(top_asvs_anova_results[Factor == "Site:Scion" & p.adj < 0.05, ]), "\n",
-  # "Storage:Scion:", nrow(top_asvs_anova_results[Factor == "Storage:Scion" & p.adj < 0.05, ]), "\n",
-  # "Site:Storage:Scion:", nrow(top_asvs_anova_results[Factor == "Site:Storage:Scion" & p.adj < 0.05, ]), "\n\n",
+  "Site:Storage:", nrow(asv_canker_anova_results[Factor == "Site:Storage" & p.adj < 0.05, ]), "\n",
+  "Site:Scion:", nrow(asv_canker_anova_results[Factor == "Site:Scion" & p.adj < 0.05, ]), "\n",
+  "Storage:Scion:", nrow(asv_canker_anova_results[Factor == "Storage:Scion" & p.adj < 0.05, ]), "\n",
+  "Site:Cankers:", nrow(asv_canker_anova_results[Factor == "Site:Cankers" & p.adj < 0.05, ]), "\n",
+  "Storage:Cankers:", nrow(asv_canker_anova_results[Factor == "Storage:Cankers" & p.adj < 0.05, ]), "\n",
+  "Scion:Cankers:", nrow(asv_canker_anova_results[Factor == "Scion:Cankers" & p.adj < 0.05, ]), "\n",
   "Total ASVs:", length(unique(asv_canker_anova_results$ASV)), "\n\n"
 )
 ```
@@ -4297,7 +4300,16 @@ cat(
 ```
 # Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values 
 # 
+#  Site: 677 
+#  Storage: 11 
+#  Scion: 0 
 #  Cankers: 9 
+#  Site:Storage: 94 
+#  Site:Scion: 4 
+#  Storage:Scion: 0 
+#  Site:Cankers: 2 
+#  Storage:Cankers: 0 
+#  Scion:Cankers: 3 
 #  Total ASVs: 995
 ```
 
@@ -8613,13 +8625,16 @@ asv_canker_anova_summary <- asv_canker_anova_results %>%
 
 cat(
   "Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values", "\n\n",
+  "Site:", nrow(asv_canker_anova_results[Factor == "Site" & p.adj < 0.05, ]), "\n",
+  "Storage:", nrow(asv_canker_anova_results[Factor == "Storage" & p.adj < 0.05, ]), "\n",
+  "Scion:", nrow(asv_canker_anova_results[Factor == "Scion" & p.adj < 0.05, ]), "\n",
   "Cankers:", nrow(asv_canker_anova_results[Factor == "Cankers" & p.adj < 0.05, ]), "\n",
-  # "Storage:", nrow(top_asvs_anova_results[Factor == "Storage" & p.adj < 0.05, ]), "\n",
-  # "Scion:", nrow(top_asvs_anova_results[Factor == "Scion" & p.adj < 0.05, ]), "\n",
-  # "Site:Storage:", nrow(top_asvs_anova_results[Factor == "Site:Storage" & p.adj < 0.05, ]), "\n",
-  # "Site:Scion:", nrow(top_asvs_anova_results[Factor == "Site:Scion" & p.adj < 0.05, ]), "\n",
-  # "Storage:Scion:", nrow(top_asvs_anova_results[Factor == "Storage:Scion" & p.adj < 0.05, ]), "\n",
-  # "Site:Storage:Scion:", nrow(top_asvs_anova_results[Factor == "Site:Storage:Scion" & p.adj < 0.05, ]), "\n\n",
+  "Site:Storage:", nrow(asv_canker_anova_results[Factor == "Site:Storage" & p.adj < 0.05, ]), "\n",
+  "Site:Scion:", nrow(asv_canker_anova_results[Factor == "Site:Scion" & p.adj < 0.05, ]), "\n",
+  "Storage:Scion:", nrow(asv_canker_anova_results[Factor == "Storage:Scion" & p.adj < 0.05, ]), "\n",
+  "Site:Cankers:", nrow(asv_canker_anova_results[Factor == "Site:Cankers" & p.adj < 0.05, ]), "\n",
+  "Storage:Cankers:", nrow(asv_canker_anova_results[Factor == "Storage:Cankers" & p.adj < 0.05, ]), "\n",
+  "Scion:Cankers:", nrow(asv_canker_anova_results[Factor == "Scion:Cankers" & p.adj < 0.05, ]), "\n",
   "Total ASVs:", length(unique(asv_canker_anova_results$ASV)), "\n\n"
 )
 ```
@@ -8627,7 +8642,16 @@ cat(
 ```
 # Number of ASVs with statistically significant (*P* < 0.05) adjusted p-values 
 # 
+#  Site: 3698 
+#  Storage: 61 
+#  Scion: 101 
 #  Cankers: 31 
+#  Site:Storage: 399 
+#  Site:Scion: 65 
+#  Storage:Scion: 19 
+#  Site:Cankers: 61 
+#  Storage:Cankers: 8 
+#  Scion:Cankers: 57 
 #  Total ASVs: 5883
 ```
 

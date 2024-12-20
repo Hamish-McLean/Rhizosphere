@@ -2368,15 +2368,15 @@ result &lt;- aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T)</code><
 <pre><code># [1] &quot;Settings:  sequential SS &quot;</code></pre>
 <pre class="r"><code>summary(result)</code></pre>
 <pre><code># Component 1 :
-#                    Df R Sum Sq R Mean Sq Iter Pr(Prob)    
-# Site                2  11554.5    5777.2 5000  &lt; 2e-16 ***
-# Storage             1   2056.4    2056.4 2753  0.03523 *  
-# Site:Storage        2    812.4     406.2  321  0.53894    
-# Scion               6    875.7     145.9  346  0.98844    
-# Site:Scion         12   2817.7     234.8  592  0.94426    
-# Storage:Scion       6   2046.5     341.1  374  0.71123    
-# Site:Storage:Scion 12   2735.3     227.9  414  1.00000    
-# Residuals          39  21381.5     548.2                  
+#                    Df R Sum Sq R Mean Sq Iter Pr(Prob)   
+# Site                2  11554.5    5777.2 5000  0.00120 **
+# Storage             1   2056.4    2056.4 2010  0.04776 * 
+# Site:Storage        2    812.4     406.2   80  0.98750   
+# Scion               6    875.7     145.9  179  1.00000   
+# Site:Scion         12   2817.7     234.8  578  0.94637   
+# Storage:Scion       6   2046.5     341.1  784  0.80357   
+# Site:Storage:Scion 12   2735.3     227.9   95  1.00000   
+# Residuals          39  21381.5     548.2                 
 # ---
 # Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <pre class="r"><code>df &lt;- result %&gt;% summary() %&gt;% unclass() %&gt;% data.frame()
@@ -2428,7 +2428,7 @@ Site
 5000
 </td>
 <td style="text-align:right;">
-0.0000000
+0.0012000
 </td>
 <td style="text-align:right;">
 26.094102
@@ -2448,10 +2448,10 @@ Storage
 2056.4245
 </td>
 <td style="text-align:right;">
-2753
+2010
 </td>
 <td style="text-align:right;">
-0.0352343
+0.0477612
 </td>
 <td style="text-align:right;">
 4.644139
@@ -2471,10 +2471,10 @@ Site:Storage
 406.1772
 </td>
 <td style="text-align:right;">
-321
+80
 </td>
 <td style="text-align:right;">
-0.5389408
+0.9875000
 </td>
 <td style="text-align:right;">
 1.834585
@@ -2494,10 +2494,10 @@ Scion
 145.9461
 </td>
 <td style="text-align:right;">
-346
+179
 </td>
 <td style="text-align:right;">
-0.9884393
+1.0000000
 </td>
 <td style="text-align:right;">
 1.977589
@@ -2517,10 +2517,10 @@ Site:Scion
 234.8100
 </td>
 <td style="text-align:right;">
-592
+578
 </td>
 <td style="text-align:right;">
-0.9442568
+0.9463668
 </td>
 <td style="text-align:right;">
 6.363415
@@ -2540,10 +2540,10 @@ Storage:Scion
 341.0898
 </td>
 <td style="text-align:right;">
-374
+784
 </td>
 <td style="text-align:right;">
-0.7112299
+0.8035714
 </td>
 <td style="text-align:right;">
 4.621813
@@ -2563,7 +2563,7 @@ Site:Storage:Scion
 227.9431
 </td>
 <td style="text-align:right;">
-414
+95
 </td>
 <td style="text-align:right;">
 1.0000000
@@ -2607,12 +2607,12 @@ result &lt;- aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T)</code><
 <pre><code># Component 1 :
 #                    Df R Sum Sq R Mean Sq Iter Pr(Prob)    
 # Site                2  12291.8    6145.9 5000  &lt; 2e-16 ***
-# Storage             1   1077.6    1077.6  704  0.12500    
-# Site:Storage        2   2320.4    1160.2 1180  0.07881 .  
-# Scion               6    570.9      95.1   51  1.00000    
-# Site:Scion         12   3082.1     256.8  580  0.78966    
-# Storage:Scion       6   2730.6     455.1 2250  0.42000    
-# Site:Storage:Scion 12   5311.1     442.6 1447  0.45750    
+# Storage             1   1077.6    1077.6 1830  0.05191 .  
+# Site:Storage        2   2320.4    1160.2  541  0.15712    
+# Scion               6    570.9      95.1  177  0.98870    
+# Site:Scion         12   3082.1     256.8  405  0.84691    
+# Storage:Scion       6   2730.6     455.1 5000  0.35860    
+# Site:Storage:Scion 12   5311.1     442.6 1933  0.40352    
 # Residuals          39  16895.5     433.2                  
 # ---
 # Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
@@ -2685,10 +2685,10 @@ Storage
 1077.57489
 </td>
 <td style="text-align:right;">
-704
+1830
 </td>
 <td style="text-align:right;">
-0.1250000
+0.0519126
 </td>
 <td style="text-align:right;">
 2.433548
@@ -2708,10 +2708,10 @@ Site:Storage
 1160.21098
 </td>
 <td style="text-align:right;">
-1180
+541
 </td>
 <td style="text-align:right;">
-0.0788136
+0.1571165
 </td>
 <td style="text-align:right;">
 5.240339
@@ -2731,10 +2731,10 @@ Scion
 95.14458
 </td>
 <td style="text-align:right;">
-51
+177
 </td>
 <td style="text-align:right;">
-1.0000000
+0.9887006
 </td>
 <td style="text-align:right;">
 1.289222
@@ -2754,10 +2754,10 @@ Site:Scion
 256.84552
 </td>
 <td style="text-align:right;">
-580
+405
 </td>
 <td style="text-align:right;">
-0.7896552
+0.8469136
 </td>
 <td style="text-align:right;">
 6.960583
@@ -2777,10 +2777,10 @@ Storage:Scion
 455.10114
 </td>
 <td style="text-align:right;">
-2250
+5000
 </td>
 <td style="text-align:right;">
-0.4200000
+0.3586000
 </td>
 <td style="text-align:right;">
 6.166682
@@ -2800,10 +2800,10 @@ Site:Storage:Scion
 442.59435
 </td>
 <td style="text-align:right;">
-1447
+1933
 </td>
 <td style="text-align:right;">
-0.4574983
+0.4035178
 </td>
 <td style="text-align:right;">
 11.994427
@@ -2844,12 +2844,12 @@ result &lt;- aovp(update(formula, measure ~ .), all_alpha_ord, seqs = T)</code><
 <pre><code># Component 1 :
 #                    Df R Sum Sq R Mean Sq Iter Pr(Prob)    
 # Site                2  12937.5    6468.8 5000  &lt; 2e-16 ***
-# Storage             1    764.2     764.2  711  0.12377    
-# Site:Storage        2   2484.2    1242.1 1793  0.05633 .  
-# Scion               6   1188.1     198.0  176  0.85795    
-# Site:Scion         12   2027.8     169.0  211  1.00000    
-# Storage:Scion       6   2529.6     421.6 1522  0.34166    
-# Site:Storage:Scion 12   5334.6     444.6 1047  0.49093    
+# Storage             1    764.2     764.2  280  0.26429    
+# Site:Storage        2   2484.2    1242.1 1806  0.06866 .  
+# Scion               6   1188.1     198.0  524  0.67557    
+# Site:Scion         12   2027.8     169.0  373  0.93834    
+# Storage:Scion       6   2529.6     421.6 1527  0.57367    
+# Site:Storage:Scion 12   5334.6     444.6 1403  0.47684    
 # Residuals          39  17014.0     436.3                  
 # ---
 # Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
@@ -2922,10 +2922,10 @@ Storage
 764.2007
 </td>
 <td style="text-align:right;">
-711
+280
 </td>
 <td style="text-align:right;">
-0.1237693
+0.2642857
 </td>
 <td style="text-align:right;">
 1.725837
@@ -2945,10 +2945,10 @@ Site:Storage
 1242.1227
 </td>
 <td style="text-align:right;">
-1793
+1806
 </td>
 <td style="text-align:right;">
-0.0563302
+0.0686600
 </td>
 <td style="text-align:right;">
 5.610310
@@ -2968,10 +2968,10 @@ Scion
 198.0090
 </td>
 <td style="text-align:right;">
-176
+524
 </td>
 <td style="text-align:right;">
-0.8579545
+0.6755725
 </td>
 <td style="text-align:right;">
 2.683049
@@ -2991,10 +2991,10 @@ Site:Scion
 168.9818
 </td>
 <td style="text-align:right;">
-211
+373
 </td>
 <td style="text-align:right;">
-1.0000000
+0.9383378
 </td>
 <td style="text-align:right;">
 4.579453
@@ -3014,10 +3014,10 @@ Storage:Scion
 421.5990
 </td>
 <td style="text-align:right;">
-1522
+1527
 </td>
 <td style="text-align:right;">
-0.3416557
+0.5736739
 </td>
 <td style="text-align:right;">
 5.712724
@@ -3037,10 +3037,10 @@ Site:Storage:Scion
 444.5516
 </td>
 <td style="text-align:right;">
-1047
+1403
 </td>
 <td style="text-align:right;">
-0.4909265
+0.4768354
 </td>
 <td style="text-align:right;">
 12.047469
@@ -3084,18 +3084,18 @@ result &lt;- aovp(update(design_with_canker, measure ~ .), all_alpha_ord, seqs =
 <pre><code># [1] &quot;Settings:  sequential SS : numeric variables centered&quot;</code></pre>
 <pre class="r"><code>summary(result)</code></pre>
 <pre><code># Component 1 :
-#                 Df R Sum Sq R Mean Sq Iter Pr(Prob)    
-# Site             2  10705.9    5353.0 5000  &lt; 2e-16 ***
-# Storage          1   2000.3    2000.3 1362  0.06902 .  
-# Site:Storage     2   1102.9     551.5  844  0.32583    
-# Scion            6   1343.8     224.0   91  1.00000    
-# Site:Scion      12   2791.5     232.6  457  0.97155    
-# Storage:Scion    6   2435.1     405.9  867  0.43945    
-# Cankers          1      5.4       5.4   51  1.00000    
-# Site:Cankers     2     74.7      37.4   58  1.00000    
-# Storage:Cankers  1   1309.8    1309.8 1025  0.08976 .  
-# Scion:Cankers    6    838.5     139.8  159  0.94340    
-# Residuals       39  20339.1     521.5                  
+#                 Df R Sum Sq R Mean Sq Iter Pr(Prob)   
+# Site             2  10705.9    5353.0 5000  0.00260 **
+# Storage          1   2000.3    2000.3 2278  0.04214 * 
+# Site:Storage     2   1102.9     551.5  743  0.38358   
+# Scion            6   1343.8     224.0  444  0.85360   
+# Site:Scion      12   2791.5     232.6  406  0.97291   
+# Storage:Scion    6   2435.1     405.9 1822  0.66575   
+# Cankers          1      5.4       5.4   51  0.92157   
+# Site:Cankers     2     74.7      37.4   61  0.88525   
+# Storage:Cankers  1   1309.8    1309.8  771  0.11543   
+# Scion:Cankers    6    838.5     139.8  323  0.98142   
+# Residuals       39  20339.1     521.5                 
 # ---
 # Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <pre class="r"><code>df &lt;- result %&gt;% summary() %&gt;% unclass() %&gt;% data.frame()
@@ -3147,7 +3147,7 @@ Site
 5000
 </td>
 <td style="text-align:right;">
-0.0000000
+0.0026000
 </td>
 <td style="text-align:right;">
 24.9282204
@@ -3167,10 +3167,10 @@ Storage
 2000.30721
 </td>
 <td style="text-align:right;">
-1362
+2278
 </td>
 <td style="text-align:right;">
-0.0690162
+0.0421422
 </td>
 <td style="text-align:right;">
 4.6576084
@@ -3190,10 +3190,10 @@ Site:Storage
 551.45030
 </td>
 <td style="text-align:right;">
-844
+743
 </td>
 <td style="text-align:right;">
-0.3258294
+0.3835801
 </td>
 <td style="text-align:right;">
 2.5680451
@@ -3213,10 +3213,10 @@ Scion
 223.96637
 </td>
 <td style="text-align:right;">
-91
+444
 </td>
 <td style="text-align:right;">
-1.0000000
+0.8536036
 </td>
 <td style="text-align:right;">
 3.1289624
@@ -3236,10 +3236,10 @@ Site:Scion
 232.62296
 </td>
 <td style="text-align:right;">
-457
+406
 </td>
 <td style="text-align:right;">
-0.9715536
+0.9729064
 </td>
 <td style="text-align:right;">
 6.4998015
@@ -3259,10 +3259,10 @@ Storage:Scion
 405.85776
 </td>
 <td style="text-align:right;">
-867
+1822
 </td>
 <td style="text-align:right;">
-0.4394464
+0.6657519
 </td>
 <td style="text-align:right;">
 5.6701085
@@ -3285,7 +3285,7 @@ Cankers
 51
 </td>
 <td style="text-align:right;">
-1.0000000
+0.9215686
 </td>
 <td style="text-align:right;">
 0.0126155
@@ -3305,10 +3305,10 @@ Site:Cankers
 37.35182
 </td>
 <td style="text-align:right;">
-58
+61
 </td>
 <td style="text-align:right;">
-1.0000000
+0.8852459
 </td>
 <td style="text-align:right;">
 0.1739434
@@ -3328,10 +3328,10 @@ Storage:Cankers
 1309.75912
 </td>
 <td style="text-align:right;">
-1025
+771
 </td>
 <td style="text-align:right;">
-0.0897561
+0.1154345
 </td>
 <td style="text-align:right;">
 3.0497041
@@ -3351,10 +3351,10 @@ Scion:Cankers
 139.75738
 </td>
 <td style="text-align:right;">
-159
+323
 </td>
 <td style="text-align:right;">
-0.9433962
+0.9814241
 </td>
 <td style="text-align:right;">
 1.9525056
@@ -3395,15 +3395,15 @@ result &lt;- aovp(update(design_with_canker, measure ~ .), all_alpha_ord, seqs =
 <pre><code># Component 1 :
 #                 Df R Sum Sq R Mean Sq Iter Pr(Prob)    
 # Site             2  13852.6    6926.3 5000   &lt;2e-16 ***
-# Storage          1   1251.7    1251.7  886   0.1016    
-# Site:Storage     2   1768.4     884.2 1287   0.1220    
-# Scion            6    762.0     127.0  284   0.8345    
-# Site:Scion      12   2630.3     219.2  240   0.8583    
-# Storage:Scion    6   2739.4     456.6 1610   0.4149    
-# Cankers          1    185.8     185.8  194   0.3402    
-# Site:Cankers     2    813.1     406.6  517   0.2669    
-# Storage:Cankers  1    548.6     548.6  480   0.1729    
-# Scion:Cankers    6   2265.9     377.7 1233   0.4631    
+# Storage          1   1251.7    1251.7  290   0.2586    
+# Site:Storage     2   1768.4     884.2 1607   0.1413    
+# Scion            6    762.0     127.0   84   1.0000    
+# Site:Scion      12   2630.3     219.2  244   0.7951    
+# Storage:Scion    6   2739.4     456.6 2646   0.3670    
+# Cankers          1    185.8     185.8   51   0.7255    
+# Site:Cankers     2    813.1     406.6  158   0.5190    
+# Storage:Cankers  1    548.6     548.6  910   0.1000 .  
+# Scion:Cankers    6   2265.9     377.7 4822   0.4985    
 # Residuals       39  16718.0     428.7                  
 # ---
 # Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
@@ -3476,10 +3476,10 @@ Storage
 1251.7195
 </td>
 <td style="text-align:right;">
-886
+290
 </td>
 <td style="text-align:right;">
-0.1015801
+0.2586207
 </td>
 <td style="text-align:right;">
 2.8751434
@@ -3499,10 +3499,10 @@ Site:Storage
 884.2012
 </td>
 <td style="text-align:right;">
-1287
+1607
 </td>
 <td style="text-align:right;">
-0.1219891
+0.1412570
 </td>
 <td style="text-align:right;">
 4.0619409
@@ -3522,10 +3522,10 @@ Scion
 126.9970
 </td>
 <td style="text-align:right;">
-284
+84
 </td>
 <td style="text-align:right;">
-0.8345070
+1.0000000
 </td>
 <td style="text-align:right;">
 1.7502390
@@ -3545,10 +3545,10 @@ Site:Scion
 219.1946
 </td>
 <td style="text-align:right;">
-240
+244
 </td>
 <td style="text-align:right;">
-0.8583333
+0.7950820
 </td>
 <td style="text-align:right;">
 6.0417619
@@ -3568,10 +3568,10 @@ Storage:Scion
 456.5607
 </td>
 <td style="text-align:right;">
-1610
+2646
 </td>
 <td style="text-align:right;">
-0.4149068
+0.3669690
 </td>
 <td style="text-align:right;">
 6.2921965
@@ -3591,10 +3591,10 @@ Cankers
 185.7798
 </td>
 <td style="text-align:right;">
-194
+51
 </td>
 <td style="text-align:right;">
-0.3402062
+0.7254902
 </td>
 <td style="text-align:right;">
 0.4267277
@@ -3614,10 +3614,10 @@ Site:Cankers
 406.5694
 </td>
 <td style="text-align:right;">
-517
+158
 </td>
 <td style="text-align:right;">
-0.2669246
+0.5189873
 </td>
 <td style="text-align:right;">
 1.8677433
@@ -3637,10 +3637,10 @@ Storage:Cankers
 548.6167
 </td>
 <td style="text-align:right;">
-480
+910
 </td>
 <td style="text-align:right;">
-0.1729167
+0.1000000
 </td>
 <td style="text-align:right;">
 1.2601479
@@ -3660,10 +3660,10 @@ Scion:Cankers
 377.6527
 </td>
 <td style="text-align:right;">
-1233
+4822
 </td>
 <td style="text-align:right;">
-0.4630981
+0.4985483
 </td>
 <td style="text-align:right;">
 5.2047069
@@ -3704,15 +3704,15 @@ result &lt;- aovp(update(design_with_canker, measure ~ .), all_alpha_ord, seqs =
 <pre><code># Component 1 :
 #                 Df R Sum Sq R Mean Sq Iter Pr(Prob)    
 # Site             2  14033.2    7016.6 5000  &lt; 2e-16 ***
-# Storage          1    717.3     717.3  731  0.12038    
-# Site:Storage     2   2039.3    1019.6 2446  0.08585 .  
-# Scion            6   1448.1     241.3  251  0.87649    
-# Site:Scion      12   1930.5     160.9  490  0.98571    
-# Storage:Scion    6   2599.3     433.2 1721  0.35328    
-# Cankers          1    221.4     221.4  112  0.47321    
-# Site:Cankers     2   1657.7     828.9 1231  0.07555 .  
-# Storage:Cankers  1     12.5      12.5   51  1.00000    
-# Scion:Cankers    6   3837.5     639.6 4636  0.16803    
+# Storage          1    717.3     717.3  582  0.14777    
+# Site:Storage     2   2039.3    1019.6 1256  0.07404 .  
+# Scion            6   1448.1     241.3  175  0.81143    
+# Site:Scion      12   1930.5     160.9  646  0.92879    
+# Storage:Scion    6   2599.3     433.2 2337  0.35601    
+# Cankers          1    221.4     221.4   87  0.54023    
+# Site:Cankers     2   1657.7     828.9  979  0.13994    
+# Storage:Cankers  1     12.5      12.5   53  0.66038    
+# Scion:Cankers    6   3837.5     639.6 5000  0.18300    
 # Residuals       39  15602.8     400.1                  
 # ---
 # Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
@@ -3785,10 +3785,10 @@ Storage
 717.33454
 </td>
 <td style="text-align:right;">
-731
+582
 </td>
 <td style="text-align:right;">
-0.1203830
+0.1477663
 </td>
 <td style="text-align:right;">
 1.6266257
@@ -3808,10 +3808,10 @@ Site:Storage
 1019.63101
 </td>
 <td style="text-align:right;">
-2446
+1256
 </td>
 <td style="text-align:right;">
-0.0858545
+0.0740446
 </td>
 <td style="text-align:right;">
 4.6242247
@@ -3831,10 +3831,10 @@ Scion
 241.34723
 </td>
 <td style="text-align:right;">
-251
+175
 </td>
 <td style="text-align:right;">
-0.8764940
+0.8114286
 </td>
 <td style="text-align:right;">
 3.2836697
@@ -3854,10 +3854,10 @@ Site:Scion
 160.87181
 </td>
 <td style="text-align:right;">
-490
+646
 </td>
 <td style="text-align:right;">
-0.9857143
+0.9287926
 </td>
 <td style="text-align:right;">
 4.3775094
@@ -3877,10 +3877,10 @@ Storage:Scion
 433.22495
 </td>
 <td style="text-align:right;">
-1721
+2337
 </td>
 <td style="text-align:right;">
-0.3532830
+0.3560120
 </td>
 <td style="text-align:right;">
 5.8942779
@@ -3900,10 +3900,10 @@ Cankers
 221.37410
 </td>
 <td style="text-align:right;">
-112
+87
 </td>
 <td style="text-align:right;">
-0.4732143
+0.5402299
 </td>
 <td style="text-align:right;">
 0.5019873
@@ -3923,10 +3923,10 @@ Site:Cankers
 828.86751
 </td>
 <td style="text-align:right;">
-1231
+979
 </td>
 <td style="text-align:right;">
-0.0755483
+0.1399387
 </td>
 <td style="text-align:right;">
 3.7590752
@@ -3946,10 +3946,10 @@ Storage:Cankers
 12.46303
 </td>
 <td style="text-align:right;">
-51
+53
 </td>
 <td style="text-align:right;">
-1.0000000
+0.6603774
 </td>
 <td style="text-align:right;">
 0.0282611
@@ -3969,10 +3969,10 @@ Scion:Cankers
 639.58701
 </td>
 <td style="text-align:right;">
-4636
+5000
 </td>
 <td style="text-align:right;">
-0.1680328
+0.1830000
 </td>
 <td style="text-align:right;">
 8.7019540
@@ -6958,18 +6958,30 @@ asv_canker_anova_summary &lt;- asv_canker_anova_results %&gt;%
 
 cat(
   &quot;Number of ASVs with statistically significant (*P* &lt; 0.05) adjusted p-values&quot;, &quot;\n\n&quot;,
+  &quot;Site:&quot;, nrow(asv_canker_anova_results[Factor == &quot;Site&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
+  &quot;Storage:&quot;, nrow(asv_canker_anova_results[Factor == &quot;Storage&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
+  &quot;Scion:&quot;, nrow(asv_canker_anova_results[Factor == &quot;Scion&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
   &quot;Cankers:&quot;, nrow(asv_canker_anova_results[Factor == &quot;Cankers&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
-  # &quot;Storage:&quot;, nrow(top_asvs_anova_results[Factor == &quot;Storage&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
-  # &quot;Scion:&quot;, nrow(top_asvs_anova_results[Factor == &quot;Scion&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
-  # &quot;Site:Storage:&quot;, nrow(top_asvs_anova_results[Factor == &quot;Site:Storage&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
-  # &quot;Site:Scion:&quot;, nrow(top_asvs_anova_results[Factor == &quot;Site:Scion&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
-  # &quot;Storage:Scion:&quot;, nrow(top_asvs_anova_results[Factor == &quot;Storage:Scion&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
-  # &quot;Site:Storage:Scion:&quot;, nrow(top_asvs_anova_results[Factor == &quot;Site:Storage:Scion&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n\n&quot;,
+  &quot;Site:Storage:&quot;, nrow(asv_canker_anova_results[Factor == &quot;Site:Storage&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
+  &quot;Site:Scion:&quot;, nrow(asv_canker_anova_results[Factor == &quot;Site:Scion&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
+  &quot;Storage:Scion:&quot;, nrow(asv_canker_anova_results[Factor == &quot;Storage:Scion&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
+  &quot;Site:Cankers:&quot;, nrow(asv_canker_anova_results[Factor == &quot;Site:Cankers&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
+  &quot;Storage:Cankers:&quot;, nrow(asv_canker_anova_results[Factor == &quot;Storage:Cankers&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
+  &quot;Scion:Cankers:&quot;, nrow(asv_canker_anova_results[Factor == &quot;Scion:Cankers&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
   &quot;Total ASVs:&quot;, length(unique(asv_canker_anova_results$ASV)), &quot;\n\n&quot;
 )</code></pre>
 <pre><code># Number of ASVs with statistically significant (*P* &lt; 0.05) adjusted p-values 
 # 
+#  Site: 677 
+#  Storage: 11 
+#  Scion: 0 
 #  Cankers: 9 
+#  Site:Storage: 94 
+#  Site:Scion: 4 
+#  Storage:Scion: 0 
+#  Site:Cankers: 2 
+#  Storage:Cankers: 0 
+#  Scion:Cankers: 3 
 #  Total ASVs: 995</code></pre>
 <pre class="r"><code># Filter by significant effect of scion and its interactions
 canker_asvs &lt;- asv_canker_anova_results[grepl(&quot;Cankers&quot;, Factor) &amp; p.adj &lt; 0.05, ]
@@ -13861,18 +13873,30 @@ asv_canker_anova_summary &lt;- asv_canker_anova_results %&gt;%
 
 cat(
   &quot;Number of ASVs with statistically significant (*P* &lt; 0.05) adjusted p-values&quot;, &quot;\n\n&quot;,
+  &quot;Site:&quot;, nrow(asv_canker_anova_results[Factor == &quot;Site&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
+  &quot;Storage:&quot;, nrow(asv_canker_anova_results[Factor == &quot;Storage&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
+  &quot;Scion:&quot;, nrow(asv_canker_anova_results[Factor == &quot;Scion&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
   &quot;Cankers:&quot;, nrow(asv_canker_anova_results[Factor == &quot;Cankers&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
-  # &quot;Storage:&quot;, nrow(top_asvs_anova_results[Factor == &quot;Storage&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
-  # &quot;Scion:&quot;, nrow(top_asvs_anova_results[Factor == &quot;Scion&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
-  # &quot;Site:Storage:&quot;, nrow(top_asvs_anova_results[Factor == &quot;Site:Storage&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
-  # &quot;Site:Scion:&quot;, nrow(top_asvs_anova_results[Factor == &quot;Site:Scion&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
-  # &quot;Storage:Scion:&quot;, nrow(top_asvs_anova_results[Factor == &quot;Storage:Scion&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
-  # &quot;Site:Storage:Scion:&quot;, nrow(top_asvs_anova_results[Factor == &quot;Site:Storage:Scion&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n\n&quot;,
+  &quot;Site:Storage:&quot;, nrow(asv_canker_anova_results[Factor == &quot;Site:Storage&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
+  &quot;Site:Scion:&quot;, nrow(asv_canker_anova_results[Factor == &quot;Site:Scion&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
+  &quot;Storage:Scion:&quot;, nrow(asv_canker_anova_results[Factor == &quot;Storage:Scion&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
+  &quot;Site:Cankers:&quot;, nrow(asv_canker_anova_results[Factor == &quot;Site:Cankers&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
+  &quot;Storage:Cankers:&quot;, nrow(asv_canker_anova_results[Factor == &quot;Storage:Cankers&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
+  &quot;Scion:Cankers:&quot;, nrow(asv_canker_anova_results[Factor == &quot;Scion:Cankers&quot; &amp; p.adj &lt; 0.05, ]), &quot;\n&quot;,
   &quot;Total ASVs:&quot;, length(unique(asv_canker_anova_results$ASV)), &quot;\n\n&quot;
 )</code></pre>
 <pre><code># Number of ASVs with statistically significant (*P* &lt; 0.05) adjusted p-values 
 # 
+#  Site: 3698 
+#  Storage: 61 
+#  Scion: 101 
 #  Cankers: 31 
+#  Site:Storage: 399 
+#  Site:Scion: 65 
+#  Storage:Scion: 19 
+#  Site:Cankers: 61 
+#  Storage:Cankers: 8 
+#  Scion:Cankers: 57 
 #  Total ASVs: 5883</code></pre>
 <pre class="r"><code># Filter by significant effect of scion and its interactions
 canker_asvs &lt;- asv_canker_anova_results[grepl(&quot;Cankers&quot;, Factor) &amp; p.adj &lt; 0.05, ]
