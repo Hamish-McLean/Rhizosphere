@@ -75,7 +75,9 @@ design_with_canker <- y ~ Site + Storage + Scion + Cankers + Site:Storage + Site
 canker_design <-      "Cankers ~ Site * Storage * Scion"
 
 # Control
-ASV_MODELS <- TRUE # Toggle for ASV model cells
+ASV_FACTOR <- FALSE # Toggle for ASV ~ factor models
+ASV_CANKER <- TRUE  # Toggle for ASV ~ Canker linear models
+CANKER_ASV <- FALSE # Toggle for Canker ~ ASV nested models
 ```
 
 ```{r functions}
@@ -1354,7 +1356,7 @@ top_asv_data <- merge(top_asv_data, colData, by = 0) %>% column_to_rownames("Row
 
 Effect of Site, Scion, and Storage on abundance of top ASVs
 
-```{r FUN ASV ANOVA, eval=ASV_MODELS}
+```{r FUN ASV ANOVA, eval = ASV_FACTOR}
 # ANOVA of top ASVs
 asv_lm_anova <- function(asv, formula, data) {
   f = update(formula, paste0("log(", asv, " + 1) ~ ."))
@@ -1492,7 +1494,27 @@ write.fasta(
 
 ### Effect of design factors and canker counts on abundance of top ASVs
 
-```{r FUN ASV ANOVA with canker, eval=ASV_MODELS}
+```{r FUN ASV ANOVA with canker, eval = ASV_CANKER}
+# ANOVA of top ASVs
+asv_lm_anova_canker <- function(asv, formula, data) {
+  f = update(formula, paste0("log(", asv, " + 1) ~ ."))
+  a = aov(f, data = data)
+  df = a %>% summary() %>% unclass() %>% data.frame()
+  df[4, "coef"] <- coef(a)["Cankers"]
+  return(df)
+}
+
+# Extend ANOVA results with ASV metadata
+extend_asv_anova_canker <- function(anova_result, asv) {
+  anova_result %>% mutate(
+    ASV = asv,
+    Taxonomy = taxData[asv, "rank"],
+    Abundance = round(mean(top_asv_data[[asv]]), 3),
+    Factor = gsub(" ", "", rownames(anova_result)),
+    var = Sum.Sq / sum(anova_result$Sum.Sq) * 100
+    # coef = anova_result$coef
+  )
+}
 
 formula <- design_with_canker
 
@@ -1500,8 +1522,8 @@ formula <- design_with_canker
 asv_canker_anova_results <- lapply(
   top_asv_ids, 
   function(asv) {
-    asv_lm_anova(asv, formula, top_asv_data) %>%
-    extend_asv_anova(asv)
+    asv_lm_anova_canker(asv, formula, top_asv_data) %>%
+    extend_asv_anova_canker(asv)
   }
 ) %>% bind_rows() %>% data.table()
 
@@ -1516,8 +1538,8 @@ asv_canker_anova_results$Factor <- factor(asv_canker_anova_results$Factor, level
 
 # Summary of top ASV ANOVA results
 asv_canker_anova_summary <- asv_canker_anova_results %>% 
-  select(ASV, Taxonomy, Abundance, Factor, var, p.adj) %>% 
-  pivot_wider(names_from = Factor, values_from = c(var, p.adj), names_glue = "{Factor}_{.value}") %>%
+  select(ASV, Taxonomy, Abundance, Factor, var, p.adj, coef) %>% 
+  pivot_wider(names_from = Factor, values_from = c(var, p.adj, coef), names_glue = "{Factor}_{.value}") %>%
   select(
     ASV, Taxonomy, Abundance, 
     Site_var, Site_p.adj, Storage_var, Storage_p.adj, 
@@ -1527,7 +1549,8 @@ asv_canker_anova_summary <- asv_canker_anova_results %>%
     "Storage:Scion_var", "Storage:Scion_p.adj", 
     "Site:Cankers_var", "Site:Cankers_p.adj",
     "Storage:Cankers_var", "Storage:Cankers_p.adj", 
-    "Scion:Cankers_var", "Scion:Cankers_p.adj"
+    "Scion:Cankers_var", "Scion:Cankers_p.adj",
+    "Cankers_coef"
     # "Site:Storage:Scion_var", "Site:Storage:Scion_p.adj", 
     # "Site:Storage:Cankers_var", "Site:Storage:Cankers_p.adj",
     # "Site:Storage:Scion:Cankers_var", "Site:Storage:Scion:Cankers_p.adj"
@@ -1605,7 +1628,7 @@ anova(base_model, abundance_model) %>%
 
 ### Effect of ASV abundance on canker count
 
-```{r FUN ASV canker, eval=ASV_MODELS}
+```{r FUN ASV canker, eval = CANKER_ASV}
 # Filter out samples with missing canker count
 canker_top_asv_data <- top_asv_data[complete.cases(top_asv_data$Cankers), ]
 # all.equal(top_asv_data[c("Site", "Storage", "Scion", "Cankers")],cankers)
@@ -1718,7 +1741,7 @@ cat(
 Filter top ASVs with `r (1 - FUNASVFILTER) * 100` % of reads per site
 and test the effect of ASV abundance on canker count per site.
 
-```{r FUN ASV canker per site, eval=ASV_MODELS}
+```{r FUN ASV canker per site, eval = CANKER_ASV}
 # For each site, select top ASVs with 90% of reads
 top_asvs_per_site <- lapply(
   unique(colData$Site),
@@ -2730,7 +2753,7 @@ top_asv_data <- merge(top_asv_data, colData, by = 0) %>% column_to_rownames("Row
 
 Effect of Site, Scion, and Storage on abundance of top `r DIFFOTU` ASVs
 
-```{r BAC ASV ANOVA, eval=ASV_MODELS}
+```{r BAC ASV ANOVA, eval = ASV_FACTOR}
 # Perform ANOVA on list of top ASVs
 top_asvs_anova_results <- lapply(
   top_asv_ids, 
@@ -2825,7 +2848,7 @@ write.fasta(
 
 ### Effect of design factors and canker counts on abundance of top ASVs
 
-```{r BAC ASV ANOVA with canker, eval=ASV_MODELS}
+```{r BAC ASV ANOVA with canker, eval = ASV_CANKER}
 
 formula <- design_with_canker
 
@@ -2833,8 +2856,8 @@ formula <- design_with_canker
 asv_canker_anova_results <- lapply(
   top_asv_ids, 
   function(asv) {
-    asv_lm_anova(asv, formula, top_asv_data) %>%
-    extend_asv_anova(asv)
+    asv_lm_anova_canker(asv, formula, top_asv_data) %>%
+    extend_asv_anova_canker(asv)
   }
 ) %>% bind_rows() %>% data.table()
 
@@ -2849,8 +2872,8 @@ asv_canker_anova_results$Factor <- factor(asv_canker_anova_results$Factor, level
 
 # Summary of top ASV ANOVA results
 asv_canker_anova_summary <- asv_canker_anova_results %>% 
-  select(ASV, Taxonomy, Abundance, Factor, var, p.adj) %>% 
-  pivot_wider(names_from = Factor, values_from = c(var, p.adj), names_glue = "{Factor}_{.value}") %>%
+  select(ASV, Taxonomy, Abundance, Factor, var, p.adj, coef) %>% 
+  pivot_wider(names_from = Factor, values_from = c(var, p.adj, coef), names_glue = "{Factor}_{.value}") %>%
   select(
     ASV, Taxonomy, Abundance, 
     Site_var, Site_p.adj, Storage_var, Storage_p.adj, 
@@ -2860,7 +2883,8 @@ asv_canker_anova_summary <- asv_canker_anova_results %>%
     "Storage:Scion_var", "Storage:Scion_p.adj", 
     "Site:Cankers_var", "Site:Cankers_p.adj",
     "Storage:Cankers_var", "Storage:Cankers_p.adj", 
-    "Scion:Cankers_var", "Scion:Cankers_p.adj"
+    "Scion:Cankers_var", "Scion:Cankers_p.adj",
+    "Cankers_coef"
     # "Site:Storage:Scion_var", "Site:Storage:Scion_p.adj", 
     # "Site:Storage:Cankers_var", "Site:Storage:Cankers_p.adj",
     # "Site:Storage:Scion:Cankers_var", "Site:Storage:Scion:Cankers_p.adj"
@@ -2938,7 +2962,7 @@ anova(base_model, abundance_model) %>%
 
 ### Effect of ASV abundance on canker count
 
-```{r BAC ASV canker, eval=ASV_MODELS}
+```{r BAC ASV canker, eval = CANKER_ASV}
 # Filter out samples with missing canker count
 top_asv_data <- top_asv_data[complete.cases(top_asv_data$Cankers), ]
 
@@ -2989,7 +3013,7 @@ cat(
 Filter top ASVs with `r (1 - BACASVFILTER) * 100` % of reads per site
 and test the effect of ASV abundance on canker count per site.
 
-```{r BAC ASV canker per site, eval=ASV_MODELS}
+```{r BAC ASV canker per site, eval = CANKER_ASV}
 # For each site, select top ASVs with 50% of reads
 top_asvs_per_site <- lapply(
   unique(colData$Site),
