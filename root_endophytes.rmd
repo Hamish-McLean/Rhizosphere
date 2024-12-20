@@ -1159,6 +1159,25 @@ df %>%
   kable_styling("striped", full_width = F)
 ```
 
+#### ADONIS with canker
+
+```{r FUN BC canker}
+missing <- rownames(colData[is.na(colData$Cankers), ])
+# Calculate Bray-Curtis distance matrix
+vg_canker <- vegdist(t(counts(dds, normalize = T)[, !colnames(counts(dds)) %in% missing]), method = "bray")
+
+formula <- update(design_with_canker, vg_canker ~ .)
+
+set.seed(sum(utf8ToInt("Hamish McLean")))
+result <- adonis2(formula, colData[!is.na(colData$Cankers), ], permutations = 1000)
+result
+df <- result %>% data.frame()
+df$Perc.Var <- df$SumOfSqs / df["Total", "SumOfSqs"] * 100
+df %>%
+  kbl() %>%
+  kable_styling("striped", full_width = F)
+```
+
 #### Bray-Curtis canker correlation
 
 ```{r FUN BC canker correlation}
@@ -1508,10 +1527,10 @@ asv_canker_anova_summary <- asv_canker_anova_results %>%
     "Storage:Scion_var", "Storage:Scion_p.adj", 
     "Site:Cankers_var", "Site:Cankers_p.adj",
     "Storage:Cankers_var", "Storage:Cankers_p.adj", 
-    "Scion:Cankers_var", "Scion:Cankers_p.adj",
-    "Site:Storage:Scion_var", "Site:Storage:Scion_p.adj", 
-    "Site:Storage:Cankers_var", "Site:Storage:Cankers_p.adj",
-    "Site:Storage:Scion:Cankers_var", "Site:Storage:Scion:Cankers_p.adj"
+    "Scion:Cankers_var", "Scion:Cankers_p.adj"
+    # "Site:Storage:Scion_var", "Site:Storage:Scion_p.adj", 
+    # "Site:Storage:Cankers_var", "Site:Storage:Cankers_p.adj",
+    # "Site:Storage:Scion:Cankers_var", "Site:Storage:Scion:Cankers_p.adj"
   ) %>%
   data.table()
 
@@ -1568,7 +1587,7 @@ The base model for canker counts uses the formula: `r canker_design`.
 canker_abundance_data <- colData[complete.cases(colData$Cankers), ]
 
 # Base model
-canker_design <- "Cankers ~ Site * Storage * Scion"
+# canker_design <- "Cankers ~ Site * Storage * Scion"
 base_model <- glm.nb(canker_design, data = canker_abundance_data)
 
 # Abundance model
@@ -2515,6 +2534,25 @@ df %>%
   kable_styling("striped", full_width = F)
 ```
 
+#### ADONIS with canker
+
+```{r BAC BC canker}
+missing <- rownames(colData[is.na(colData$Cankers), ])
+# Calculate Bray-Curtis distance matrix
+vg_canker <- vegdist(t(counts(dds, normalize = T)[, !colnames(counts(dds)) %in% missing]), method = "bray")
+
+formula <- update(design_with_canker, vg_canker ~ .)
+
+set.seed(sum(utf8ToInt("Hamish McLean")))
+result <- adonis2(formula, colData[!is.na(colData$Cankers), ], permutations = 1000)
+result
+df <- result %>% data.frame()
+df$Perc.Var <- df$SumOfSqs / df["Total", "SumOfSqs"] * 100
+df %>%
+  kbl() %>%
+  kable_styling("striped", full_width = F)
+```
+
 #### Bray-Curtis canker correlation
 
 ```{r BAC BC canker correlation}
@@ -2819,10 +2857,10 @@ asv_canker_anova_summary <- asv_canker_anova_results %>%
     "Storage:Scion_var", "Storage:Scion_p.adj", 
     "Site:Cankers_var", "Site:Cankers_p.adj",
     "Storage:Cankers_var", "Storage:Cankers_p.adj", 
-    "Scion:Cankers_var", "Scion:Cankers_p.adj",
-    "Site:Storage:Scion_var", "Site:Storage:Scion_p.adj", 
-    "Site:Storage:Cankers_var", "Site:Storage:Cankers_p.adj",
-    "Site:Storage:Scion:Cankers_var", "Site:Storage:Scion:Cankers_p.adj"
+    "Scion:Cankers_var", "Scion:Cankers_p.adj"
+    # "Site:Storage:Scion_var", "Site:Storage:Scion_p.adj", 
+    # "Site:Storage:Cankers_var", "Site:Storage:Cankers_p.adj",
+    # "Site:Storage:Scion:Cankers_var", "Site:Storage:Scion:Cankers_p.adj"
   ) %>%
   data.table()
 
@@ -2879,7 +2917,7 @@ The base model for canker counts uses the formula: `r canker_design`.
 canker_abundance_data <- colData[complete.cases(colData$Cankers), ]
 
 # Base model
-canker_design = "Cankers ~ Site * Storage * Scion"
+# canker_design = "Cankers ~ Site * Storage * Scion"
 base_model <- glm.nb(canker_design, data = canker_abundance_data)
 
 # Abundance model
