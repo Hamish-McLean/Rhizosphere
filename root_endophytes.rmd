@@ -3305,7 +3305,31 @@ beta_canker_results %>%
 ## Taxonomy
 
 ```{r taxonomy figures}
+combined_phylum <- ggarrange(
+  fun_phylum_site_plot, bac_phylum_site_plot,
+  ncol = 2, nrow = 1, labels = c("A", "B"),
+  common.legend = T, legend = "bottom"
+)
 
+ggsave(
+  filename = "combined_phylum.png", plot = combined_phylum, path = "figures/", 
+  height = 15, width = 25, units = "cm"
+)
+
+combined_phylum
+
+combined_class <- ggarrange(
+  fun_class_site_plot, bac_class_site_plot,
+  ncol = 2, nrow = 1, labels = c("A", "B"),
+  common.legend = T, legend = "bottom"
+)
+
+ggsave(
+  filename = "combined_class.png", plot = combined_class, path = "figures/", 
+  height = 15, width = 25, units = "cm"
+)
+
+combined_class
 ```
 
 ## Abundance
