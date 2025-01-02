@@ -76,7 +76,7 @@ canker_design <-      "Cankers ~ Site * Storage * Scion"
 
 # Control
 ASV_FACTOR <- FALSE # Toggle for ASV ~ factor models
-ASV_CANKER <- TRUE  # Toggle for ASV ~ Canker linear models
+ASV_CANKER <- FALSE  # Toggle for ASV ~ Canker linear models
 CANKER_ASV <- FALSE # Toggle for Canker ~ ASV nested models
 ```
 
@@ -668,11 +668,44 @@ data.table(
 Plots of proportion of normalised reads assigned to members of phylum and class.
 
 ```{r FUN taxonomy plots}
+# First just site
 dat <- list(as.data.frame(counts(dds, normalize = T)), taxData, as.data.frame(colData(dds)))
+
+design <- "Site"
+
+# md1 <- getSummedTaxa(dat, conf = TAXCONF, design = design, cutoff = 0.1)
+md1 <- getSummedTaxa(dat, conf = TAXCONF, design = design, taxon = "phylum", cutoff = 0.1)
+
+md1[, Site := factor(Site, levels = c(1, 2, 3))]
+md1[, taxon := factor(taxon, levels = unique(taxon[order(value, decreasing = T)]))]
+
+removals <- md1[, .(value = mean(value)), by = "taxon"][value < 0.5, taxon]
+md1 <- md1[!taxon %in% removals, ]
+
+fun_phylum_site_plot <- plotfun1(md1, x = "taxon", fill = "Site")
+
+ggsave("figures/fun_phylum_site.png", fun_phylum_site_plot, width = 20, height = 15, units = "cm")
+
+fun_phylum_site_plot
+
+md2 <- getSummedTaxa(dat, conf = TAXCONF, design = design, taxon = "class", cutoff = 0.1)
+
+md2[, Site := factor(Site, levels = c(1, 2, 3))]
+md2[, taxon := factor(taxon, levels = unique(taxon[order(value, decreasing = T)]))]
+
+removals <- md2[, .(value = mean(value)), by = "taxon"][value < 0.5, taxon]
+md2 <- md2[!taxon %in% removals, ]
+
+fun_class_site_plot <- plotfun1(md2, x = "taxon", fill = "Site")
+
+ggsave("figures/fun_class_site.png", fun_class_site_plot, width = 20, height = 15, units = "cm")
+
+fun_class_site_plot
+
+# Next site and storage
 
 design <- c("Site", "Storage")
 
-# md1 <- getSummedTaxa(dat, conf = TAXCONF, design = design, cutoff = 0.1)
 md1 <- getSummedTaxa(dat, conf = TAXCONF, design = design, taxon = "phylum", cutoff = 0.1)
 
 md1[, Site := factor(Site, levels = c(1, 2, 3))]
@@ -687,8 +720,6 @@ fun_phylum_plot <- plotfun1(md1, x = "taxon", fill = "Site") +
 
 ggsave("figures/fun_phylum.png", fun_phylum_plot, width = 25, height = 15, units = "cm")
 
-fun_phylum_plot
-
 md2 <- getSummedTaxa(dat, conf = TAXCONF, design = design, taxon = "class", cutoff = 0.1)
 
 md2[, Site := factor(Site, levels = c(1, 2, 3))]
@@ -702,8 +733,6 @@ fun_class_plot <- plotfun1(md2, x = "taxon", fill = "Site") +
   facet_wrap(~ Storage)
 
 ggsave("figures/fun_class.png", fun_class_plot, width = 25, height = 15, units = "cm")
-
-fun_class_plot
 ```
 
 ## Community size
@@ -2080,11 +2109,42 @@ data.table(
 Plots of proportion of normalised reads assigned to members of phylum and class.
 
 ```{r BAC taxonomy plots}
+# First just site
 dat <- list(as.data.frame(counts(dds, normalize = T)), taxData, as.data.frame(colData(dds)))
 
+design <- "Site"
+
+md1 <- getSummedTaxa(dat, conf = TAXCONF, design = design, taxon = "phylum", cutoff = 0.1)
+
+md1[, Site := factor(Site, levels = c(1, 2, 3))]
+md1[, taxon := factor(taxon, levels = unique(taxon[order(value, decreasing = T)]))]
+
+removals <- md1[, .(value = mean(value)), by = "taxon"][value < 0.5, taxon]
+md1 <- md1[!taxon %in% removals, ]
+
+bac_phylum_site_plot <- plotfun1(md1, x = "taxon", fill = "Site")
+
+ggsave("figures/bac_phylum_site.png", bac_phylum_site_plot, width = 20, height = 15, units = "cm")
+
+bac_phylum_site_plot
+
+md2 <- getSummedTaxa(dat, conf = TAXCONF, design = design, taxon = "class", cutoff = 0.1, topn = 9)
+
+md2[, Site := factor(Site, levels = c(1, 2, 3))]
+md2[, taxon := factor(taxon, levels = unique(taxon[order(value, decreasing = T)]))]
+
+removals <- md2[, .(value = mean(value)), by = "taxon"][value < 0.5, taxon]
+md2 <- md2[!taxon %in% removals, ]
+
+bac_class_site_plot <- plotfun1(md2, x = "taxon", fill = "Site")
+
+ggsave("figures/bac_class_site.png", bac_class_site_plot, width = 20, height = 15, units = "cm")
+
+bac_class_site_plot
+
+# Next site and storage
 design <- c("Site", "Storage")
 
-# md1 <- getSummedTaxa(dat, conf = TAXCONF, design = design, cutoff = 0.1)
 md1 <- getSummedTaxa(dat, conf = TAXCONF, design = design, taxon = "phylum", cutoff = 0.1)
 
 md1[, Site := factor(Site, levels = c(1, 2, 3))]
@@ -2099,8 +2159,6 @@ bac_phylum_plot <- plotfun1(md1, x = "taxon", fill = "Site") +
 
 ggsave("figures/bac_phylum.png", bac_phylum_plot, width = 25, height = 15, units = "cm")
 
-bac_phylum_plot
-
 md2 <- getSummedTaxa(dat, conf = TAXCONF, design = design, taxon = "class", cutoff = 0.1, topn = 9)
 
 md2[, Site := factor(Site, levels = c(1, 2, 3))]
@@ -2114,8 +2172,6 @@ bac_class_plot <- plotfun1(md2, x = "taxon", fill = "Site") +
   facet_wrap(~ Storage)
 
 ggsave("figures/bac_class.png", bac_class_plot, width = 25, height = 15, units = "cm")
-
-bac_class_plot
 ```
 
 ## Community size
@@ -3245,6 +3301,12 @@ beta_canker_results %>%
 ```
 
 # Extra figures
+
+## Taxonomy
+
+```{r taxonomy figures}
+
+```
 
 ## Abundance
 
