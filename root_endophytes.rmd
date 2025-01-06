@@ -2678,7 +2678,7 @@ bac_nmds_plot <- plotOrd(
   alpha = 0.75, cbPalette = T
 ) #+ theme(text = element_text(size = 14))
 
-ggsave(filename = "fun_nmds_plot.png", plot = bac_nmds_plot, path = "figures/")
+ggsave(filename = "bac_nmds_plot.png", plot = bac_nmds_plot, path = "figures/")
 
 bac_nmds_plot
 ```
@@ -2692,7 +2692,7 @@ missing <- rownames(colData[is.na(colData$Cankers), ])
 colData$log_cankers <- log10(colData$Cankers + 1)
 
 bac_nmds_canker_plot <- plotOrd(
-  fun_nmds, colData, 
+  bac_nmds, colData, 
   design = "log_cankers",
   shape = "Site",
   continuous = TRUE,
@@ -3485,6 +3485,23 @@ ggsave(
 )
 
 mega_combo_plot
+```
+
+## NMDS with canker
+
+```{r NMDS canker plots}
+combined_nmds_canker <- ggarrange(
+  fun_nmds_canker_plot, bac_nmds_canker_plot,
+  ncol = 2, nrow = 1, labels = c("A", "B"),
+  common.legend = T, legend = "bottom"
+)
+
+ggsave(
+  filename = "combined_nmds_canker.png", plot = combined_nmds_canker, path = "figures/", 
+  height = 10, width = 24, units = "cm"
+)
+
+combined_nmds_canker
 ```
 
 ```{r BAC save image}
