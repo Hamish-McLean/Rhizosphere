@@ -134,6 +134,10 @@ mutate_factors <- function(data){
         planting_date %in% c("march", "april") ~ "yes",
         planting_date %in% c("dec") ~ "no"
       ) %>% as.factor(),
+      Season = case_when(
+        planting_date %in% c("march", "april") ~ "Spring",
+        planting_date %in% c("dec") ~ "Winter"
+      ) %>% as.factor(),
       Scion = as.factor(Scion)
     )
   return(data)
@@ -1247,7 +1251,7 @@ fun_nmds <- scores(ord)
 fun_nmds_plot <- plotOrd(
   fun_nmds, colData(dds), 
   design = "Site", 
-  shape = "Storage", 
+  shape = "Season", 
   alpha = 0.75, cbPalette = T
 ) #+ theme(text = element_text(size = 14))
 
@@ -2674,7 +2678,7 @@ bac_nmds <- scores(ord)
 bac_nmds_plot <- plotOrd(
   bac_nmds, colData(dds), 
   design = "Site", 
-  shape = "Storage", 
+  shape = "Season", 
   alpha = 0.75, cbPalette = T
 ) #+ theme(text = element_text(size = 14))
 
@@ -3359,7 +3363,7 @@ abundance_box <- ggboxplot(
   data = abundance_combined, x = "Site", y = "log_copy_number", 
   color = "Storage", add = "jitter", facet.by = "kingdom",
   palette = cbPalette, legend = "bottom",
-  ylab = "Copy number (log10)", xlab = "Site"
+  ylab = "Theoretical copy number (log10)", xlab = "Site"
 ) 
 
 ggsave(
@@ -3373,15 +3377,17 @@ abundance_box
 ## Alpha diversity
 
 ```{r α-diversity figures}
-alpha_combined <- rbind(fun_alpha, bac_alpha) %>% 
-  subset(select = c("Site", "Storage", "Scion", "Target", "S.chao1", "shannon", "simpson")) %>%
+all_combined <- rbind(fun_alpha, bac_alpha) %>% 
+  subset(select = c("Site", "Storage", "Scion", "Target", "S.chao1", "shannon", "simpson", "log_copy_number")) %>%
   mutate(kingdom = ifelse(Target == "ITS", "Fungi", "Bacteria")) %>%
   mutate(kingdom = factor(kingdom, levels = c("Fungi", "Bacteria"))) %>%
   mutate(Storage = factor(Storage, levels = c("no", "yes"))) %>%
-  rename(Chao1 = S.chao1, Shannon = shannon, Simpson = simpson) %>%
-  pivot_longer(
-    cols = c("Chao1", "Shannon", "Simpson"), names_to = "measure", values_to = "value"
-  )
+  mutate(Season = ifelse(Storage == "no", "Winter", "Spring")) %>%
+  rename(Chao1 = S.chao1, Shannon = shannon, Simpson = simpson, TCN = log_copy_number)
+  
+alpha_combined <- all_combined %>% pivot_longer(
+  cols = c("Chao1", "Shannon", "Simpson", "TCN"), names_to = "measure", values_to = "value"
+)
 
 # alpha_bar <- ggbarplot(
 #   data = alpha_combined, x = "Storage", y = "value", 
@@ -3443,6 +3449,63 @@ ggsave(
 )
 ```
 
+## Abundance and α-diversity combined
+
+```{r abundance α-diversity figures}
+abundance_plot <- ggboxplot(
+  data = all_combined, x = "Site", y = "TCN", 
+  color = "Season", add = "jitter", facet.by = "kingdom",
+  palette = cbPalette, scales = "free_y", legend = "bottom",
+  ylab = "Theoretical copy number (log10)", xlab = "Site"
+) # + labs(colour = "Planting season")
+chao1_plot <- ggboxplot(
+  data = all_combined, x = "Site", y = "Chao1", 
+  color = "Season", add = "jitter", facet.by = "kingdom",
+  palette = cbPalette, scales = "free_y", legend = "bottom",
+  ylab = "Chao1 index", xlab = "Site"
+) # + labs(colour = "Planting season")
+shannon_plot <- ggboxplot(
+  data = all_combined, x = "Site", y = "Shannon", 
+  color = "Season", add = "jitter", facet.by = "kingdom",
+  palette = cbPalette, scales = "free_y", legend = "bottom",
+  ylab = "Shannon index", xlab = "Site"
+) # + labs(colour = "Planting season")
+simpson_plot <- ggboxplot(
+  data = all_combined, x = "Site", y = "Simpson", 
+  color = "Season", add = "jitter", facet.by = "kingdom",
+  palette = cbPalette, scales = "free_y", legend = "bottom",
+  ylab = "Simpson index", xlab = "Site"
+) # + labs(colour = "Planting season")
+
+abundance_alpha_combined <- ggarrange(
+  abundance_plot, chao1_plot, shannon_plot, simpson_plot,
+  ncol = 1, nrow = 4, labels = c("A", "B", "C", "D"),
+  common.legend = T, legend = "bottom"
+)
+
+ggsave(
+  filename = "abundance_alpha_combined.png", plot = abundance_alpha_combined, path = "figures/", 
+  height = 40, width = 24, units = "cm"
+)
+
+abundance_alpha_combined
+```
+
+### Abundance and α-diversity with facet
+
+```{r abundance α-diversity facet figures}
+abundance_alpha_facet <- ggboxplot(
+  data = alpha_combined, x = "Site", y = "value", 
+  color = "Storage", add = "jitter", facet.by = c("measure", "kingdom"),
+  palette = cbPalette, scales = "free_y", legend = "bottom",
+  ylab = "Mean diversity index", xlab = "Site"
+) #+ guides(color = guide_legend(position = "right"))
+ggsave(
+  filename = "abundance_alpha_facet.png", plot = abundance_alpha_facet, path = "figures/", 
+  height = 40, width = 24, units = "cm"
+)
+```
+
 ## PCA
   
 ```{r PCA figures}
@@ -3461,7 +3524,7 @@ pca_combo_plot
 
 nmds_combo_plot <- ggarrange(
   fun_nmds_plot, bac_nmds_plot,
-  ncol = 2, nrow = 1, widths = c(1.19, 1),
+  ncol = 2, nrow = 1, labels = c("A", "B"), widths = c(1.19, 1),
   common.legend = T, legend = "bottom"
 )
 
