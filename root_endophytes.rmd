@@ -3449,6 +3449,44 @@ ggsave(
 )
 ```
 
+## α-diversity per site
+
+```{r α-diversity per site figures}
+shannon_canker_site_plot <- ggscatter(
+  data = bac_alpha, y = "shannon", x = "Cankers", facet.by = "Site",  
+  scales = "free_y",
+  add = "reg.line", conf.int = T, cor.coef = T
+)
+
+ggsave(
+  filename = "shannon_site_plot.png", plot = shannon_canker_site_plot, path = "figures/", 
+  height = 20, width = 24, units = "cm"
+)
+
+simpson_canker_site_plot <- ggscatter(
+  data = bac_alpha, y = "simpson", x = "Cankers", facet.by = "Site",  
+  scales = "free_y",
+  add = "reg.line", conf.int = T, cor.coef = T
+)
+
+ggsave(
+  filename = "simpson_site_plot.png", plot = simpson_canker_site_plot, path = "figures/", 
+  height = 20, width = 24, units = "cm"
+)
+
+
+alpha_canker_site_plot <- ggarrange(
+  shannon_canker_site_plot, simpson_canker_site_plot,
+  ncol = 1, nrow = 2, labels = c("A", "B"),
+  common.legend = T, legend = "bottom"
+)
+
+ggsave(
+  filename = "alpha_canker_site_plot.png", plot = alpha_canker_site_plot, path = "figures/", 
+  height = 20, width = 24, units = "cm"
+)
+```
+
 ## Abundance and α-diversity combined
 
 ```{r abundance α-diversity figures}
