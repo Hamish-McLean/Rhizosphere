@@ -3490,28 +3490,30 @@ ggsave(
 ## Abundance and α-diversity combined
 
 ```{r abundance α-diversity figures}
+box_palette <- c("Winter" = "#8da0cb", "Spring" = "#fc8d62")
+
 abundance_plot <- ggboxplot(
   data = all_combined, x = "Site", y = "TCN", 
   color = "Season", add = "jitter", facet.by = "kingdom",
-  palette = cbPalette, scales = "free_y", legend = "bottom",
-  ylab = "Theoretical copy number (log10)", xlab = "Site"
+  palette = box_palette, scales = "free", legend = "bottom",
+  ylab = "TCN (log10)", xlab = "Site"
 ) # + labs(colour = "Planting season")
 chao1_plot <- ggboxplot(
   data = all_combined, x = "Site", y = "Chao1", 
   color = "Season", add = "jitter", facet.by = "kingdom",
-  palette = cbPalette, scales = "free_y", legend = "bottom",
+  palette = box_palette, scales = "free_y", legend = "bottom",
   ylab = "Chao1 index", xlab = "Site"
 ) # + labs(colour = "Planting season")
 shannon_plot <- ggboxplot(
   data = all_combined, x = "Site", y = "Shannon", 
   color = "Season", add = "jitter", facet.by = "kingdom",
-  palette = cbPalette, scales = "free_y", legend = "bottom",
+  palette = box_palette, scales = "free_y", legend = "bottom",
   ylab = "Shannon index", xlab = "Site"
 ) # + labs(colour = "Planting season")
 simpson_plot <- ggboxplot(
   data = all_combined, x = "Site", y = "Simpson", 
   color = "Season", add = "jitter", facet.by = "kingdom",
-  palette = cbPalette, scales = "free_y", legend = "bottom",
+  palette = box_palette, scales = "free_y", legend = "bottom",
   ylab = "Simpson index", xlab = "Site"
 ) # + labs(colour = "Planting season")
 
@@ -3523,7 +3525,7 @@ abundance_alpha_combined <- ggarrange(
 
 ggsave(
   filename = "abundance_alpha_combined.png", plot = abundance_alpha_combined, path = "figures/", 
-  height = 40, width = 24, units = "cm"
+  height = 24, width = 18, units = "cm", dpi = 300, bg = "white"
 )
 
 abundance_alpha_combined
@@ -3535,12 +3537,13 @@ abundance_alpha_combined
 abundance_alpha_facet <- ggboxplot(
   data = alpha_combined, x = "Site", y = "value", 
   color = "Storage", add = "jitter", facet.by = c("measure", "kingdom"),
-  palette = cbPalette, scales = "free_y", legend = "bottom",
-  ylab = "Mean diversity index", xlab = "Site"
+  palette = cbPalette, scales = "free_y", legend = "bottom"
+  # ylab = "Mean diversity index", xlab = "Site", 
+  # labeller = c(TCN = "TCN (log10)", Chao1 = "Chao1 index", Shannon = "Shannon index", Simpson = "Simpson index")
 ) #+ guides(color = guide_legend(position = "right"))
 ggsave(
   filename = "abundance_alpha_facet.png", plot = abundance_alpha_facet, path = "figures/", 
-  height = 40, width = 24, units = "cm"
+  height = 24, width = 18, units = "cm"
 )
 ```
 
@@ -3568,7 +3571,7 @@ nmds_combo_plot <- ggarrange(
 
 ggsave(
   filename = "nmds_combo_plot.png", plot = nmds_combo_plot, path = "figures/", 
-  height = 13, width = 24, units = "cm"
+  height = 13, width = 24, units = "cm", dpi = 300, bg = "white"
 )
 
 nmds_combo_plot
@@ -3582,7 +3585,7 @@ mega_combo_plot <- ggarrange(
 
 ggsave(
   filename = "mega_combo_plot.png", plot = mega_combo_plot, path = "figures/", 
-  height = 25, width = 30, units = "cm"
+  height = 15, width = 18, units = "cm", dpi = 300
 )
 
 mega_combo_plot
